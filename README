@@ -73,6 +73,7 @@ follows:
    Configure and build
      # ./autoreconf -i
      # ./configure
+     # make
 
    Final installation
      # sudo make install
@@ -83,6 +84,7 @@ to the project should follow a separate "Configure and build" step.
 
    Configure and build
      # ./bootstrap-configure
+     # make
 
 The script "bootstrap-configure" cleans the repository, calls
 autreconf and then invokes configure with proper settings for
