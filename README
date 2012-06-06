@@ -83,7 +83,6 @@ to the project should follow a separate "Configure and build" step.
 
    Configure and build
      # ./bootstrap-configure
-     # ./configure
 
 The script "bootstrap-configure" cleans the repository, calls
 autreconf and then invokes configure with proper settings for
