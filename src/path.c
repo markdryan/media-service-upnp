@@ -20,13 +20,15 @@
  *
  */
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <stdio.h>
 #include <string.h>
 
-#include "path.h"
 #include "error.h"
+#include "path.h"
 
 gboolean msu_path_get_non_root_id(const gchar *object_path,
 				  const gchar **slash_before_id)

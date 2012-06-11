@@ -23,6 +23,8 @@
 #ifndef MSU_ERROR_H__
 #define MSU_ERROR_H__
 
+#include <glib.h>
+
 enum msu_error_t_ {
 	MSU_ERROR_BAD_PATH,
 	MSU_ERROR_OBJECT_NOT_FOUND,

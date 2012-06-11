@@ -20,9 +20,12 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <string.h>
 
-#include "config.h"
 #include "path.h"
 #include "props.h"
 
