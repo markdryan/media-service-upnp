@@ -5,7 +5,7 @@ Media-service-upnp is a high level media content API that allows
 client applications to discover, browse and search UPNP and DLNA media
 servers.  Media-service-upnp is a d-Bus service implemented on top
 of the GUPnP libraries.  It is designed to be used by media
-application such as Digital Media Players (DMPs) or Digital Media
+applications such as Digital Media Players (DMPs) or Digital Media
 Controllers (DMCs).  Media-service-upnp offers such applications a
 number of benefits.
 
