@@ -35,7 +35,7 @@ PKG_PROG_PKG_CONFIG(0.16)
 PKG_CHECK_MODULES([DBUS], [dbus-1])
 PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.26.1])
 PKG_CHECK_MODULES([GIO], [gio-2.0 >= 2.26.1])
-PKG_CHECK_MODULES([GUPNP], [gupnp-1.0])
+PKG_CHECK_MODULES([GUPNP], [gupnp-1.0 >= 0.17.2])
 PKG_CHECK_MODULES([GUPNPAV], [gupnp-av-1.0])
 
 # Checks for header files.
