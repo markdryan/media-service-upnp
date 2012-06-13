@@ -26,8 +26,8 @@
 
 #include <string.h>
 
-#include "sort.h"
 #include "props.h"
+#include "sort.h"
 
 gchar *msu_sort_translate_sort_string(GHashTable *filter_map,
 				      const gchar *sort_string)

@@ -23,8 +23,8 @@
 #ifndef MSU_TASK_H__
 #define MSU_TASK_H__
 
-#include <glib.h>
 #include <gio/gio.h>
+#include <glib.h>
 
 enum msu_task_type_t_{
 	MSU_TASK_GET_VERSION,

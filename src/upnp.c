@@ -29,14 +29,14 @@
 #include <libgupnp/gupnp-control-point.h>
 #include <libgupnp/gupnp-error.h>
 
-#include "upnp.h"
+#include "async.h"
+#include "device.h"
 #include "error.h"
+#include "path.h"
 #include "props.h"
 #include "search.h"
 #include "sort.h"
-#include "path.h"
-#include "device.h"
-#include "async.h"
+#include "upnp.h"
 
 struct msu_upnp_t_ {
 	GDBusConnection *connection;

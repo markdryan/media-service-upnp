@@ -26,9 +26,9 @@
 
 #include <string.h>
 
-#include "search.h"
-#include "props.h"
 #include "path.h"
+#include "props.h"
+#include "search.h"
 
 gchar *msu_search_translate_search_string(GHashTable *filter_map,
 					  const gchar *search_string)

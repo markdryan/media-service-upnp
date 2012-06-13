@@ -24,8 +24,8 @@
 #include <config.h>
 #endif
 
-#include "task.h"
 #include "error.h"
+#include "task.h"
 
 msu_task_t *msu_task_get_version_new(GDBusMethodInvocation *invocation)
 {
