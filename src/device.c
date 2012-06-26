@@ -79,7 +79,7 @@ static void prv_msu_device_count_data_new(msu_async_cb_data_t *cb_data,
 
 static void prv_msu_context_delete(gpointer context)
 {
-	msu_context_t *ctx = context;
+	msu_device_context_t *ctx = context;
 
 	if (ctx) {
 		if (ctx->device_proxy)
@@ -95,11 +95,11 @@ static void prv_msu_context_delete(gpointer context)
 
 static void prv_msu_context_new(const gchar *ip_address,
 				GUPnPDeviceProxy *proxy,
-				msu_context_t **context)
+				msu_device_context_t **context)
 {
 	const gchar *service_type =
 		"urn:schemas-upnp-org:service:ContentDirectory";
-	msu_context_t *ctx = g_new(msu_context_t, 1);
+	msu_device_context_t *ctx = g_new(msu_device_context_t, 1);
 
 	ctx->ip_address = g_strdup(ip_address);
 	ctx->device_proxy = proxy;
@@ -171,7 +171,7 @@ void msu_device_append_new_context(msu_device_t *device,
 				   const gchar *ip_address,
 				   GUPnPDeviceProxy *proxy)
 {
-	msu_context_t *context;
+	msu_device_context_t *context;
 
 	prv_msu_context_new(ip_address, proxy, &context);
 	g_ptr_array_add(device->contexts, context);
@@ -198,9 +198,9 @@ msu_device_t *msu_device_from_path(const gchar *path, GHashTable *device_list)
 	return retval;
 }
 
-msu_context_t *msu_device_get_context(msu_device_t *device)
+msu_device_context_t *msu_device_get_context(msu_device_t *device)
 {
-	msu_context_t *context;
+	msu_device_context_t *context;
 	unsigned int i;
 	const char ip4_local_prefix[] = "127.0.0.";
 
@@ -414,7 +414,7 @@ void msu_device_get_children(msu_device_t *device,  msu_task_t *task,
 			     const gchar *upnp_filter, const gchar *sort_by,
 			     GCancellable *cancellable)
 {
-	msu_context_t *context;
+	msu_device_context_t *context;
 
 	context = msu_device_get_context(device);
 
@@ -625,7 +625,7 @@ no_complete:
 	g_free(result);
 }
 
-static void prv_get_all_ms2spec_props(msu_context_t *context,
+static void prv_get_all_ms2spec_props(msu_device_context_t *context,
 				      GCancellable *cancellable,
 				      msu_async_cb_data_t *cb_data)
 {
@@ -683,7 +683,7 @@ void msu_device_get_all_props(msu_device_t *device,  msu_task_t *task,
 {
 	msu_async_get_all_t *cb_task_data;
 	msu_task_get_props_t *task_data = &task->get_props;
-	msu_context_t *context;
+	msu_device_context_t *context;
 
 	context = msu_device_get_context(device);
 	cb_task_data = &cb_data->get_all;
@@ -950,7 +950,7 @@ on_error:
 	g_free(result);
 }
 
-static void prv_get_ms2spec_prop(msu_context_t *context,
+static void prv_get_ms2spec_prop(msu_device_context_t *context,
 				 msu_prop_map_t *prop_map,
 				 msu_task_get_prop_t *task_data,
 				 GCancellable *cancellable,
@@ -1025,7 +1025,7 @@ void msu_device_get_prop(msu_device_t *device,  msu_task_t *task,
 			 GCancellable *cancellable)
 {
 	msu_task_get_prop_t *task_data = &task->get_prop;
-	msu_context_t *context;
+	msu_device_context_t *context;
 
 	context = msu_device_get_context(device);
 
@@ -1205,7 +1205,7 @@ void msu_device_search(msu_device_t *device,  msu_task_t *task,
 		       const gchar *upnp_filter, const gchar *upnp_query,
 		       const gchar *sort_by, GCancellable *cancellable)
 {
-	msu_context_t *context;
+	msu_device_context_t *context;
 
 	context = msu_device_get_context(device);
 
@@ -1250,7 +1250,7 @@ void msu_device_get_resource(msu_device_t *device,  msu_task_t *task,
 			     GCancellable *cancellable)
 {
 	msu_async_get_all_t *cb_task_data;
-	msu_context_t *context;
+	msu_device_context_t *context;
 
 	context = msu_device_get_context(device);
 	cb_task_data = &cb_data->get_all;

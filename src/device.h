@@ -28,8 +28,8 @@
 #include "async.h"
 #include "props.h"
 
-typedef struct msu_context_t_ msu_context_t;
-struct msu_context_t_ {
+typedef struct msu_device_context_t_ msu_device_context_t;
+struct msu_device_context_t_ {
 	gchar *ip_address;
 	GUPnPDeviceProxy *device_proxy;
 	GUPnPServiceProxy *service_proxy;
@@ -55,7 +55,7 @@ gboolean msu_device_new(GDBusConnection *connection,
 			guint counter,
 			msu_device_t **device);
 msu_device_t *msu_device_from_path(const gchar *path, GHashTable *device_list);
-msu_context_t *msu_device_get_context(msu_device_t *device);
+msu_device_context_t *msu_device_get_context(msu_device_t *device);
 void msu_device_get_children(msu_device_t *device,  msu_task_t *task,
 			     msu_async_cb_data_t *cb_data,
 			     const gchar *upnp_filter, const gchar *sort_by,
