@@ -1,25 +1,41 @@
+INCLUDES = -DG_LOG_DOMAIN=\"MSU\"
+
+if DEBUG
+DEBUG_CFLAGS = -DDEBUG
+endif
+
+AM_CFLAGS = \
+		$(DEBUG_CFLAGS) \
+		$(LOG_CFLAGS)
+
+#AS_ECHO($(LOG_CFLAGS))
+
+ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
+
 mediaconsole_sources = \
-		src/upnp.c \
-		src/media-service-upnp.c \
+		src/async.c \
+		src/device.c \
 		src/error.c \
+		src/media-service-upnp.c \
+		src/log.c \
+		src/path.c \
 		src/props.c \
 		src/search.c \
-		src/path.c \
+		src/sort.c \
 		src/task.c \
-		src/device.c \
-		src/async.c \
-		src/sort.c
+		src/upnp.c
 
 mediaconsole_headers = \
-		src/upnp.h \
+		src/async.h \
+		src/device.h \
 		src/error.h \
+		src/log.h \
+		src/path.h \
 		src/props.h \
 		src/search.h \
-		src/path.h \
+		src/sort.h \
 		src/task.h \
-		src/device.h \
-		src/async.h \
-		src/sort.h
+		src/upnp.h
 
 
 bin_PROGRAMS = media-service-upnp
