@@ -83,7 +83,7 @@ static gchar **prv_subtree_enumerate(GDBusConnection *connection,
 				     const gchar *object_path,
 				     gpointer user_data)
 {
-	return (gchar **) g_new0(gchar, 1);
+	return g_malloc0(sizeof(gchar*));
 }
 
 static GDBusInterfaceInfo **prv_subtree_introspect(
