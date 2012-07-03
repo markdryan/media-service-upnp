@@ -53,7 +53,7 @@ struct msu_upnp_t_ {
 static gchar **prv_subtree_enumerate(GDBusConnection *connection,
 				     const gchar *sender,
 				     const gchar *object_path,
-				     gpointer user_daata);
+				     gpointer user_data);
 
 static GDBusInterfaceInfo **prv_subtree_introspect(
 	GDBusConnection *connection,
@@ -81,7 +81,7 @@ static const GDBusSubtreeVTable gSubtreeVtable = {
 static gchar **prv_subtree_enumerate(GDBusConnection *connection,
 				     const gchar *sender,
 				     const gchar *object_path,
-				     gpointer user_daata)
+				     gpointer user_data)
 {
 	return (gchar **) g_new0(gchar, 1);
 }

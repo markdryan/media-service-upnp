@@ -121,7 +121,7 @@ void msu_log_init(const char *program, msu_log_t *log_context)
 	}
 }
 
-void msu_log_finialize(msu_log_t *log_context)
+void msu_log_finalize(msu_log_t *log_context)
 {
 	(void) setlogmask(LOG_MASK(LOG_INFO));
 	syslog(LOG_INFO, "Media Service UPnP: Exit");

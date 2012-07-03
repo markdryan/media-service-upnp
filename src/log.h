@@ -43,7 +43,7 @@ struct msu_log_t_ {
 
 void msu_log_init(const char *program, msu_log_t *log_context);
 
-void msu_log_finialize(msu_log_t *log_context);
+void msu_log_finalize(msu_log_t *log_context);
 
 void msu_log_error(const char *format, ...)
 			__attribute__((format(printf, 1, 2)));
