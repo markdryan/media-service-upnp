@@ -37,7 +37,7 @@ enum msu_error_t_ {
 	MSU_ERROR_DIED,
 	MSU_ERROR_CANCELLED
 };
-typedef enum msu_error_ msu_error_t;
+typedef enum msu_error_t_ msu_error_t;
 
 #define MSU_ERROR (msu_error_quark())
 GQuark msu_error_quark(void);
