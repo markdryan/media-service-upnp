@@ -97,7 +97,7 @@ struct msu_task_t_ {
 		msu_task_search_t search;
 		msu_task_get_resource_t resource;
 		msu_task_set_protocol_info_t protocol_info;
-	};
+	} ut;
 };
 
 msu_task_t *msu_task_get_version_new(GDBusMethodInvocation *invocation);

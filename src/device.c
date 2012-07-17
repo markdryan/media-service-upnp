@@ -222,8 +222,8 @@ static void prv_found_child(GUPnPDIDLLiteParser *parser,
 {
 	msu_async_cb_data_t *cb_data = user_data;
 	msu_task_t *task = cb_data->task;
-	msu_task_get_children_t *task_data = &task->get_children;
-	msu_async_bas_t *cb_task_data = &cb_data->bas;
+	msu_task_get_children_t *task_data = &task->ut.get_children;
+	msu_async_bas_t *cb_task_data = &cb_data->ut.bas;
 	msu_device_object_builder_t *builder;
 	gboolean have_child_count;
 
@@ -275,7 +275,7 @@ static GVariant *prv_children_result_to_variant(msu_async_cb_data_t *cb_data)
 {
 	guint i;
 	msu_device_object_builder_t *builder;
-	msu_async_bas_t *cb_task_data = &cb_data->bas;
+	msu_async_bas_t *cb_task_data = &cb_data->ut.bas;
 	GVariantBuilder vb;
 
 	g_variant_builder_init(&vb, G_VARIANT_TYPE("aa{sv}"));
@@ -292,7 +292,7 @@ static GVariant *prv_children_result_to_variant(msu_async_cb_data_t *cb_data)
 static void prv_get_search_ex_result(msu_async_cb_data_t *cb_data)
 {
 	GVariant *out_params[2];
-	msu_async_bas_t *cb_task_data = &cb_data->bas;
+	msu_async_bas_t *cb_task_data = &cb_data->ut.bas;
 
 	out_params[0] = prv_children_result_to_variant(cb_data);
 	out_params[1] = g_variant_new_uint32(cb_task_data->max_count);
@@ -310,7 +310,7 @@ static void prv_get_children_result(msu_async_cb_data_t *cb_data)
 static gboolean prv_child_count_for_list_cb(msu_async_cb_data_t *cb_data,
 					    gint count)
 {
-	msu_async_bas_t *cb_task_data = &cb_data->bas;
+	msu_async_bas_t *cb_task_data = &cb_data->ut.bas;
 	msu_device_object_builder_t *builder;
 
 	builder = g_ptr_array_index(cb_task_data->vbs, cb_task_data->retrieved);
@@ -323,7 +323,7 @@ static gboolean prv_child_count_for_list_cb(msu_async_cb_data_t *cb_data,
 
 static void prv_retrieve_child_count_for_list(msu_async_cb_data_t *cb_data)
 {
-	msu_async_bas_t *cb_task_data = &cb_data->bas;
+	msu_async_bas_t *cb_task_data = &cb_data->ut.bas;
 	msu_device_object_builder_t *builder;
 	guint i;
 
@@ -351,7 +351,7 @@ static void prv_get_children_cb(GUPnPServiceProxy *proxy,
 	GUPnPDIDLLiteParser *parser = NULL;
 	GError *upnp_error = NULL;
 	msu_async_cb_data_t *cb_data = user_data;
-	msu_async_bas_t *cb_task_data = &cb_data->bas;
+	msu_async_bas_t *cb_task_data = &cb_data->ut.bas;
 
 	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
 					    &upnp_error,
@@ -429,9 +429,9 @@ void msu_device_get_children(msu_device_t *device,  msu_task_t *task,
 						 upnp_filter,
 
 						 "StartingIndex", G_TYPE_INT,
-						 task->get_children.start,
+						 task->ut.get_children.start,
 						 "RequestedCount", G_TYPE_INT,
-						 task->get_children.count,
+						 task->ut.get_children.count,
 						 "SortCriteria", G_TYPE_STRING,
 						 sort_by,
 						 NULL);
@@ -449,7 +449,7 @@ static void prv_get_item(GUPnPDIDLLiteParser *parser,
 			 gpointer user_data)
 {
 	msu_async_cb_data_t *cb_data = user_data;
-	msu_async_get_all_t *cb_task_data = &cb_data->get_all;
+	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
 
 	if (!GUPNP_IS_DIDL_LITE_CONTAINER(object))
 		msu_props_add_item(cb_task_data->vb, object, 0xffffffff,
@@ -466,7 +466,7 @@ static void prv_get_container(GUPnPDIDLLiteParser *parser,
 		       gpointer user_data)
 {
 	msu_async_cb_data_t *cb_data = user_data;
-	msu_async_get_all_t *cb_task_data = &cb_data->get_all;
+	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
 	gboolean have_child_count;
 
 	if (GUPNP_IS_DIDL_LITE_CONTAINER(object)) {
@@ -489,7 +489,7 @@ static void prv_get_object(GUPnPDIDLLiteParser *parser,
 			   gpointer user_data)
 {
 	msu_async_cb_data_t *cb_data = user_data;
-	msu_async_get_all_t *cb_task_data = &cb_data->get_all;
+	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
 	const char *id;
 	const char *parent_path;
 	gchar *path = NULL;
@@ -517,7 +517,7 @@ static void prv_get_all(GUPnPDIDLLiteParser *parser,
 			gpointer user_data)
 {
 	msu_async_cb_data_t *cb_data = user_data;
-	msu_async_get_all_t *cb_task_data = &cb_data->get_all;
+	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
 	gboolean have_child_count;
 
 	prv_get_object(parser, object, user_data);
@@ -542,7 +542,7 @@ static void prv_get_all(GUPnPDIDLLiteParser *parser,
 static gboolean prv_get_all_child_count_cb(msu_async_cb_data_t *cb_data,
 				       gint count)
 {
-	msu_async_get_all_t *cb_task_data = &cb_data->get_all;
+	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
 
 	msu_props_add_child_count(cb_task_data->vb, count);
 	cb_data->result = g_variant_ref_sink(g_variant_builder_end(
@@ -558,7 +558,7 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 	gchar *result = NULL;
 	GUPnPDIDLLiteParser *parser = NULL;
 	msu_async_cb_data_t *cb_data = user_data;
-	msu_async_get_all_t *cb_task_data = &cb_data->get_all;
+	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
 
 	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
 					    &upnp_error,
@@ -625,9 +625,9 @@ static void prv_get_all_ms2spec_props(msu_device_context_t *context,
 				      GCancellable *cancellable,
 				      msu_async_cb_data_t *cb_data)
 {
-	msu_async_get_all_t *cb_task_data = &cb_data->get_all;
+	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
 	msu_task_t *task = cb_data->task;
-	msu_task_get_props_t *task_data = &task->get_props;
+	msu_task_get_props_t *task_data = &task->ut.get_props;
 
 	if (!strcmp(MSU_INTERFACE_MEDIA_CONTAINER, task_data->interface_name))
 		cb_task_data->prop_func = G_CALLBACK(prv_get_container);
@@ -678,11 +678,11 @@ void msu_device_get_all_props(msu_device_t *device,  msu_task_t *task,
 			      GCancellable *cancellable)
 {
 	msu_async_get_all_t *cb_task_data;
-	msu_task_get_props_t *task_data = &task->get_props;
+	msu_task_get_props_t *task_data = &task->ut.get_props;
 	msu_device_context_t *context;
 
 	context = msu_device_get_context(device);
-	cb_task_data = &cb_data->get_all;
+	cb_task_data = &cb_data->ut.get_all;
 
 	cb_task_data->vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
@@ -723,8 +723,8 @@ static void prv_get_object_property(GUPnPDIDLLiteParser *parser,
 {
 	msu_async_cb_data_t *cb_data = user_data;
 	msu_task_t *task = cb_data->task;
-	msu_task_get_prop_t *task_data = &task->get_prop;
-	msu_async_get_prop_t *cb_task_data = &cb_data->get_prop;
+	msu_task_get_prop_t *task_data = &task->ut.get_prop;
+	msu_async_get_prop_t *cb_task_data = &cb_data->ut.get_prop;
 
 	if (cb_data->result)
 		goto on_error;
@@ -744,8 +744,8 @@ static void prv_get_item_property(GUPnPDIDLLiteParser *parser,
 {
 	msu_async_cb_data_t *cb_data = user_data;
 	msu_task_t *task = cb_data->task;
-	msu_task_get_prop_t *task_data = &task->get_prop;
-	msu_async_get_prop_t *cb_task_data = &cb_data->get_prop;
+	msu_task_get_prop_t *task_data = &task->ut.get_prop;
+	msu_async_get_prop_t *cb_task_data = &cb_data->ut.get_prop;
 
 	if (cb_data->result)
 		goto on_error;
@@ -764,7 +764,7 @@ static void prv_get_container_property(GUPnPDIDLLiteParser *parser,
 {
 	msu_async_cb_data_t *cb_data = user_data;
 	msu_task_t *task = cb_data->task;
-	msu_task_get_prop_t *task_data = &task->get_prop;
+	msu_task_get_prop_t *task_data = &task->ut.get_prop;
 
 	if (cb_data->result)
 		goto on_error;
@@ -883,8 +883,8 @@ static void prv_get_ms2spec_prop_cb(GUPnPServiceProxy *proxy,
 	gchar *result = NULL;
 	GUPnPDIDLLiteParser *parser = NULL;
 	msu_async_cb_data_t *cb_data = user_data;
-	msu_async_get_prop_t *cb_task_data = &cb_data->get_prop;
-	msu_task_get_prop_t *task_data = &cb_data->task->get_prop;
+	msu_async_get_prop_t *cb_task_data = &cb_data->ut.get_prop;
+	msu_task_get_prop_t *task_data = &cb_data->task->ut.get_prop;
 
 	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
 					    &upnp_error,
@@ -955,7 +955,7 @@ static void prv_get_ms2spec_prop(msu_device_context_t *context,
 	msu_async_get_prop_t *cb_task_data;
 	const gchar *filter;
 
-	cb_task_data = &cb_data->get_prop;
+	cb_task_data = &cb_data->ut.get_prop;
 
 	if (!prop_map) {
 		cb_data->error = g_error_new(MSU_ERROR,
@@ -1020,7 +1020,7 @@ void msu_device_get_prop(msu_device_t *device,  msu_task_t *task,
 			 msu_prop_map_t *prop_map, gboolean root_object,
 			 GCancellable *cancellable)
 {
-	msu_task_get_prop_t *task_data = &task->get_prop;
+	msu_task_get_prop_t *task_data = &task->ut.get_prop;
 	msu_device_context_t *context;
 
 	context = msu_device_get_context(device);
@@ -1047,7 +1047,7 @@ void msu_device_get_prop(msu_device_t *device,  msu_task_t *task,
 		(void) g_idle_add(msu_async_complete_task, cb_data);
 
 	} else if (strcmp(task_data->interface_name, "")) {
-		prv_get_ms2spec_prop(context, prop_map, &task->get_prop,
+		prv_get_ms2spec_prop(context, prop_map, &task->ut.get_prop,
 				     cancellable, cb_data);
 	} else {
 		if (root_object)
@@ -1060,7 +1060,7 @@ void msu_device_get_prop(msu_device_t *device,  msu_task_t *task,
 			(void) g_idle_add(msu_async_complete_task, cb_data);
 		else
 			prv_get_ms2spec_prop(context, prop_map,
-					     &task->get_prop, cancellable,
+					     &task->ut.get_prop, cancellable,
 					     cb_data);
 	}
 }
@@ -1070,7 +1070,7 @@ static void prv_found_target(GUPnPDIDLLiteParser *parser,
 			     gpointer user_data)
 {
 	msu_async_cb_data_t *cb_data = user_data;
-	msu_async_bas_t *cb_task_data = &cb_data->bas;
+	msu_async_bas_t *cb_task_data = &cb_data->ut.bas;
 	const char *id;
 	const char *parent_path;
 	gchar *path = NULL;
@@ -1132,7 +1132,7 @@ static void prv_search_cb(GUPnPServiceProxy *proxy,
 	GUPnPDIDLLiteParser *parser = NULL;
 	GError *upnp_error = NULL;
 	msu_async_cb_data_t *cb_data = user_data;
-	msu_async_bas_t *cb_task_data = &cb_data->bas;
+	msu_async_bas_t *cb_task_data = &cb_data->ut.bas;
 
 	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
 					    &upnp_error,
@@ -1212,8 +1212,8 @@ void msu_device_search(msu_device_t *device,  msu_task_t *task,
 		"ContainerID", G_TYPE_STRING, cb_data->id,
 		"SearchCriteria", G_TYPE_STRING, upnp_query,
 		"Filter", G_TYPE_STRING, upnp_filter,
-		"StartingIndex", G_TYPE_INT, task->search.start,
-		"RequestedCount", G_TYPE_INT, task->search.count,
+		"StartingIndex", G_TYPE_INT, task->ut.search.start,
+		"RequestedCount", G_TYPE_INT, task->ut.search.count,
 		"SortCriteria", G_TYPE_STRING, sort_by,
 		NULL);
 
@@ -1232,8 +1232,8 @@ static void prv_get_resource(GUPnPDIDLLiteParser *parser,
 {
 	msu_async_cb_data_t *cb_data = user_data;
 	msu_task_t *task = cb_data->task;
-	msu_task_get_resource_t *task_data = &task->resource;
-	msu_async_get_all_t *cb_task_data = &cb_data->get_all;
+	msu_task_get_resource_t *task_data = &task->ut.resource;
+	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
 
 	msu_props_add_resource(cb_task_data->vb, object,
 			       cb_task_data->filter_mask,
@@ -1249,7 +1249,7 @@ void msu_device_get_resource(msu_device_t *device,  msu_task_t *task,
 	msu_device_context_t *context;
 
 	context = msu_device_get_context(device);
-	cb_task_data = &cb_data->get_all;
+	cb_task_data = &cb_data->ut.get_all;
 
 	cb_task_data->vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 	cb_task_data->prop_func = G_CALLBACK(prv_get_resource);

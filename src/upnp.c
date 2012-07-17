@@ -344,7 +344,7 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_task_t *task,
 	gchar *sort_by = NULL;
 
 	cb_data = msu_async_cb_data_new(task, cb, user_data);
-	cb_task_data = &cb_data->bas;
+	cb_task_data = &cb_data->ut.bas;
 
 	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error))
@@ -362,10 +362,11 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_task_t *task,
 
 	cb_task_data->filter_mask =
 		msu_props_parse_filter(upnp->filter_map,
-				       task->get_children.filter, &upnp_filter);
+					task->ut.get_children.filter,
+					&upnp_filter);
 
 	sort_by = msu_sort_translate_sort_string(upnp->filter_map,
-						 task->get_children.sort_by);
+						 task->ut.get_children.sort_by);
 	if (!sort_by) {
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_QUERY,
 					     "Sort Criteria are not valid");
@@ -398,7 +399,7 @@ void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_task_t *task,
 	msu_device_t *device;
 
 	cb_data = msu_async_cb_data_new(task, cb, user_data);
-	cb_task_data = &cb_data->get_all;
+	cb_task_data = &cb_data->ut.get_all;
 
 	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error))
@@ -441,9 +442,9 @@ void msu_upnp_get_prop(msu_upnp_t *upnp, msu_task_t *task,
 	msu_prop_map_t *prop_map;
 	msu_task_get_prop_t *task_data;
 
-	task_data = &task->get_prop;
+	task_data = &task->ut.get_prop;
 	cb_data = msu_async_cb_data_new(task, cb, user_data);
-	cb_task_data = &cb_data->get_prop;
+	cb_task_data = &cb_data->ut.get_prop;
 
 	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
 				      &cb_data->id,
@@ -489,7 +490,7 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
 	msu_device_t *device;
 
 	cb_data = msu_async_cb_data_new(task, cb, user_data);
-	cb_task_data = &cb_data->bas;
+	cb_task_data = &cb_data->ut.bas;
 
 	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error))
@@ -507,10 +508,10 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
 
 	cb_task_data->filter_mask =
 		msu_props_parse_filter(upnp->filter_map,
-				       task->search.filter, &upnp_filter);
+				       task->ut.search.filter, &upnp_filter);
 
 	upnp_query = msu_search_translate_search_string(upnp->filter_map,
-							task->search.query);
+							task->ut.search.query);
 	if (!upnp_query) {
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_QUERY,
 					     "Query string is not valid.");
@@ -518,7 +519,7 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
 	}
 
 	sort_by = msu_sort_translate_sort_string(upnp->filter_map,
-						 task->search.sort_by);
+						 task->ut.search.sort_by);
 	if (!sort_by) {
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_QUERY,
 					     "Sort Criteria are not valid");
@@ -550,7 +551,7 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_task_t *task,
 	gchar *root_path = NULL;
 
 	cb_data = msu_async_cb_data_new(task, cb, user_data);
-	cb_task_data = &cb_data->get_all;
+	cb_task_data = &cb_data->ut.get_all;
 
 	if (!msu_path_get_path_and_id(task->path, &root_path, &cb_data->id,
 				      &cb_data->error))
@@ -567,7 +568,7 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_task_t *task,
 
 	cb_task_data->filter_mask =
 		msu_props_parse_filter(upnp->filter_map,
-				       task->resource.filter, &upnp_filter);
+				       task->ut.resource.filter, &upnp_filter);
 
 	msu_device_get_resource(device, task, cb_data, upnp_filter,
 				cancellable);

@@ -358,10 +358,10 @@ static void prv_process_sync_task(msu_context_t *context, msu_task_t *task)
 		client = g_hash_table_lookup(context->watchers, client_name);
 		if (client) {
 			g_free(client->protocol_info);
-			if (task->protocol_info.protocol_info[0]) {
+			if (task->ut.protocol_info.protocol_info[0]) {
 				client->protocol_info =
-					task->protocol_info.protocol_info;
-				task->protocol_info.protocol_info = NULL;
+					task->ut.protocol_info.protocol_info;
+				task->ut.protocol_info.protocol_info = NULL;
 			} else {
 				client->protocol_info = NULL;
 			}

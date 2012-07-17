@@ -74,12 +74,14 @@ msu_task_t *msu_task_get_children_new(GDBusMethodInvocation *invocation,
 	task = prv_m2spec_task_new(MSU_TASK_GET_CHILDREN, invocation, path,
 				   "(@aa{sv})");
 
-	task->get_children.containers = containers;
-	task->get_children.items = items;
+	task->ut.get_children.containers = containers;
+	task->ut.get_children.items = items;
 
-	g_variant_get(parameters, "(uu@as)", &task->get_children.start,
-		      &task->get_children.count, &task->get_children.filter);
-	task->get_children.sort_by = g_strdup("");
+	g_variant_get(parameters, "(uu@as)", &task->ut.get_children.start,
+					     &task->ut.get_children.count,
+					     &task->ut.get_children.filter);
+
+	task->ut.get_children.sort_by = g_strdup("");
 
 	return task;
 }
@@ -94,12 +96,13 @@ msu_task_t *msu_task_get_children_ex_new(GDBusMethodInvocation *invocation,
 	task = prv_m2spec_task_new(MSU_TASK_GET_CHILDREN, invocation, path,
 				   "(@aa{sv})");
 
-	task->get_children.containers = containers;
-	task->get_children.items = items;
+	task->ut.get_children.containers = containers;
+	task->ut.get_children.items = items;
 
-	g_variant_get(parameters, "(uu@ass)", &task->get_children.start,
-		      &task->get_children.count, &task->get_children.filter,
-		      &task->get_children.sort_by);
+	g_variant_get(parameters, "(uu@ass)", &task->ut.get_children.start,
+					      &task->ut.get_children.count,
+					      &task->ut.get_children.filter,
+					      &task->ut.get_children.sort_by);
 
 	return task;
 }
@@ -111,10 +114,11 @@ msu_task_t *msu_task_get_prop_new(GDBusMethodInvocation *invocation,
 
 	task = prv_m2spec_task_new(MSU_TASK_GET_PROP, invocation, path, "(v)");
 
-	g_variant_get(parameters, "(ss)", &task->get_prop.interface_name,
-		      &task->get_prop.prop_name);
-	g_strstrip(task->get_prop.interface_name);
-	g_strstrip(task->get_prop.prop_name);
+	g_variant_get(parameters, "(ss)", &task->ut.get_prop.interface_name,
+		      &task->ut.get_prop.prop_name);
+
+	g_strstrip(task->ut.get_prop.interface_name);
+	g_strstrip(task->ut.get_prop.prop_name);
 
 	return task;
 }
@@ -127,8 +131,8 @@ msu_task_t *msu_task_get_props_new(GDBusMethodInvocation *invocation,
 	task = prv_m2spec_task_new(MSU_TASK_GET_ALL_PROPS, invocation, path,
 				   "(@a{sv})");
 
-	g_variant_get(parameters, "(s)", &task->get_props.interface_name);
-	g_strstrip(task->get_props.interface_name);
+	g_variant_get(parameters, "(s)", &task->ut.get_props.interface_name);
+	g_strstrip(task->ut.get_props.interface_name);
 
 	return task;
 }
@@ -141,10 +145,11 @@ msu_task_t *msu_task_search_new(GDBusMethodInvocation *invocation,
 	task = prv_m2spec_task_new(MSU_TASK_SEARCH, invocation, path,
 				   "(@aa{sv})");
 
-	g_variant_get(parameters, "(suu@as)", &task->search.query,
-		      &task->search.start, &task->search.count,
-		      &task->search.filter);
-	task->search.sort_by = g_strdup("");
+	g_variant_get(parameters, "(suu@as)", &task->ut.search.query,
+		      &task->ut.search.start, &task->ut.search.count,
+		      &task->ut.search.filter);
+
+	task->ut.search.sort_by = g_strdup("");
 
 	return task;
 }
@@ -157,9 +162,10 @@ msu_task_t *msu_task_search_ex_new(GDBusMethodInvocation *invocation,
 	task = prv_m2spec_task_new(MSU_TASK_SEARCH, invocation, path,
 				   "(@aa{sv}u)");
 
-	g_variant_get(parameters, "(suu@ass)", &task->search.query,
-		      &task->search.start, &task->search.count,
-		      &task->search.filter, &task->search.sort_by);
+	g_variant_get(parameters, "(suu@ass)", &task->ut.search.query,
+		      &task->ut.search.start, &task->ut.search.count,
+		      &task->ut.search.filter, &task->ut.search.sort_by);
+
 	task->multiple_retvals = TRUE;
 
 	return task;
@@ -173,8 +179,8 @@ msu_task_t *msu_task_get_resource_new(GDBusMethodInvocation *invocation,
 	task = prv_m2spec_task_new(MSU_TASK_GET_RESOURCE, invocation, path,
 				   "(@a{sv})");
 
-	g_variant_get(parameters, "(s@as)", &task->resource.protocol_info,
-		      &task->resource.filter);
+	g_variant_get(parameters, "(s@as)", &task->ut.resource.protocol_info,
+					    &task->ut.resource.filter);
 
 	return task;
 }
@@ -187,7 +193,7 @@ msu_task_t *msu_task_set_protocol_info_new(GDBusMethodInvocation *invocation,
 	task->type = MSU_TASK_SET_PROTOCOL_INFO;
 	task->invocation = invocation;
 	task->synchronous = TRUE;
-	g_variant_get(parameters, "(s)", &task->protocol_info.protocol_info);
+	g_variant_get(parameters, "(s)", &task->ut.protocol_info.protocol_info);
 
 	return task;
 }
@@ -196,31 +202,31 @@ static void prv_msu_task_delete(msu_task_t *task)
 {
 	switch (task->type) {
 	case MSU_TASK_GET_CHILDREN:
-		if (task->get_children.filter)
-			g_variant_unref(task->get_children.filter);
-		g_free(task->get_children.sort_by);
+		if (task->ut.get_children.filter)
+			g_variant_unref(task->ut.get_children.filter);
+		g_free(task->ut.get_children.sort_by);
 		break;
 	case MSU_TASK_GET_ALL_PROPS:
-		g_free(task->get_props.interface_name);
+		g_free(task->ut.get_props.interface_name);
 		break;
 	case MSU_TASK_GET_PROP:
-		g_free(task->get_prop.interface_name);
-		g_free(task->get_prop.prop_name);
+		g_free(task->ut.get_prop.interface_name);
+		g_free(task->ut.get_prop.prop_name);
 		break;
 	case MSU_TASK_SEARCH:
-		g_free(task->search.query);
-		if (task->search.filter)
-			g_variant_unref(task->search.filter);
-		g_free(task->search.sort_by);
+		g_free(task->ut.search.query);
+		if (task->ut.search.filter)
+			g_variant_unref(task->ut.search.filter);
+		g_free(task->ut.search.sort_by);
 		break;
 	case MSU_TASK_GET_RESOURCE:
-		if (task->resource.filter)
-			g_variant_unref(task->resource.filter);
-		g_free(task->resource.protocol_info);
+		if (task->ut.resource.filter)
+			g_variant_unref(task->ut.resource.filter);
+		g_free(task->ut.resource.protocol_info);
 		break;
 	case MSU_TASK_SET_PROTOCOL_INFO:
-		if (task->protocol_info.protocol_info)
-			g_free(task->protocol_info.protocol_info);
+		if (task->ut.protocol_info.protocol_info)
+			g_free(task->ut.protocol_info.protocol_info);
 		break;
 	default:
 		break;

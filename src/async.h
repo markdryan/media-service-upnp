@@ -77,7 +77,7 @@ struct msu_async_cb_data_t_ {
 		msu_async_bas_t bas;
 		msu_async_get_prop_t get_prop;
 		msu_async_get_all_t get_all;
-	};
+	} ut;
 };
 
 msu_async_cb_data_t *msu_async_cb_data_new(msu_task_t *task,
