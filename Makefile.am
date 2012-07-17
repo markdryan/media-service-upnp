@@ -1,15 +1,9 @@
 INCLUDES = -DG_LOG_DOMAIN=\"MSU\"
 
-if DEBUG
-DEBUG_CFLAGS = -DDEBUG
-endif
-
 AM_CFLAGS =	$(GLIB_CFLAGS)		\
 		$(GIO_CFLAGS)		\
 		$(GUPNP_CFLAGS)		\
 		$(GUPNPAV_CFLAGS)	\
-		$(DEBUG_CFLAGS)		\
-		$(LOG_CFLAGS) 		\
 		-include config.h
 
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}

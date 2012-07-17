@@ -36,32 +36,32 @@ static void prv_msu_log_set_flags(msu_log_t *log_context)
 	int mask = 0;
 	GLogLevelFlags flags = 0;
 
-	if (MSU_LOG_LEVEL & LOG_LEVEL_ERROR) {
+	if (MSU_LOG_LEVEL & MSU_LOG_LEVEL_ERROR) {
 		mask |= LOG_MASK(LOG_ERR);
 		flags |= G_LOG_LEVEL_ERROR;
 	}
 
-	if (MSU_LOG_LEVEL & LOG_LEVEL_CRITICAL) {
+	if (MSU_LOG_LEVEL & MSU_LOG_LEVEL_CRITICAL) {
 		mask |= LOG_MASK(LOG_CRIT);
 		flags |= G_LOG_LEVEL_CRITICAL;
 	}
 
-	if (MSU_LOG_LEVEL & LOG_LEVEL_WARNING) {
+	if (MSU_LOG_LEVEL & MSU_LOG_LEVEL_WARNING) {
 		mask |= LOG_MASK(LOG_WARNING);
 		flags |= G_LOG_LEVEL_WARNING;
 	}
 
-	if (MSU_LOG_LEVEL & LOG_LEVEL_MESSAGE) {
+	if (MSU_LOG_LEVEL & MSU_LOG_LEVEL_MESSAGE) {
 		mask |= LOG_MASK(LOG_NOTICE);
 		flags |= G_LOG_LEVEL_MESSAGE;
 	}
 
-	if (MSU_LOG_LEVEL & LOG_LEVEL_INFO) {
+	if (MSU_LOG_LEVEL & MSU_LOG_LEVEL_INFO) {
 		mask |= LOG_MASK(LOG_INFO);
 		flags |= G_LOG_LEVEL_INFO;
 	}
 
-	if (MSU_LOG_LEVEL & LOG_LEVEL_DEBUG) {
+	if (MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG) {
 		mask |= LOG_MASK(LOG_DEBUG);
 		flags |= G_LOG_LEVEL_DEBUG;
 	}
@@ -92,7 +92,7 @@ void msu_log_init(const char *program, msu_log_t *log_context)
 	int option = LOG_NDELAY | LOG_PID;
 	int old;
 
-#ifdef DEBUG
+#ifdef MSU_DEBUG_ENABLED
 	option |= LOG_PERROR | LOG_CONS;
 #endif
 
