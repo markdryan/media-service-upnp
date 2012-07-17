@@ -4,68 +4,82 @@ if DEBUG
 DEBUG_CFLAGS = -DDEBUG
 endif
 
-AM_CFLAGS = \
-		$(DEBUG_CFLAGS) \
+AM_CFLAGS =	$(GLIB_CFLAGS)		\
+		$(GIO_CFLAGS)		\
+		$(GUPNP_CFLAGS)		\
+		$(GUPNPAV_CFLAGS)	\
+		$(DEBUG_CFLAGS)		\
 		$(LOG_CFLAGS)
-
-#AS_ECHO($(LOG_CFLAGS))
 
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
-mediaconsole_sources = \
-		src/async.c \
-		src/device.c \
-		src/error.c \
-		src/media-service-upnp.c \
-		src/log.c \
-		src/path.c \
-		src/props.c \
-		src/search.c \
-		src/sort.c \
-		src/task.c \
-		src/upnp.c
+mediaconsole_sources =	src/async.c		\
+			src/device.c		\
+			src/error.c		\
+			src/media-service-upnp.c \
+			src/log.c		\
+			src/path.c		\
+			src/props.c		\
+			src/search.c		\
+			src/sort.c		\
+			src/task.c		\
+			src/upnp.c
 
-mediaconsole_headers = \
-		src/async.h \
-		src/device.h \
-		src/error.h \
-		src/log.h \
-		src/path.h \
-		src/props.h \
-		src/search.h \
-		src/sort.h \
-		src/task.h \
-		src/upnp.h
+mediaconsole_headers =	src/async.h	\
+			src/device.h	\
+			src/error.h	\
+			src/log.h	\
+			src/path.h	\
+			src/props.h	\
+			src/search.h	\
+			src/sort.h	\
+			src/task.h	\
+			src/upnp.h
 
 
 bin_PROGRAMS = media-service-upnp
-media_service_upnp_SOURCES = $(mediaconsole_headers) $(mediaconsole_sources)
-media_service_upnp_CPPFLAGS = $(GLIB_CFLAGS)  $(GIO_CFLAGS) $(GUPNP_CFLAGS) $(GUPNPAV_CFLAGS)
-media_service_upnp_LDADD = $(GLIB_LIBS) $(GIO_LIBS) $(GUPNP_LIBS) $(GUPNPAV_LIBS)
 
-dms_info_sources = \
-		test/dms-info.c
+media_service_upnp_SOURCES =	$(mediaconsole_headers)	\
+				$(mediaconsole_sources)
+
+media_service_upnp_LDADD =	$(GLIB_LIBS)	\
+				$(GIO_LIBS)	\
+				$(GUPNP_LIBS)	\
+				$(GUPNPAV_LIBS)
+
+
+dms_info_sources = test/dms-info.c
 
 noinst_PROGRAMS = dms-info
 dms_info_SOURCES = $(dms_info_sources)
-dms_info_CPPFLAGS = $(GLIB_CFLAGS)  $(GIO_CFLAGS)
-dms_info_LDADD = $(GLIB_LIBS) $(GIO_LIBS)
+
+dms_info_CFLAGS =	$(GLIB_CFLAGS)	\
+			$(GIO_CFLAGS)
+
+dms_info_LDADD =	$(GLIB_LIBS)	\
+			$(GIO_LIBS)
+
 
 dbussessiondir = @DBUS_SESSION_DIR@
 dbussession_DATA = src/com.intel.media-service-upnp.service
 
 EXTRA_DIST = test/mediaconsole.py
 
-MAINTAINERCLEANFILES =	Makefile.in \
-			aclocal.m4 \
-			configure \
-			config.h.in \
-			config.h.in~ \
-			build-aux/depcomp \
-			build-aux/compile \
-			build-aux/missing \
+MAINTAINERCLEANFILES =	Makefile.in		\
+			aclocal.m4		\
+			configure		\
+			config.h.in		\
+			config.h.in~		\
+			build-aux/depcomp	\
+			build-aux/compile	\
+			build-aux/missing	\
 			build-aux/install-sh
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = media-service-upnp.pc
-DISTCLEANFILES = $(pkgconfig_DATA)
+
+CLEANFILES = $(pkgconfig_DATA) $(dbussession_DATA)
+DISTCLEANFILES = $(pkgconfig_DATA) $(dbussession_DATA)
+
+maintainer-clean-local:
+	rm -rf build-aux
