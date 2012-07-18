@@ -8,34 +8,34 @@ AM_CFLAGS =	$(GLIB_CFLAGS)		\
 
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
-mediaconsole_sources =	src/async.c		\
-			src/device.c		\
-			src/error.c		\
-			src/media-service-upnp.c \
-			src/log.c		\
-			src/path.c		\
-			src/props.c		\
-			src/search.c		\
-			src/sort.c		\
-			src/task.c		\
-			src/upnp.c
+media_service_upnp_sources = 	src/async.c		 \
+				src/device.c		 \
+				src/error.c		 \
+				src/media-service-upnp.c \
+				src/log.c		 \
+				src/path.c		 \
+				src/props.c		 \
+				src/search.c		 \
+				src/sort.c		 \
+				src/task.c		 \
+				src/upnp.c
 
-mediaconsole_headers =	src/async.h	\
-			src/device.h	\
-			src/error.h	\
-			src/log.h	\
-			src/path.h	\
-			src/props.h	\
-			src/search.h	\
-			src/sort.h	\
-			src/task.h	\
-			src/upnp.h
+media_service_upnp_headers =	src/async.h	\
+				src/device.h	\
+				src/error.h	\
+				src/log.h	\
+				src/path.h	\
+				src/props.h	\
+				src/search.h	\
+				src/sort.h	\
+				src/task.h	\
+				src/upnp.h
 
 
 bin_PROGRAMS = media-service-upnp
 
-media_service_upnp_SOURCES =	$(mediaconsole_headers)	\
-				$(mediaconsole_sources)
+media_service_upnp_SOURCES =	$(media_service_upnp_headers)	\
+				$(media_service_upnp_sources)
 
 media_service_upnp_LDADD =	$(GLIB_LIBS)	\
 				$(GIO_LIBS)	\
