@@ -26,7 +26,7 @@
 #include <gio/gio.h>
 #include <glib.h>
 
-enum msu_task_type_t_{
+enum msu_task_type_t_ {
 	MSU_TASK_GET_VERSION,
 	MSU_TASK_GET_SERVERS,
 	MSU_TASK_GET_CHILDREN,

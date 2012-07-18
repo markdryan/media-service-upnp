@@ -488,8 +488,8 @@ done:
 	return retval;
 }
 
-static GUPnPDIDLLiteResource *prv_get_matching_resource(
-	GUPnPDIDLLiteObject *object, const gchar *protocol_info)
+static GUPnPDIDLLiteResource *prv_get_matching_resource
+	(GUPnPDIDLLiteObject *object, const gchar *protocol_info)
 {
 	GUPnPDIDLLiteResource *retval = NULL;
 	GUPnPDIDLLiteResource *res;
@@ -500,7 +500,9 @@ static GUPnPDIDLLiteResource *prv_get_matching_resource(
 	if (protocol_info)
 		pi_str_array = g_strsplit(protocol_info, ",", 0);
 
-	ptr = resources = gupnp_didl_lite_object_get_resources(object);
+	resources = gupnp_didl_lite_object_get_resources(object);
+	ptr = resources;
+
 	while (ptr) {
 		res = ptr->data;
 		if (!retval) {
@@ -729,7 +731,9 @@ static GVariant *prv_compute_resources(GUPnPDIDLLiteObject *object,
 
 	res_array_vb = g_variant_builder_new(G_VARIANT_TYPE("aa{sv}"));
 
-	ptr = resources = gupnp_didl_lite_object_get_resources(object);
+	resources = gupnp_didl_lite_object_get_resources(object);
+	ptr = resources;
+
 	while (ptr) {
 		res = ptr->data;
 		res_vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));

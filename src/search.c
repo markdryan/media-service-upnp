@@ -114,7 +114,9 @@ gchar *msu_search_translate_search_string(GHashTable *filter_map,
 		g_free(prop);
 		g_free(op);
 
-		value = prop = op = NULL;
+		value = NULL;
+		prop = NULL;
+		op = NULL;
 
 		g_match_info_next(match_info, NULL);
 	}

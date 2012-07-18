@@ -980,7 +980,7 @@ static void prv_get_ms2spec_prop(msu_device_context_t *context,
 	} else {
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_UNKNOWN_INTERFACE,
-					     "Interface is unknown.");;
+					     "Interface is unknown.");
 		goto on_error;
 	}
 
@@ -1041,7 +1041,7 @@ void msu_device_get_prop(msu_device_t *device,  msu_task_t *task,
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_UNKNOWN_INTERFACE,
-					    "Interface is unknown.");;
+					    "Interface is unknown.");
 		}
 
 		(void) g_idle_add(msu_async_complete_task, cb_data);

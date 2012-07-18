@@ -72,7 +72,7 @@ void msu_log_debug(const char *format, ...)
 		#define MSU_LOG_ERROR(fmt, ...) \
 			do { \
 				msu_log_error("%s:%s() " fmt, __FILE__, \
-						__FUNCTION__, ## __VA_ARGS__); \
+						__func__, ## __VA_ARGS__); \
 			} while (0)
 	#else
 		#define MSU_LOG_ERROR(fmt, ...) \
@@ -92,7 +92,7 @@ void msu_log_debug(const char *format, ...)
 		#define MSU_LOG_CRITICAL(fmt, ...) \
 			do { \
 				msu_log_critical("%s:%s() " fmt, __FILE__, \
-						__FUNCTION__, ## __VA_ARGS__); \
+						__func__, ## __VA_ARGS__); \
 			} while (0)
 	#else
 		#define MSU_LOG_CRITICAL(fmt, ...) \
@@ -112,7 +112,7 @@ void msu_log_debug(const char *format, ...)
 		#define MSU_LOG_WARNING(fmt, ...) \
 			do { \
 				msu_log_warning("%s:%s() " fmt, __FILE__, \
-						__FUNCTION__, ## __VA_ARGS__); \
+						__func__, ## __VA_ARGS__); \
 			} while (0)
 	#else
 		#define MSU_LOG_WARNING(fmt, ...) \
@@ -132,7 +132,7 @@ void msu_log_debug(const char *format, ...)
 		#define MSU_LOG_MESSAGE(fmt, ...) \
 			do { \
 				msu_log_message("%s:%s() " fmt, __FILE__, \
-						__FUNCTION__, ## __VA_ARGS__); \
+						__func__, ## __VA_ARGS__); \
 			} while (0)
 	#else
 		#define MSU_LOG_MESSAGE(fmt, ...) \
@@ -152,7 +152,7 @@ void msu_log_debug(const char *format, ...)
 		#define MSU_LOG_INFO(fmt, ...) \
 			do { \
 				msu_log_info("%s:%s() " fmt, __FILE__, \
-						__FUNCTION__, ## __VA_ARGS__); \
+						__func__, ## __VA_ARGS__); \
 			} while (0)
 	#else
 		#define MSU_LOG_INFO(fmt, ...) \
@@ -172,7 +172,7 @@ void msu_log_debug(const char *format, ...)
 		#define MSU_LOG_DEBUG(fmt, ...) \
 			do { \
 				msu_log_debug("%s:%s() " fmt, __FILE__, \
-						__FUNCTION__, ## __VA_ARGS__); \
+						__func__, ## __VA_ARGS__); \
 			} while (0)
 	#else
 		#define MSU_LOG_DEBUG(fmt, ...) \

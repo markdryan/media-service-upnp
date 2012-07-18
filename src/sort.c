@@ -67,7 +67,8 @@ gchar *msu_sort_translate_sort_string(GHashTable *filter_map,
 		g_free(prop);
 		g_free(op);
 
-		prop = op = NULL;
+		prop = NULL;
+		op = NULL;
 
 		g_match_info_next(match_info, NULL);
 	}
