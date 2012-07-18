@@ -23,10 +23,7 @@ AC_DEFUN_ONCE([MSU_COMPILER_FLAGS], [
 	if (test x"${CFLAGS}" = x""); then
 		CFLAGS="-Wall"
 		CFLAGS+=" -O2"
-		CFLAGS+=" -std=gnu99 -pedantic"
 		CFLAGS+=" -D_FORTIFY_SOURCE=2"
-		CFLAGS+=" -Wno-overlength-strings"
-		CFLAGS+=" -Wno-format-extra-args"
 	fi
 
 	if (test x"$USE_MAINTAINER_MODE" = x"yes"); then
@@ -44,6 +41,11 @@ AC_DEFUN_ONCE([MSU_COMPILER_FLAGS], [
 		CFLAGS+=" -Wshadow"
 		CFLAGS+=" -Wformat=2"
 		CFLAGS+=" -Winit-self"
+
+		CFLAGS+=" -std=gnu99"
+		CFLAGS+=" -pedantic"
+		CFLAGS+=" -Wno-overlength-strings"
+		CFLAGS+=" -Wno-format-extra-args"
 
 		CFLAGS+=" -DG_DISABLE_DEPRECATED"
 	fi
