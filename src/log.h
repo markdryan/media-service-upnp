@@ -45,61 +45,40 @@ void msu_log_init(const char *program, msu_log_t *log_context);
 
 void msu_log_finalize(msu_log_t *log_context);
 
-void msu_log_error(const char *format, ...)
-			__attribute__((format(printf, 1, 2)));
+void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
+			__attribute__((format(printf, 3, 4)));
 
-void msu_log_critical(const char *format, ...)
-			__attribute__((format(printf, 1, 2)));
-
-void msu_log_warning(const char *format, ...)
-			__attribute__((format(printf, 1, 2)));
-
-void msu_log_message(const char *format, ...)
-			__attribute__((format(printf, 1, 2)));
-
-void msu_log_info(const char *format, ...)
-			__attribute__((format(printf, 1, 2)));
-
-void msu_log_debug(const char *format, ...)
-			__attribute__((format(printf, 1, 2)));
-
+/* Generic Logging macro
+ */
+#ifdef MSU_DEBUG_ENABLED
+	#define MSU_LOG_HELPER(priority, flags, fmt, ...)    \
+		do { \
+			msu_log_trace(priority, flags, "%s : %s() --- " fmt, \
+				      __FILE__, __func__, ## __VA_ARGS__); \
+		} while (0)
+#else
+	#define MSU_LOG_HELPER(priority, flags, fmt, ...) \
+		do { \
+			msu_log_trace(priority, flags, fmt, ## __VA_ARGS__); \
+		} while (0)
+#endif
 
 
 /* Logging macro for error messages
  */
 #if MSU_LOG_LEVEL & MSU_MSU_LOG_LEVEL_ERROR
-	#ifdef MSU_DEBUG_ENABLED
-		#define MSU_LOG_ERROR(fmt, ...) \
-			do { \
-				msu_log_error("%s:%s() " fmt, __FILE__, \
-						__func__, ## __VA_ARGS__); \
-			} while (0)
-	#else
-		#define MSU_LOG_ERROR(fmt, ...) \
-			do { \
-				msu_log_error(fmt, ## __VA_ARGS__); \
-			} while (0)
-	#endif
+	#define MSU_LOG_ERROR(...) \
+		MSU_LOG_HELPER(LOG_ERR, G_LOG_LEVEL_ERROR, __VA_ARGS__, 0)
 #else
-	#define MSU_LOG_ERROR(fmt, ...)
+	#define MSU_LOG_ERROR(...)
 #endif
 
 
 /* Logging macro for critical messages
  */
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_CRITICAL
-	#ifdef MSU_DEBUG_ENABLED
-		#define MSU_LOG_CRITICAL(fmt, ...) \
-			do { \
-				msu_log_critical("%s:%s() " fmt, __FILE__, \
-						__func__, ## __VA_ARGS__); \
-			} while (0)
-	#else
-		#define MSU_LOG_CRITICAL(fmt, ...) \
-			do { \
-				msu_log_critical(fmt, ## __VA_ARGS__); \
-			} while (0)
-	#endif
+	#define MSU_LOG_CRITICAL(...) \
+		MSU_LOG_HELPER(LOG_CRIT, G_LOG_LEVEL_CRITICAL, __VA_ARGS__, 0)
 #else
 	#define MSU_LOG_CRITICAL(fmt, ...)
 #endif
@@ -108,18 +87,8 @@ void msu_log_debug(const char *format, ...)
 /* Logging macro for warning messages
  */
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_WARNING
-	#ifdef MSU_DEBUG_ENABLED
-		#define MSU_LOG_WARNING(fmt, ...) \
-			do { \
-				msu_log_warning("%s:%s() " fmt, __FILE__, \
-						__func__, ## __VA_ARGS__); \
-			} while (0)
-	#else
-		#define MSU_LOG_WARNING(fmt, ...) \
-			do { \
-				msu_log_warning(fmt, ## __VA_ARGS__); \
-			} while (0)
-	#endif
+	#define MSU_LOG_WARNING(...) \
+		MSU_LOG_HELPER(LOG_WARNING, G_LOG_LEVEL_WARNING, __VA_ARGS__, 0)
 #else
 	#define MSU_LOG_WARNING(fmt, ...)
 #endif
@@ -128,18 +97,8 @@ void msu_log_debug(const char *format, ...)
 /* Logging macro for messages
  */
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_MESSAGE
-	#ifdef MSU_DEBUG_ENABLED
-		#define MSU_LOG_MESSAGE(fmt, ...) \
-			do { \
-				msu_log_message("%s:%s() " fmt, __FILE__, \
-						__func__, ## __VA_ARGS__); \
-			} while (0)
-	#else
-		#define MSU_LOG_MESSAGE(fmt, ...) \
-			do { \
-				msu_log_message(fmt, ## __VA_ARGS__); \
-			} while (0)
-	#endif
+	#define MSU_LOG_MESSAGE(...) \
+		MSU_LOG_HELPER(LOG_NOTICE, G_LOG_LEVEL_MESSAGE, __VA_ARGS__, 0)
 #else
 	#define MSU_LOG_MESSAGE(fmt, ...)
 #endif
@@ -148,18 +107,8 @@ void msu_log_debug(const char *format, ...)
 /* Logging macro for informational messages
  */
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_INFO
-	#ifdef MSU_DEBUG_ENABLED
-		#define MSU_LOG_INFO(fmt, ...) \
-			do { \
-				msu_log_info("%s:%s() " fmt, __FILE__, \
-						__func__, ## __VA_ARGS__); \
-			} while (0)
-	#else
-		#define MSU_LOG_INFO(fmt, ...) \
-			do { \
-				msu_log_info(fmt, ## __VA_ARGS__); \
-			} while (0)
-	#endif
+	#define MSU_LOG_INFO(...) \
+		MSU_LOG_HELPER(LOG_INFO, G_LOG_LEVEL_INFO, __VA_ARGS__, 0)
 #else
 	#define MSU_LOG_INFO(fmt, ...)
 #endif
@@ -168,18 +117,8 @@ void msu_log_debug(const char *format, ...)
 /* Logging macro for debug messages
  */
 #if MSU_LOG_LEVEL & MSU_MSU_LOG_LEVEL_DEBUG
-	#ifdef MSU_DEBUG_ENABLED
-		#define MSU_LOG_DEBUG(fmt, ...) \
-			do { \
-				msu_log_debug("%s:%s() " fmt, __FILE__, \
-						__func__, ## __VA_ARGS__); \
-			} while (0)
-	#else
-		#define MSU_LOG_DEBUG(fmt, ...) \
-			do { \
-				msu_log_debug(fmt, ## __VA_ARGS__); \
-			} while (0)
-	#endif
+	#define MSU_LOG_DEBUG(...) \
+		MSU_LOG_HELPER(LOG_DEBUG, G_LOG_LEVEL_DEBUG, __VA_ARGS__, 0)
 #else
 	#define MSU_LOG_DEBUG(fmt, ...)
 #endif

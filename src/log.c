@@ -31,6 +31,7 @@
 
 static msu_log_t *s_log_context;
 
+
 static void prv_msu_log_set_flags(msu_log_t *log_context)
 {
 	int mask = 0;
@@ -122,7 +123,7 @@ void msu_log_finalize(msu_log_t *log_context)
 	syslog(LOG_INFO, "Media Service UPnP: Exit");
 
 	if (log_context->log_type != MSU_LOG_TYPE_SYSLOG)
-		MSU_LOG_INFO("%s", "Media Service UPnP: Exit");
+		MSU_LOG_INFO("Media Service UPnP: Exit");
 
 	(void) g_log_set_default_handler(log_context->old_handler, NULL);
 
@@ -132,7 +133,7 @@ void msu_log_finalize(msu_log_t *log_context)
 	s_log_context = NULL;
 }
 
-void msu_log_error(const char *format, ...)
+void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 {
 	va_list args;
 
@@ -140,120 +141,10 @@ void msu_log_error(const char *format, ...)
 
 	switch (s_log_context->log_type) {
 	case MSU_LOG_TYPE_SYSLOG:
-		vsyslog(LOG_ERR, format, args);
+		vsyslog(priority, format, args);
 		break;
 	case MSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_ERROR, format, args);
-		break;
-	case MSU_LOG_TYPE_FILE:
-		break;
-	default:
-		break;
-	}
-
-	va_end(args);
-}
-
-void msu_log_critical(const char *format, ...)
-{
-	va_list args;
-
-	va_start(args, format);
-
-	switch (s_log_context->log_type) {
-	case MSU_LOG_TYPE_SYSLOG:
-		vsyslog(LOG_CRIT, format, args);
-		break;
-	case MSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, format, args);
-		break;
-	case MSU_LOG_TYPE_FILE:
-		break;
-	default:
-		break;
-	}
-
-	va_end(args);
-}
-
-void msu_log_warning(const char *format, ...)
-{
-	va_list args;
-
-	va_start(args, format);
-
-	switch (s_log_context->log_type) {
-	case MSU_LOG_TYPE_SYSLOG:
-		vsyslog(LOG_WARNING, format, args);
-		break;
-	case MSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_WARNING, format, args);
-		break;
-	case MSU_LOG_TYPE_FILE:
-		break;
-	default:
-		break;
-	}
-
-	va_end(args);
-}
-
-void msu_log_message(const char *format, ...)
-{
-	va_list args;
-
-	va_start(args, format);
-
-	switch (s_log_context->log_type) {
-	case MSU_LOG_TYPE_SYSLOG:
-		vsyslog(LOG_NOTICE, format, args);
-		break;
-	case MSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, format, args);
-		break;
-	case MSU_LOG_TYPE_FILE:
-		break;
-	default:
-		break;
-	}
-
-	va_end(args);
-}
-
-void msu_log_info(const char *format, ...)
-{
-	va_list args;
-
-	va_start(args, format);
-
-	switch (s_log_context->log_type) {
-	case MSU_LOG_TYPE_SYSLOG:
-		vsyslog(LOG_INFO, format, args);
-		break;
-	case MSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_INFO, format, args);
-		break;
-	case MSU_LOG_TYPE_FILE:
-		break;
-	default:
-		break;
-	}
-
-	va_end(args);
-}
-
-void msu_log_debug(const char *format, ...)
-{
-	va_list args;
-
-	va_start(args, format);
-
-	switch (s_log_context->log_type) {
-	case MSU_LOG_TYPE_SYSLOG:
-		vsyslog(LOG_DEBUG, format, args);
-		break;
-	case MSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, format, args);
+		g_logv(G_LOG_DOMAIN, flags, format, args);
 		break;
 	case MSU_LOG_TYPE_FILE:
 		break;
