@@ -45,8 +45,9 @@ AC_DEFUN_ONCE([MSU_COMPILER_FLAGS], [
 		CFLAGS+=" -std=gnu99"
 		CFLAGS+=" -pedantic"
 		CFLAGS+=" -Wno-overlength-strings"
-		CFLAGS+=" -Wno-format-extra-args"
 
 		CFLAGS+=" -DG_DISABLE_DEPRECATED"
 	fi
+
+	CFLAGS+=" -Wno-format-extra-args"
 ])
