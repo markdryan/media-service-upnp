@@ -27,13 +27,13 @@ def print_array_of_props(aprops):
         print ""
         print "Resource " + str(i)
         for key, value in aprops[i].iteritems():
-            print '{0:<30}{1:<30}'.format(key,value)
+            print u'{0:<30}{1:<30}'.format(key,value)
         i = i + 1
 
 def print_prop_array(props):
     for key, value in props.iteritems():
         if key != "Resources":
-            print '{0:<30}{1:<30}'.format(key,value)
+            print u'{0:<30}{1:<30}'.format(key,value)
     for key, value in props.iteritems():
         if key == "Resources":
             print_array_of_props(value)
@@ -82,7 +82,7 @@ class Item(MediaObject):
     def print_compatible_resource(self, protocol_info, fltr):
         props = self.__itemIF.GetCompatibleResource(protocol_info, fltr);
         for key, value in props.iteritems():
-            print '{0:<30}{1:<30}'.format(key,value)
+            print u'{0:<30}{1:<30}'.format(key,value)
 
 class Container(MediaObject):
 
@@ -103,7 +103,7 @@ class Container(MediaObject):
         objects = self.__containerIF.ListContainersEx(offset, count, fltr, sort)
         for item in objects:
             for key, value in item.iteritems():
-                print '{0:<30}{1:<30}'.format(key, value)
+                print u'{0:<30}{1:<30}'.format(key, value)
             print ""
 
     def list_items(self, offset, count, fltr, sort=""):
@@ -147,9 +147,9 @@ class UPNP(object):
                     folderName = server.get_prop("FriendlyName");
                 except e,Exception:
                     folderName = server.get_prop("DisplayName");
-                print '{0:<30}{1:<30}'.format(folderName , i)
+                print u'{0:<30}{1:<30}'.format(folderName , i)
             except dbus.exceptions.DBusException, err:
-                print "Cannot retrieve properties for " + i
+                print u"Cannot retrieve properties for " + i
                 print str(err).strip()[:-1]
 
     def version(self):
