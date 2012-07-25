@@ -23,6 +23,8 @@
 #ifndef MSU_LOG_H__
 #define MSU_LOG_H__
 
+#include <syslog.h>
+
 #include <glib.h>
 
 enum msu_log_type_t_ {
@@ -116,7 +118,7 @@ void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 
 /* Logging macro for debug messages
  */
-#if MSU_LOG_LEVEL & MSU_MSU_LOG_LEVEL_DEBUG
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
 	#define MSU_LOG_DEBUG(...) \
 		MSU_LOG_HELPER(LOG_DEBUG, G_LOG_LEVEL_DEBUG, __VA_ARGS__, 0)
 #else
