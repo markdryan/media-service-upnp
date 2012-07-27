@@ -919,9 +919,9 @@ int main(int argc, char *argv[])
 
 on_error:
 
-	msu_log_finalize(&log_context);
-
 	prv_msu_context_free(&context);
+
+	msu_log_finalize(&log_context);
 
 	return retval;
 }
