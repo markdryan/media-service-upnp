@@ -28,6 +28,7 @@
 #include "async.h"
 #include "device.h"
 #include "error.h"
+#include "log.h"
 #include "path.h"
 #include "props.h"
 #include "search.h"
@@ -177,6 +178,8 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 	msu_device_context_t *context;
 	unsigned int i;
 
+	MSU_LOG_DEBUG("Enter");
+
 	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *) proxy);
 	if (!udn)
 		goto on_error;
@@ -184,9 +187,14 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 	ip_address = gupnp_context_get_host_ip(
 		gupnp_control_point_get_context(cp));
 
+	MSU_LOG_DEBUG("UDN %s", udn);
+	MSU_LOG_DEBUG("IP Address %s", ip_address);
+
 	device = g_hash_table_lookup(upnp->server_udn_map, udn);
 
 	if (!device) {
+		MSU_LOG_DEBUG("Device not found. Adding");
+
 		if (msu_device_new(upnp->connection, proxy,
 				   ip_address, &gSubtreeVtable, upnp,
 				   upnp->counter, &device)) {
@@ -196,18 +204,27 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 			upnp->found_server(device->path, upnp->user_data);
 		}
 	} else {
+		MSU_LOG_DEBUG("Device Found");
+
 		for (i = 0; i < device->contexts->len; ++i) {
 			context = g_ptr_array_index(device->contexts, i);
 			if (!strcmp(context->ip_address, ip_address))
 				break;
 		}
 
-		if (i == device->contexts->len)
+		if (i == device->contexts->len) {
+			MSU_LOG_DEBUG("Adding Context");
 			msu_device_append_new_context(device, ip_address,
 						      proxy);
+		}
 	}
 
 on_error:
+
+	MSU_LOG_DEBUG("Exit");
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+	msu_log_trace(LOG_DEBUG, G_LOG_LEVEL_DEBUG, "%s", "");
+#endif
 
 	return;
 }
@@ -223,6 +240,8 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 	unsigned int i;
 	msu_device_context_t *context;
 
+	MSU_LOG_DEBUG("Enter");
+
 	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *) proxy);
 	if (!udn)
 		goto on_error;
@@ -230,9 +249,14 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 	ip_address = gupnp_context_get_host_ip(
 		gupnp_control_point_get_context(cp));
 
+	MSU_LOG_DEBUG("UDN %s", udn);
+	MSU_LOG_DEBUG("IP Address %s", ip_address);
+
 	device = g_hash_table_lookup(upnp->server_udn_map, udn);
-	if (!device)
+	if (!device) {
+		MSU_LOG_WARNING("Device not found. Ignoring");
 		goto on_error;
+	}
 
 	for (i = 0; i < device->contexts->len; ++i) {
 		context = g_ptr_array_index(device->contexts, i);
@@ -243,12 +267,18 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 	if (i < device->contexts->len) {
 		(void) g_ptr_array_remove_index(device->contexts, i);
 		if (device->contexts->len == 0) {
+			MSU_LOG_DEBUG("Last Context lost. Delete device");
 			upnp->lost_server(device->path, upnp->user_data);
 			g_hash_table_remove(upnp->server_udn_map, udn);
 		}
 	}
 
 on_error:
+
+	MSU_LOG_DEBUG("Exit");
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+	msu_log_trace(LOG_DEBUG, G_LOG_LEVEL_DEBUG, "%s", "");
+#endif
 
 	return;
 }
@@ -319,16 +349,24 @@ GVariant *msu_upnp_get_server_ids(msu_upnp_t *upnp)
 	GHashTableIter iter;
 	gpointer value;
 	msu_device_t *device;
+	GVariant *retval;
+
+	MSU_LOG_DEBUG("Enter");
 
 	g_variant_builder_init(&vb, G_VARIANT_TYPE("ao"));
 
 	g_hash_table_iter_init(&iter, upnp->server_udn_map);
 	while (g_hash_table_iter_next(&iter, NULL, &value)) {
 		device = value;
+		MSU_LOG_DEBUG("Have device %s", device->path);
 		g_variant_builder_add(&vb, "o", device->path);
 	}
 
-	return g_variant_ref_sink(g_variant_builder_end(&vb));
+	retval = g_variant_ref_sink(g_variant_builder_end(&vb));
+
+	MSU_LOG_DEBUG("Exit");
+
+	return retval;
 }
 
 void msu_upnp_get_children(msu_upnp_t *upnp, msu_task_t *task,
@@ -343,16 +381,26 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_task_t *task,
 	gchar *upnp_filter = NULL;
 	gchar *sort_by = NULL;
 
+	MSU_LOG_DEBUG("Enter");
+
+	MSU_LOG_DEBUG("Path: %s", task->path);
+	MSU_LOG_DEBUG("Start: %u", task->ut.get_children.start);
+	MSU_LOG_DEBUG("Count: %u", task->ut.get_children.count);
+
 	cb_data = msu_async_cb_data_new(task, cb, user_data);
 	cb_task_data = &cb_data->ut.bas;
 
 	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
-				      &cb_data->id, &cb_data->error))
+				      &cb_data->id, &cb_data->error)) {
+		MSU_LOG_ERROR("Bad path %s", task->path);
 		goto on_error;
+	}
 
 	device = msu_device_from_path(cb_task_data->root_path,
 				      upnp->server_udn_map);
 	if (!device) {
+		MSU_LOG_ERROR("Cannot locate device for %s",
+			      cb_task_data->root_path);
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
 				    "Cannot locate device corresponding to"
@@ -365,13 +413,18 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_task_t *task,
 					task->ut.get_children.filter,
 					&upnp_filter);
 
+	MSU_LOG_DEBUG("Filter Mask 0x%x", cb_task_data->filter_mask);
+
 	sort_by = msu_sort_translate_sort_string(upnp->filter_map,
 						 task->ut.get_children.sort_by);
 	if (!sort_by) {
+		MSU_LOG_ERROR("Invalid Sort Criteria");
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_QUERY,
 					     "Sort Criteria are not valid");
 		goto on_error;
 	}
+
+	MSU_LOG_DEBUG("Sort By %s", sort_by);
 
 	cb_task_data->protocol_info = protocol_info;
 
@@ -385,6 +438,8 @@ on_error:
 
 	g_free(sort_by);
 	g_free(upnp_filter);
+
+	MSU_LOG_DEBUG("Exit with %s", !cb_data->action ? "FAIL" : "SUCCESS");
 }
 
 void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_task_t *task,
@@ -398,18 +453,29 @@ void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_task_t *task,
 	msu_async_get_all_t *cb_task_data;
 	msu_device_t *device;
 
+	MSU_LOG_DEBUG("Enter");
+
+	MSU_LOG_DEBUG("Path: %s", task->path);
+	MSU_LOG_DEBUG("Interface %s", task->ut.get_prop.interface_name);
+
 	cb_data = msu_async_cb_data_new(task, cb, user_data);
 	cb_task_data = &cb_data->ut.get_all;
 
 	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
-				      &cb_data->id, &cb_data->error))
+				      &cb_data->id, &cb_data->error)) {
+		MSU_LOG_ERROR("Bad path %s", task->path);
 		goto on_error;
+	}
 
 	root_object = cb_data->id[0] == '0' && cb_data->id[1] == 0;
+
+	MSU_LOG_DEBUG("Root Object = %d", root_object);
 
 	device = msu_device_from_path(cb_task_data->root_path,
 				      upnp->server_udn_map);
 	if (!device) {
+		MSU_LOG_ERROR("Cannot locate device for %s",
+			      cb_task_data->root_path);
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
 				    "Cannot locate device corresponding to"
@@ -422,11 +488,15 @@ void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_task_t *task,
 	msu_device_get_all_props(device, task, cb_data, root_object,
 				 cancellable);
 
+	MSU_LOG_DEBUG("Exit with SUCCESS");
+
 	return;
 
 on_error:
 
 	(void) g_idle_add(msu_async_complete_task, cb_data);
+
+	MSU_LOG_DEBUG("Exit with FAIL");
 }
 
 void msu_upnp_get_prop(msu_upnp_t *upnp, msu_task_t *task,
@@ -442,20 +512,32 @@ void msu_upnp_get_prop(msu_upnp_t *upnp, msu_task_t *task,
 	msu_prop_map_t *prop_map;
 	msu_task_get_prop_t *task_data;
 
+	MSU_LOG_DEBUG("Enter");
+
+	MSU_LOG_DEBUG("Path: %s", task->path);
+	MSU_LOG_DEBUG("Interface %s", task->ut.get_prop.interface_name);
+	MSU_LOG_DEBUG("Prop.%s", task->ut.get_prop.prop_name);
+
 	task_data = &task->ut.get_prop;
 	cb_data = msu_async_cb_data_new(task, cb, user_data);
 	cb_task_data = &cb_data->ut.get_prop;
 
 	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
 				      &cb_data->id,
-				      &cb_data->error))
+				      &cb_data->error)) {
+		MSU_LOG_ERROR("Bad path %s", task->path);
 		goto on_error;
+	}
 
 	root_object = cb_data->id[0] == '0' && cb_data->id[1] == 0;
+
+	MSU_LOG_DEBUG("Root Object = %d", root_object);
 
 	device = msu_device_from_path(cb_task_data->root_path,
 				      upnp->server_udn_map);
 	if (!device) {
+		MSU_LOG_ERROR("Cannot locate device for %s",
+			      cb_task_data->root_path);
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
 				    "Cannot locate device corresponding to"
@@ -469,11 +551,15 @@ void msu_upnp_get_prop(msu_upnp_t *upnp, msu_task_t *task,
 	msu_device_get_prop(device, task, cb_data, prop_map,
 			    root_object, cancellable);
 
+	MSU_LOG_DEBUG("Exit with SUCCESS");
+
 	return;
 
 on_error:
 
 	(void) g_idle_add(msu_async_complete_task, cb_data);
+
+	MSU_LOG_DEBUG("Exit with FAIL");
 }
 
 void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
@@ -489,16 +575,27 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
 	msu_async_bas_t *cb_task_data;
 	msu_device_t *device;
 
+	MSU_LOG_DEBUG("Enter");
+
+	MSU_LOG_DEBUG("Path: %s", task->path);
+	MSU_LOG_DEBUG("Query: %s", task->ut.search.query);
+	MSU_LOG_DEBUG("Start: %u", task->ut.search.start);
+	MSU_LOG_DEBUG("Count: %u", task->ut.search.count);
+
 	cb_data = msu_async_cb_data_new(task, cb, user_data);
 	cb_task_data = &cb_data->ut.bas;
 
 	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
-				      &cb_data->id, &cb_data->error))
+				      &cb_data->id, &cb_data->error)) {
+		MSU_LOG_ERROR("Bad path %s", task->path);
 		goto on_error;
+	}
 
 	device = msu_device_from_path(cb_task_data->root_path,
 				      upnp->server_udn_map);
 	if (!device) {
+		MSU_LOG_ERROR("Cannot locate device for %s",
+			      cb_task_data->root_path);
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
 				    "Cannot locate device corresponding to"
@@ -510,21 +607,31 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
 		msu_props_parse_filter(upnp->filter_map,
 				       task->ut.search.filter, &upnp_filter);
 
+	MSU_LOG_DEBUG("Filter Mask 0x%x", cb_task_data->filter_mask);
+
 	upnp_query = msu_search_translate_search_string(upnp->filter_map,
 							task->ut.search.query);
 	if (!upnp_query) {
+		MSU_LOG_ERROR("Query string is not valid:%s",
+			      task->search.query);
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_QUERY,
 					     "Query string is not valid.");
 		goto on_error;
 	}
 
+	MSU_LOG_DEBUG("UPnP Query %s", upnp_query);
+
 	sort_by = msu_sort_translate_sort_string(upnp->filter_map,
 						 task->ut.search.sort_by);
 	if (!sort_by) {
+		MSU_LOG_ERROR("Invalid Sort Criteria");
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_QUERY,
 					     "Sort Criteria are not valid");
 		goto on_error;
 	}
+
+	MSU_LOG_DEBUG("Sort By %s", sort_by);
+
 	cb_task_data->protocol_info = protocol_info;
 
 	msu_device_search(device, task, cb_data, upnp_filter,
@@ -537,6 +644,8 @@ on_error:
 	g_free(sort_by);
 	g_free(upnp_query);
 	g_free(upnp_filter);
+
+	MSU_LOG_DEBUG("Exit with %s", !cb_data->action ? "FAIL" : "SUCCESS");
 }
 
 void msu_upnp_get_resource(msu_upnp_t *upnp, msu_task_t *task,
@@ -550,15 +659,24 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_task_t *task,
 	gchar *upnp_filter = NULL;
 	gchar *root_path = NULL;
 
+	MSU_LOG_DEBUG("Enter");
+
+	MSU_LOG_DEBUG("Protocol Info: %s ", task->ut.resource.protocol_info);
+
 	cb_data = msu_async_cb_data_new(task, cb, user_data);
 	cb_task_data = &cb_data->ut.get_all;
 
 	if (!msu_path_get_path_and_id(task->path, &root_path, &cb_data->id,
-				      &cb_data->error))
+				      &cb_data->error)) {
+		MSU_LOG_ERROR("Bad path %s", task->path);
 		goto on_error;
+	}
+
+	MSU_LOG_DEBUG("Root Path %s Id %s", root_path, cb_data->id);
 
 	device = msu_device_from_path(root_path, upnp->server_udn_map);
 	if (!device) {
+		MSU_LOG_ERROR("Cannot locate device for %s", root_path);
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
 				    "Cannot locate device corresponding to"
@@ -570,6 +688,8 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_task_t *task,
 		msu_props_parse_filter(upnp->filter_map,
 				       task->ut.resource.filter, &upnp_filter);
 
+	MSU_LOG_DEBUG("Filter Mask 0x%x", cb_task_data->filter_mask);
+
 	msu_device_get_resource(device, task, cb_data, upnp_filter,
 				cancellable);
 
@@ -580,4 +700,6 @@ on_error:
 
 	g_free(upnp_filter);
 	g_free(root_path);
+
+	MSU_LOG_DEBUG("Exit with %s", !cb_data->action ? "FAIL" : "SUCCESS");
 }

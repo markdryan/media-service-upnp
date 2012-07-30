@@ -22,6 +22,7 @@
 
 #include "async.h"
 #include "error.h"
+#include "log.h"
 
 msu_async_cb_data_t *msu_async_cb_data_new(msu_task_t *task,
 					   msu_upnp_task_complete_t cb,
@@ -68,6 +69,11 @@ void msu_async_cb_data_delete(msu_async_cb_data_t *cb_data)
 gboolean msu_async_complete_task(gpointer user_data)
 {
 	msu_async_cb_data_t *cb_data = user_data;
+
+	MSU_LOG_DEBUG("Enter. Error %p", (void *) cb_data->error);
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+	msu_log_trace(LOG_DEBUG, G_LOG_LEVEL_DEBUG, "%s", "");
+#endif
 
 	cb_data->cb(cb_data->task, cb_data->result, cb_data->error,
 		    cb_data->user_data);
