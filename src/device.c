@@ -974,6 +974,7 @@ static void prv_get_ms2spec_prop_cb(GUPnPServiceProxy *proxy,
 					    &result, NULL)) {
 		MSU_LOG_ERROR("Browse operation failed: %s",
 			      upnp_error->message);
+
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
 					     "Browse operation failed: %s",
@@ -1264,6 +1265,7 @@ static void prv_search_cb(GUPnPServiceProxy *proxy,
 
 		MSU_LOG_ERROR("Search operation failed %s",
 			      upnp_error->message);
+
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
 					     "Search operation failed: %s",
@@ -1285,6 +1287,7 @@ static void prv_search_cb(GUPnPServiceProxy *proxy,
 		&& upnp_error->code != GUPNP_XML_ERROR_EMPTY_NODE) {
 		MSU_LOG_ERROR("Unable to parse results of search: %s",
 			      upnp_error->message);
+
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
 					     "Unable to parse results of "

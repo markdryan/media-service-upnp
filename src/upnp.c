@@ -393,6 +393,7 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_task_t *task,
 	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error)) {
 		MSU_LOG_ERROR("Bad path %s", task->path);
+
 		goto on_error;
 	}
 
@@ -401,6 +402,7 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_task_t *task,
 	if (!device) {
 		MSU_LOG_ERROR("Cannot locate device for %s",
 			      cb_task_data->root_path);
+
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
 				    "Cannot locate device corresponding to"
@@ -419,6 +421,7 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_task_t *task,
 						 task->ut.get_children.sort_by);
 	if (!sort_by) {
 		MSU_LOG_ERROR("Invalid Sort Criteria");
+
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_QUERY,
 					     "Sort Criteria are not valid");
 		goto on_error;
@@ -464,6 +467,7 @@ void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_task_t *task,
 	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error)) {
 		MSU_LOG_ERROR("Bad path %s", task->path);
+
 		goto on_error;
 	}
 
@@ -476,6 +480,7 @@ void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_task_t *task,
 	if (!device) {
 		MSU_LOG_ERROR("Cannot locate device for %s",
 			      cb_task_data->root_path);
+
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
 				    "Cannot locate device corresponding to"
@@ -526,6 +531,7 @@ void msu_upnp_get_prop(msu_upnp_t *upnp, msu_task_t *task,
 				      &cb_data->id,
 				      &cb_data->error)) {
 		MSU_LOG_ERROR("Bad path %s", task->path);
+
 		goto on_error;
 	}
 
@@ -538,6 +544,7 @@ void msu_upnp_get_prop(msu_upnp_t *upnp, msu_task_t *task,
 	if (!device) {
 		MSU_LOG_ERROR("Cannot locate device for %s",
 			      cb_task_data->root_path);
+
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
 				    "Cannot locate device corresponding to"
@@ -588,6 +595,7 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
 	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error)) {
 		MSU_LOG_ERROR("Bad path %s", task->path);
+
 		goto on_error;
 	}
 
@@ -596,6 +604,7 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
 	if (!device) {
 		MSU_LOG_ERROR("Cannot locate device for %s",
 			      cb_task_data->root_path);
+
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
 				    "Cannot locate device corresponding to"
@@ -614,6 +623,7 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
 	if (!upnp_query) {
 		MSU_LOG_ERROR("Query string is not valid:%s",
 			      task->search.query);
+
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_QUERY,
 					     "Query string is not valid.");
 		goto on_error;
@@ -625,6 +635,7 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
 						 task->ut.search.sort_by);
 	if (!sort_by) {
 		MSU_LOG_ERROR("Invalid Sort Criteria");
+
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_QUERY,
 					     "Sort Criteria are not valid");
 		goto on_error;
@@ -669,6 +680,7 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_task_t *task,
 	if (!msu_path_get_path_and_id(task->path, &root_path, &cb_data->id,
 				      &cb_data->error)) {
 		MSU_LOG_ERROR("Bad path %s", task->path);
+
 		goto on_error;
 	}
 
@@ -677,6 +689,7 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_task_t *task,
 	device = msu_device_from_path(root_path, upnp->server_udn_map);
 	if (!device) {
 		MSU_LOG_ERROR("Cannot locate device for %s", root_path);
+
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
 				    "Cannot locate device corresponding to"
