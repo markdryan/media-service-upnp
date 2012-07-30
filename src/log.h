@@ -68,7 +68,7 @@ void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 
 /* Logging macro for error messages
  */
-#if MSU_LOG_LEVEL & MSU_MSU_LOG_LEVEL_ERROR
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_ERROR
 	#define MSU_LOG_ERROR(...) \
 		MSU_LOG_HELPER(LOG_ERR, G_LOG_LEVEL_ERROR, __VA_ARGS__, 0)
 #else
