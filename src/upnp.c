@@ -622,7 +622,7 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
 							task->ut.search.query);
 	if (!upnp_query) {
 		MSU_LOG_ERROR("Query string is not valid:%s",
-			      task->search.query);
+			      task->ut.search.query);
 
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_QUERY,
 					     "Query string is not valid.");
