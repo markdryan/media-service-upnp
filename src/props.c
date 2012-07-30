@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include "log.h"
 #include "path.h"
 #include "props.h"
 
@@ -290,9 +291,12 @@ guint32 msu_props_parse_filter(GHashTable *filter_map, GVariant *filter,
 static void prv_add_string_prop(GVariantBuilder *vb, const gchar *key,
 				const gchar *value)
 {
-	if (value)
+	if (value) {
+		MSU_LOG_INFO("Prop %s = %s", key, value);
+
 		g_variant_builder_add(vb, "{sv}", key,
 				      g_variant_new_string(value));
+	}
 }
 
 static void prv_add_strv_prop(GVariantBuilder *vb, const gchar *key,
@@ -306,14 +310,19 @@ static void prv_add_strv_prop(GVariantBuilder *vb, const gchar *key,
 static void prv_add_path_prop(GVariantBuilder *vb, const gchar *key,
 			      const gchar *value)
 {
-	if (value)
+	if (value) {
+		MSU_LOG_INFO("Prop %s = %s", key, value);
+
 		g_variant_builder_add(vb, "{sv}", key,
 				      g_variant_new_object_path(value));
+	}
 }
 
 static void prv_add_uint_prop(GVariantBuilder *vb, const gchar *key,
 			      unsigned int value)
 {
+	MSU_LOG_INFO("Prop %s = %u", key, value);
+
 	g_variant_builder_add(vb, "{sv}", key, g_variant_new_uint32(value));
 }
 
@@ -333,15 +342,20 @@ void msu_props_add_child_count(GVariantBuilder *item_vb, gint value)
 static void prv_add_bool_prop(GVariantBuilder *vb, const gchar *key,
 			      gboolean value)
 {
+	MSU_LOG_INFO("Prop %s = %u", key, value);
+
 	g_variant_builder_add(vb, "{sv}", key, g_variant_new_boolean(value));
 }
 
 static void prv_add_int64_prop(GVariantBuilder *vb, const gchar *key,
 			       gint64 value)
 {
-	if (value != -1)
+	if (value != -1) {
+		MSU_LOG_INFO("Prop %s = %"G_GINT64_FORMAT, key, value);
+
 		g_variant_builder_add(vb, "{sv}", key,
 				      g_variant_new_int64(value));
+	}
 }
 
 void msu_props_add_device(GUPnPDeviceInfo *proxy, GVariantBuilder *vb)
@@ -445,8 +459,15 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy, const gchar *prop)
 		str = copy;
 	}
 
-	if (str)
+	if (str) {
+		MSU_LOG_INFO("Prop %s = %s", prop, str);
+
 		retval = g_variant_ref_sink(g_variant_new_string(str));
+	}
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_WARNING
+	else
+		MSU_LOG_WARNING("Property %s not defined for device", prop);
+#endif
 
 	g_free(copy);
 
@@ -941,10 +962,15 @@ GVariant *msu_props_get_object_prop(const gchar *prop, const gchar *root_path,
 	if (!strcmp(prop, MSU_INTERFACE_PROP_PARENT)) {
 		id = gupnp_didl_lite_object_get_parent_id(object);
 		if (!id || !strcmp(id, "-1")) {
+			MSU_LOG_INFO("Prop %s = %s", prop, root_path);
+
 			retval = g_variant_ref_sink(g_variant_new_string(
 							    root_path));
 		} else {
 			path = msu_path_from_id(root_path, id);
+
+			MSU_LOG_INFO("Prop %s = %s", prop, path);
+
 			retval = g_variant_ref_sink(g_variant_new_string(
 							    path));
 			g_free(path);
@@ -955,6 +981,9 @@ GVariant *msu_props_get_object_prop(const gchar *prop, const gchar *root_path,
 			goto on_error;
 
 		path = msu_path_from_id(root_path, id);
+
+		MSU_LOG_INFO("Prop %s = %s", prop, path);
+
 		retval = g_variant_ref_sink(g_variant_new_string(path));
 		g_free(path);
 	} else if (!strcmp(prop, MSU_INTERFACE_PROP_TYPE)) {
@@ -964,12 +993,16 @@ GVariant *msu_props_get_object_prop(const gchar *prop, const gchar *root_path,
 		if (!media_spec_type)
 			goto on_error;
 
+		MSU_LOG_INFO("Prop %s = %s", prop, media_spec_type);
+
 		retval = g_variant_ref_sink(g_variant_new_string(
 						    media_spec_type));
 	} else if (!strcmp(prop, MSU_INTERFACE_PROP_DISPLAY_NAME)) {
 		title = gupnp_didl_lite_object_get_title(object);
 		if (!title)
 			goto on_error;
+
+		MSU_LOG_INFO("Prop %s = %s", prop, title);
 
 		retval = g_variant_ref_sink(g_variant_new_string(title));
 	}
@@ -995,26 +1028,40 @@ GVariant *msu_props_get_item_prop(const gchar *prop,
 		str = gupnp_didl_lite_object_get_artist(object);
 		if (!str)
 			goto on_error;
+
+		MSU_LOG_INFO("Prop %s = %s", prop, str);
+
 		retval = g_variant_ref_sink(g_variant_new_string(str));
 	} else if (!strcmp(prop, MSU_INTERFACE_PROP_ALBUM)) {
 		str = gupnp_didl_lite_object_get_album(object);
 		if (!str)
 			goto on_error;
+
+		MSU_LOG_INFO("Prop %s = %s", prop, str);
+
 		retval = g_variant_ref_sink(g_variant_new_string(str));
 	} else if (!strcmp(prop, MSU_INTERFACE_PROP_DATE)) {
 		str = gupnp_didl_lite_object_get_date(object);
 		if (!str)
 			goto on_error;
+
+		MSU_LOG_INFO("Prop %s = %s", prop, str);
+
 		retval = g_variant_ref_sink(g_variant_new_string(str));
 	} else if (!strcmp(prop, MSU_INTERFACE_PROP_GENRE)) {
 		str = gupnp_didl_lite_object_get_genre(object);
 		if (!str)
 			goto on_error;
+
+		MSU_LOG_INFO("Prop %s = %s", prop, str);
+
 		retval = g_variant_ref_sink(g_variant_new_string(str));
 	} else if (!strcmp(prop, MSU_INTERFACE_PROP_TRACK_NUMBER)) {
 		track_number = gupnp_didl_lite_object_get_track_number(object);
 		if (track_number < 0)
 			goto on_error;
+
+		MSU_LOG_INFO("Prop %s = %d", prop, track_number);
 
 		retval = g_variant_ref_sink(
 			g_variant_new_int32(track_number));
@@ -1022,6 +1069,9 @@ GVariant *msu_props_get_item_prop(const gchar *prop,
 		str = gupnp_didl_lite_object_get_album_art(object);
 		if (!str)
 			goto on_error;
+
+		MSU_LOG_INFO("Prop %s = %s", prop, str);
+
 		retval = g_variant_ref_sink(g_variant_new_string(str));
 	} else if (!strcmp(prop, MSU_INTERFACE_PROP_RESOURCES)) {
 		retval = g_variant_ref_sink(
@@ -1056,6 +1106,9 @@ GVariant *msu_props_get_container_prop(const gchar *prop,
 	if (!strcmp(prop, MSU_INTERFACE_PROP_CHILD_COUNT)) {
 		child_count =
 			gupnp_didl_lite_container_get_child_count(container);
+
+		MSU_LOG_INFO("Prop %s = %d", prop, child_count);
+
 		if (child_count >= 0) {
 			retval = g_variant_new_uint32((guint) child_count);
 			retval = g_variant_ref_sink(retval);
@@ -1063,6 +1116,9 @@ GVariant *msu_props_get_container_prop(const gchar *prop,
 	} else if (!strcmp(prop, MSU_INTERFACE_PROP_SEARCHABLE)) {
 		searchable =
 			gupnp_didl_lite_container_get_searchable(container);
+
+		MSU_LOG_INFO("Prop %s = %d", prop, searchable);
+
 		retval = g_variant_ref_sink(
 			g_variant_new_boolean(searchable));
 	}

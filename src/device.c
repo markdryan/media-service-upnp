@@ -25,6 +25,7 @@
 
 #include "device.h"
 #include "error.h"
+#include "log.h"
 #include "path.h"
 
 typedef gboolean (*msu_device_count_cb_t)(msu_async_cb_data_t *cb_data,
@@ -134,12 +135,16 @@ gboolean msu_device_new(GDBusConnection *connection,
 	guint id;
 	GString *new_path = NULL;
 
+	MSU_LOG_INFO("%s called", __func__);
+
 	dev->connection = connection;
 	dev->contexts = g_ptr_array_new_with_free_func(prv_msu_context_delete);
 	msu_device_append_new_context(dev, ip_address, proxy);
 
 	new_path = g_string_new("");
 	g_string_printf(new_path, "%s/%u", MSU_SERVER_PATH, counter);
+
+	MSU_LOG_INFO("Server Path %s", new_path->str);
 
 	flags = G_DBUS_SUBTREE_FLAGS_DISPATCH_TO_UNENUMERATED_NODES;
 	id =  g_dbus_connection_register_subtree(connection, new_path->str,
@@ -152,6 +157,9 @@ gboolean msu_device_new(GDBusConnection *connection,
 	dev->id = id;
 
 	*device = dev;
+
+	MSU_LOG_INFO("%s exit with SUCCESS", __func__);
+
 	return TRUE;
 
 on_error:
@@ -159,6 +167,8 @@ on_error:
 		g_string_free(new_path, TRUE);
 
 	msu_device_delete(dev);
+
+	MSU_LOG_INFO("%s exit with FAIL", __func__);
 
 	return FALSE;
 }
@@ -227,6 +237,8 @@ static void prv_found_child(GUPnPDIDLLiteParser *parser,
 	msu_device_object_builder_t *builder;
 	gboolean have_child_count;
 
+	MSU_LOG_INFO("%s called", __func__);
+
 	builder = g_new0(msu_device_object_builder_t, 1);
 
 	if (GUPNP_IS_DIDL_LITE_CONTAINER(object)) {
@@ -264,11 +276,15 @@ static void prv_found_child(GUPnPDIDLLiteParser *parser,
 
 	g_ptr_array_add(cb_task_data->vbs, builder);
 
+	MSU_LOG_INFO("%s exit with SUCCESS", __func__);
+
 	return;
 
 on_error:
 
 	prv_msu_device_object_builder_delete(builder);
+
+	MSU_LOG_INFO("%s exit with FAIL", __func__);
 }
 
 static GVariant *prv_children_result_to_variant(msu_async_cb_data_t *cb_data)
@@ -353,16 +369,23 @@ static void prv_get_children_cb(GUPnPServiceProxy *proxy,
 	msu_async_cb_data_t *cb_data = user_data;
 	msu_async_bas_t *cb_task_data = &cb_data->ut.bas;
 
+	MSU_LOG_INFO("%s called", __func__);
+
 	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
 					    &upnp_error,
 					    "Result", G_TYPE_STRING,
 					    &result, NULL)) {
+		MSU_LOG_ERROR("Browse operation failed: %s",
+			      upnp_error->message);
+
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
 					     "Browse operation failed: %s",
 					     upnp_error->message);
 		goto on_error;
 	}
+
+	MSU_LOG_INFO("GetChildren result: %s", result);
 
 	parser = gupnp_didl_lite_parser_new();
 
@@ -374,6 +397,9 @@ static void prv_get_children_cb(GUPnPServiceProxy *proxy,
 
 	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)
 		&& upnp_error->code != GUPNP_XML_ERROR_EMPTY_NODE) {
+		MSU_LOG_ERROR("Unable to parse results of browse: %s",
+			      upnp_error->message);
+
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
 					     "Unable to parse results of "
@@ -382,6 +408,8 @@ static void prv_get_children_cb(GUPnPServiceProxy *proxy,
 	}
 
 	if (cb_task_data->need_child_count) {
+		MSU_LOG_INFO("Need to retrieve ChildCounts");
+
 		cb_task_data->get_children_cb = prv_get_children_result;
 		prv_retrieve_child_count_for_list(cb_data);
 		goto no_complete;
@@ -403,6 +431,8 @@ no_complete:
 		g_object_unref(parser);
 
 	g_free(result);
+
+	MSU_LOG_INFO("%s exit", __func__);
 }
 
 void msu_device_get_children(msu_device_t *device,  msu_task_t *task,
@@ -411,6 +441,8 @@ void msu_device_get_children(msu_device_t *device,  msu_task_t *task,
 			     GCancellable *cancellable)
 {
 	msu_device_context_t *context;
+
+	MSU_LOG_INFO("%s called", __func__);
 
 	context = msu_device_get_context(device);
 
@@ -442,6 +474,8 @@ void msu_device_get_children(msu_device_t *device,  msu_task_t *task,
 				      G_CALLBACK(msu_async_task_cancelled),
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
+
+	MSU_LOG_INFO("%s exit", __func__);
 }
 
 static void prv_get_item(GUPnPDIDLLiteParser *parser,
@@ -560,10 +594,15 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 	msu_async_cb_data_t *cb_data = user_data;
 	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
 
+	MSU_LOG_INFO("%s called.", __func__);
+
 	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
 					    &upnp_error,
 					    "Result", G_TYPE_STRING,
 					    &result, NULL)) {
+		MSU_LOG_ERROR("Browse operation failed: %s",
+			      upnp_error->message);
+
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
 					     "Browse operation failed: %s",
@@ -571,24 +610,32 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 		goto on_error;
 	}
 
+	MSU_LOG_INFO("GetMS2SpecProps result: %s", result);
+
 	parser = gupnp_didl_lite_parser_new();
 
 	g_signal_connect(parser, "object-available" , cb_task_data->prop_func,
 			 cb_data);
 
 	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)) {
-		if (upnp_error->code == GUPNP_XML_ERROR_EMPTY_NODE)
+		if (upnp_error->code == GUPNP_XML_ERROR_EMPTY_NODE) {
+			MSU_LOG_ERROR("Property not defined for object");
+
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_UNKNOWN_PROPERTY,
 					    "Property not defined for object");
-		else
+		} else {
+			MSU_LOG_ERROR("Unable to parse results of browse: %s",
+				      upnp_error->message);
+
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_OPERATION_FAILED,
 					    "Unable to parse results of "
 					    "browse: %s",
 					    upnp_error->message);
+		}
 		goto on_error;
 	}
 
@@ -596,6 +643,8 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 		goto on_error;
 
 	if (cb_task_data->need_child_count) {
+		MSU_LOG_INFO("Need Child Count");
+
 		prv_get_child_count(cb_data, prv_get_all_child_count_cb,
 			cb_data->id);
 
@@ -619,6 +668,8 @@ no_complete:
 		g_object_unref(parser);
 
 	g_free(result);
+
+	MSU_LOG_INFO("%s exit.", __func__);
 }
 
 static void prv_get_all_ms2spec_props(msu_device_context_t *context,
@@ -629,6 +680,8 @@ static void prv_get_all_ms2spec_props(msu_device_context_t *context,
 	msu_task_t *task = cb_data->task;
 	msu_task_get_props_t *task_data = &task->ut.get_props;
 
+	MSU_LOG_INFO("%s called.", __func__);
+
 	if (!strcmp(MSU_INTERFACE_MEDIA_CONTAINER, task_data->interface_name))
 		cb_task_data->prop_func = G_CALLBACK(prv_get_container);
 	else if (!strcmp(MSU_INTERFACE_MEDIA_ITEM, task_data->interface_name))
@@ -638,6 +691,8 @@ static void prv_get_all_ms2spec_props(msu_device_context_t *context,
 	else  if (!strcmp("", task_data->interface_name))
 		cb_task_data->prop_func = G_CALLBACK(prv_get_all);
 	else {
+		MSU_LOG_ERROR("Interface is unknown.");
+
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_UNKNOWN_INTERFACE,
 				    "Interface is unknown.");
@@ -663,11 +718,15 @@ static void prv_get_all_ms2spec_props(msu_device_context_t *context,
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
 
+	MSU_LOG_INFO("%s exit SUCCESS.", __func__);
+
 	return;
 
 on_error:
 
 	(void) g_idle_add(msu_async_complete_task, cb_data);
+
+	MSU_LOG_INFO("%s exit FAIL.", __func__);
 
 	return;
 }
@@ -680,6 +739,8 @@ void msu_device_get_all_props(msu_device_t *device,  msu_task_t *task,
 	msu_async_get_all_t *cb_task_data;
 	msu_task_get_props_t *task_data = &task->ut.get_props;
 	msu_device_context_t *context;
+
+	MSU_LOG_INFO("%s called.", __func__);
 
 	context = msu_device_get_context(device);
 	cb_task_data = &cb_data->ut.get_all;
@@ -715,6 +776,8 @@ void msu_device_get_all_props(msu_device_t *device,  msu_task_t *task,
 
 		prv_get_all_ms2spec_props(context, cancellable, cb_data);
 	}
+
+	MSU_LOG_INFO("%s exit.", __func__);
 }
 
 static void prv_get_object_property(GUPnPDIDLLiteParser *parser,
@@ -801,8 +864,14 @@ on_error:
 static gboolean prv_get_child_count_cb(msu_async_cb_data_t *cb_data,
 				   gint count)
 {
+	MSU_LOG_INFO("%s called.", __func__);
+
+	MSU_LOG_INFO("Count %d", count);
+
 	cb_data->result =  g_variant_ref_sink(
 		g_variant_new_uint32((guint) count));
+
+	MSU_LOG_INFO("%s exit.", __func__);
 
 	return TRUE;
 }
@@ -817,11 +886,16 @@ static void prv_count_children_cb(GUPnPServiceProxy *proxy,
 	gint count;
 	gboolean complete = FALSE;
 
+	MSU_LOG_INFO("%s called", __func__);
+
 	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
 					    &upnp_error,
 					    "TotalMatches", G_TYPE_INT,
 					    &count,
 					    NULL)) {
+		MSU_LOG_ERROR("Browse operation failed: %s",
+			      upnp_error->message);
+
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
 					     "Browse operation failed: %s",
@@ -843,12 +917,16 @@ on_error:
 
 	if (upnp_error)
 		g_error_free(upnp_error);
+
+	MSU_LOG_INFO("%s exit", __func__);
 }
 
 static void prv_get_child_count(msu_async_cb_data_t *cb_data,
 				msu_device_count_cb_t cb, const gchar *id)
 {
 	msu_device_count_data_t *count_data;
+
+	MSU_LOG_INFO("%s called", __func__);
 
 	prv_msu_device_count_data_new(cb_data, cb, &count_data);
 	cb_data->action =
@@ -873,6 +951,8 @@ static void prv_get_child_count(msu_async_cb_data_t *cb_data,
 						 "",
 
 						 NULL);
+
+	MSU_LOG_INFO("%s exit with SUCCESS", __func__);
 }
 
 static void prv_get_ms2spec_prop_cb(GUPnPServiceProxy *proxy,
@@ -886,10 +966,14 @@ static void prv_get_ms2spec_prop_cb(GUPnPServiceProxy *proxy,
 	msu_async_get_prop_t *cb_task_data = &cb_data->ut.get_prop;
 	msu_task_get_prop_t *task_data = &cb_data->task->ut.get_prop;
 
+	MSU_LOG_INFO("%s called", __func__);
+
 	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
 					    &upnp_error,
 					    "Result", G_TYPE_STRING,
 					    &result, NULL)) {
+		MSU_LOG_ERROR("Browse operation failed: %s",
+			      upnp_error->message);
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
 					     "Browse operation failed: %s",
@@ -897,36 +981,49 @@ static void prv_get_ms2spec_prop_cb(GUPnPServiceProxy *proxy,
 		goto on_error;
 	}
 
+	MSU_LOG_INFO("GetMS2SpecProp result: %s", result);
+
 	parser = gupnp_didl_lite_parser_new();
 
 	g_signal_connect(parser, "object-available" , cb_task_data->prop_func,
 			 cb_data);
 
 	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)) {
-		if (upnp_error->code == GUPNP_XML_ERROR_EMPTY_NODE)
+		if (upnp_error->code == GUPNP_XML_ERROR_EMPTY_NODE) {
+			MSU_LOG_ERROR("Property not defined for object");
+
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_UNKNOWN_PROPERTY,
 					    "Property not defined for object");
-		else
+		} else {
+			MSU_LOG_ERROR("Unable to parse results of browse: %s",
+				      upnp_error->message);
+
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_OPERATION_FAILED,
 					    "Unable to parse results of "
 					    "browse: %s",
 					    upnp_error->message);
+		}
 		goto on_error;
 	}
 
-	if (!cb_data->result)
+	if (!cb_data->result) {
+		MSU_LOG_ERROR("Property not defined for object");
+
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_UNKNOWN_PROPERTY,
 					     "Property not defined for object");
+	}
 
 on_error:
 
 	if (cb_data->error && !strcmp(task_data->prop_name,
 				      MSU_INTERFACE_PROP_CHILD_COUNT)) {
+		MSU_LOG_INFO("ChildCount not supported by server");
+
 		g_error_free(cb_data->error);
 		cb_data->error = NULL;
 		prv_get_child_count(cb_data, prv_get_child_count_cb,
@@ -944,6 +1041,8 @@ on_error:
 		g_object_unref(parser);
 
 	g_free(result);
+
+	MSU_LOG_INFO("%s exit", __func__);
 }
 
 static void prv_get_ms2spec_prop(msu_device_context_t *context,
@@ -954,6 +1053,8 @@ static void prv_get_ms2spec_prop(msu_device_context_t *context,
 {
 	msu_async_get_prop_t *cb_task_data;
 	const gchar *filter;
+
+	MSU_LOG_INFO("%s called", __func__);
 
 	cb_task_data = &cb_data->ut.get_prop;
 
@@ -978,6 +1079,9 @@ static void prv_get_ms2spec_prop(msu_device_context_t *context,
 	} else  if (!strcmp("", task_data->interface_name)) {
 		cb_task_data->prop_func = G_CALLBACK(prv_get_all_property);
 	} else {
+		MSU_LOG_ERROR("Interface is unknown.%s",
+			      task_data->interface_name);
+
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_UNKNOWN_INTERFACE,
 					     "Interface is unknown.");
@@ -1006,11 +1110,15 @@ static void prv_get_ms2spec_prop(msu_device_context_t *context,
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
 
+	MSU_LOG_INFO("%s exit with SUCCESS", __func__);
+
 	return;
 
 on_error:
 
 	(void) g_idle_add(msu_async_complete_task, cb_data);
+
+	MSU_LOG_INFO("%s exit with FAIL", __func__);
 
 	return;
 }
@@ -1022,6 +1130,8 @@ void msu_device_get_prop(msu_device_t *device,  msu_task_t *task,
 {
 	msu_task_get_prop_t *task_data = &task->ut.get_prop;
 	msu_device_context_t *context;
+
+	MSU_LOG_INFO("%s called", __func__);
 
 	context = msu_device_get_context(device);
 
@@ -1063,6 +1173,8 @@ void msu_device_get_prop(msu_device_t *device,  msu_task_t *task,
 					     &task->ut.get_prop, cancellable,
 					     cb_data);
 	}
+
+	MSU_LOG_INFO("%s exit", __func__);
 }
 
 static void prv_found_target(GUPnPDIDLLiteParser *parser,
@@ -1076,6 +1188,8 @@ static void prv_found_target(GUPnPDIDLLiteParser *parser,
 	gchar *path = NULL;
 	gboolean have_child_count;
 	msu_device_object_builder_t *builder;
+
+	MSU_LOG_INFO("%s called", __func__);
 
 	builder = g_new0(msu_device_object_builder_t, 1);
 
@@ -1116,12 +1230,16 @@ static void prv_found_target(GUPnPDIDLLiteParser *parser,
 	g_ptr_array_add(cb_task_data->vbs, builder);
 	g_free(path);
 
+	MSU_LOG_INFO("%s SUCCESS", __func__);
+
 	return;
 
 on_error:
 
 	g_free(path);
 	prv_msu_device_object_builder_delete(builder);
+
+	MSU_LOG_INFO("%s exit with FAIL", __func__);
 }
 
 static void prv_search_cb(GUPnPServiceProxy *proxy,
@@ -1134,6 +1252,8 @@ static void prv_search_cb(GUPnPServiceProxy *proxy,
 	msu_async_cb_data_t *cb_data = user_data;
 	msu_async_bas_t *cb_task_data = &cb_data->ut.bas;
 
+	MSU_LOG_INFO("%s called", __func__);
+
 	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
 					    &upnp_error,
 					    "Result", G_TYPE_STRING,
@@ -1141,6 +1261,9 @@ static void prv_search_cb(GUPnPServiceProxy *proxy,
 					    "TotalMatches", G_TYPE_INT,
 					    &cb_task_data->max_count,
 					    NULL)) {
+
+		MSU_LOG_ERROR("Search operation failed %s",
+			      upnp_error->message);
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
 					     "Search operation failed: %s",
@@ -1156,8 +1279,12 @@ static void prv_search_cb(GUPnPServiceProxy *proxy,
 	g_signal_connect(parser, "object-available" ,
 			 G_CALLBACK(prv_found_target), cb_data);
 
+	MSU_LOG_INFO("Server Search result: %s", result);
+
 	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)
 		&& upnp_error->code != GUPNP_XML_ERROR_EMPTY_NODE) {
+		MSU_LOG_ERROR("Unable to parse results of search: %s",
+			      upnp_error->message);
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
 					     "Unable to parse results of "
@@ -1166,6 +1293,8 @@ static void prv_search_cb(GUPnPServiceProxy *proxy,
 	}
 
 	if (cb_task_data->need_child_count) {
+		MSU_LOG_INFO("Need to retrieve child count");
+
 		if (cb_data->task->multiple_retvals)
 			cb_task_data->get_children_cb =
 				prv_get_search_ex_result;
@@ -1194,6 +1323,8 @@ no_complete:
 
 	if (upnp_error)
 		g_error_free(upnp_error);
+
+	MSU_LOG_INFO("%s exit", __func__);
 }
 
 void msu_device_search(msu_device_t *device,  msu_task_t *task,
@@ -1202,6 +1333,8 @@ void msu_device_search(msu_device_t *device,  msu_task_t *task,
 		       const gchar *sort_by, GCancellable *cancellable)
 {
 	msu_device_context_t *context;
+
+	MSU_LOG_INFO("%s called", __func__);
 
 	context = msu_device_get_context(device);
 
@@ -1224,6 +1357,8 @@ void msu_device_search(msu_device_t *device,  msu_task_t *task,
 				      G_CALLBACK(msu_async_task_cancelled),
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
+
+	MSU_LOG_INFO("%s exit", __func__);
 }
 
 static void prv_get_resource(GUPnPDIDLLiteParser *parser,
@@ -1234,6 +1369,8 @@ static void prv_get_resource(GUPnPDIDLLiteParser *parser,
 	msu_task_t *task = cb_data->task;
 	msu_task_get_resource_t *task_data = &task->ut.resource;
 	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
+
+	MSU_LOG_INFO("%s called", __func__);
 
 	msu_props_add_resource(cb_task_data->vb, object,
 			       cb_task_data->filter_mask,
@@ -1272,4 +1409,6 @@ void msu_device_get_resource(msu_device_t *device,  msu_task_t *task,
 				      G_CALLBACK(msu_async_task_cancelled),
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
+
+	MSU_LOG_INFO("%s exit", __func__);
 }
