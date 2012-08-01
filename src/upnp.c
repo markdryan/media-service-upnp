@@ -222,9 +222,7 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 on_error:
 
 	MSU_LOG_DEBUG("Exit");
-#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
-	msu_log_trace(LOG_DEBUG, G_LOG_LEVEL_DEBUG, "%s", "");
-#endif
+	MSU_LOG_DEBUG_NL();
 
 	return;
 }
@@ -276,9 +274,7 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 on_error:
 
 	MSU_LOG_DEBUG("Exit");
-#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
-	msu_log_trace(LOG_DEBUG, G_LOG_LEVEL_DEBUG, "%s", "");
-#endif
+	MSU_LOG_DEBUG_NL();
 
 	return;
 }

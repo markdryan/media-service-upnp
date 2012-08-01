@@ -71,9 +71,7 @@ gboolean msu_async_complete_task(gpointer user_data)
 	msu_async_cb_data_t *cb_data = user_data;
 
 	MSU_LOG_DEBUG("Enter. Error %p", (void *) cb_data->error);
-#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
-	msu_log_trace(LOG_DEBUG, G_LOG_LEVEL_DEBUG, "%s", "");
-#endif
+	MSU_LOG_DEBUG_NL();
 
 	cb_data->cb(cb_data->task, cb_data->result, cb_data->error,
 		    cb_data->user_data);
