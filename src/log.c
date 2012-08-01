@@ -26,7 +26,7 @@
 
 #include "log.h"
 
-static msu_log_t *s_log_context;
+static msu_log_t s_log_context;
 
 
 static void prv_msu_log_set_flags_from_param(msu_log_t *log_context)
@@ -87,7 +87,7 @@ static void prv_msu_log_handler(const gchar *log_domain,
 		g_log_default_handler(log_domain, log_level, message, data);
 }
 
-void msu_log_init(const char *program, msu_log_t *log_context)
+void msu_log_init(const char *program)
 {
 	int option = LOG_NDELAY | LOG_PID;
 	int old;
@@ -96,40 +96,38 @@ void msu_log_init(const char *program, msu_log_t *log_context)
 	option |= LOG_PERROR | LOG_CONS;
 #endif
 
-	memset(log_context, 0, sizeof(msu_log_t));
-	prv_msu_log_set_flags_from_param(log_context);
+	memset(&s_log_context, 0, sizeof(s_log_context));
+	prv_msu_log_set_flags_from_param(&s_log_context);
 
 	openlog(basename(program), option, LOG_DAEMON);
 
 	old = setlogmask(LOG_MASK(LOG_INFO));
 	syslog(LOG_INFO, "Media Service UPnP version %s", VERSION);
-	(void) setlogmask(log_context->mask);
+	(void) setlogmask(s_log_context.mask);
 
-	log_context->old_mask = old;
-	log_context->old_handler = g_log_set_default_handler(
+	s_log_context.old_mask = old;
+	s_log_context.old_handler = g_log_set_default_handler(
 					prv_msu_log_handler,
-					log_context);
+					&s_log_context);
 
-	s_log_context = log_context;
-
-	if (log_context->log_type != MSU_LOG_TYPE_SYSLOG)
+	if (s_log_context.log_type != MSU_LOG_TYPE_SYSLOG)
 		MSU_LOG_INFO("Media Service UPnP version %s", VERSION);
 }
 
-void msu_log_finalize(msu_log_t *log_context)
+void msu_log_finalize(void)
 {
 	(void) setlogmask(LOG_MASK(LOG_INFO));
 	syslog(LOG_INFO, "Media Service UPnP: Exit");
 
-	if (log_context->log_type != MSU_LOG_TYPE_SYSLOG)
+	if (s_log_context.log_type != MSU_LOG_TYPE_SYSLOG)
 		MSU_LOG_INFO("Media Service UPnP: Exit");
 
-	(void) g_log_set_default_handler(log_context->old_handler, NULL);
+	(void) g_log_set_default_handler(s_log_context.old_handler, NULL);
 
-	(void) setlogmask(log_context->old_mask);
+	(void) setlogmask(s_log_context.old_mask);
 	closelog();
 
-	s_log_context = NULL;
+	memset(&s_log_context, 0, sizeof(s_log_context));
 }
 
 void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
@@ -138,7 +136,7 @@ void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 
 	va_start(args, format);
 
-	switch (s_log_context->log_type) {
+	switch (s_log_context.log_type) {
 	case MSU_LOG_TYPE_SYSLOG:
 		vsyslog(priority, format, args);
 		break;

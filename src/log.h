@@ -43,9 +43,9 @@ struct msu_log_t_ {
 	GLogFunc old_handler;
 };
 
-void msu_log_init(const char *program, msu_log_t *log_context);
+void msu_log_init(const char *program);
 
-void msu_log_finalize(msu_log_t *log_context);
+void msu_log_finalize(void);
 
 void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 			__attribute__((format(printf, 3, 4)));
