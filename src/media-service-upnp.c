@@ -31,6 +31,7 @@
 
 #include "log.h"
 #include "props.h"
+#include "settings.h"
 #include "task.h"
 #include "upnp.h"
 
@@ -868,6 +869,8 @@ static void prv_unregister_client(gpointer user_data)
 int main(int argc, char *argv[])
 {
 	msu_context_t context;
+	msu_settings_context_t settings;
+
 	sigset_t mask;
 	int retval = 1;
 
@@ -883,6 +886,7 @@ int main(int argc, char *argv[])
 	g_type_init();
 
 	msu_log_init(argv[0]);
+	msu_settings_init(&settings);
 
 	context.root_node_info =
 		g_dbus_node_info_new_for_xml(g_msu_root_introspection, NULL);
@@ -917,6 +921,8 @@ int main(int argc, char *argv[])
 	retval = 0;
 
 on_error:
+
+	msu_settings_finalize(&settings);
 
 	prv_msu_context_free(&context);
 

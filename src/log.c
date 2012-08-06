@@ -26,51 +26,94 @@
 
 #include "log.h"
 
+typedef struct msu_log_t_ msu_log_t;
+struct msu_log_t_ {
+	int old_mask;
+	int mask;
+	msu_log_type_t log_type;
+	GLogLevelFlags flags;
+	GLogFunc old_handler;
+};
+
 static msu_log_t s_log_context;
 
-
-static void prv_msu_log_set_flags_from_param(msu_log_t *log_context)
+static void prv_msu_log_get_mf(int log_level, int *mask, GLogLevelFlags *flags)
 {
-	int mask = 0;
-	GLogLevelFlags flags = 0;
+	*mask = 0;
+	*flags = 0;
 
-	if (MSU_LOG_LEVEL & MSU_LOG_LEVEL_ERROR) {
-		mask |= LOG_MASK(LOG_ERR);
-		flags |= G_LOG_LEVEL_ERROR;
+	if (log_level & MSU_LOG_LEVEL_ERROR) {
+		*mask |= LOG_MASK(LOG_ERR);
+		*flags |= G_LOG_LEVEL_ERROR;
 	}
 
-	if (MSU_LOG_LEVEL & MSU_LOG_LEVEL_CRITICAL) {
-		mask |= LOG_MASK(LOG_CRIT);
-		flags |= G_LOG_LEVEL_CRITICAL;
+	if (log_level & MSU_LOG_LEVEL_CRITICAL) {
+		*mask |= LOG_MASK(LOG_CRIT);
+		*flags |= G_LOG_LEVEL_CRITICAL;
 	}
 
-	if (MSU_LOG_LEVEL & MSU_LOG_LEVEL_WARNING) {
-		mask |= LOG_MASK(LOG_WARNING);
-		flags |= G_LOG_LEVEL_WARNING;
+	if (log_level & MSU_LOG_LEVEL_WARNING) {
+		*mask |= LOG_MASK(LOG_WARNING);
+		*flags |= G_LOG_LEVEL_WARNING;
 	}
 
-	if (MSU_LOG_LEVEL & MSU_LOG_LEVEL_MESSAGE) {
-		mask |= LOG_MASK(LOG_NOTICE);
-		flags |= G_LOG_LEVEL_MESSAGE;
+	if (log_level & MSU_LOG_LEVEL_MESSAGE) {
+		*mask |= LOG_MASK(LOG_NOTICE);
+		*flags |= G_LOG_LEVEL_MESSAGE;
 	}
 
-	if (MSU_LOG_LEVEL & MSU_LOG_LEVEL_INFO) {
-		mask |= LOG_MASK(LOG_INFO);
-		flags |= G_LOG_LEVEL_INFO;
+	if (log_level & MSU_LOG_LEVEL_INFO) {
+		*mask |= LOG_MASK(LOG_INFO);
+		*flags |= G_LOG_LEVEL_INFO;
 	}
 
-	if (MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG) {
-		mask |= LOG_MASK(LOG_DEBUG);
-		flags |= G_LOG_LEVEL_DEBUG;
+	if (log_level & MSU_LOG_LEVEL_DEBUG) {
+		*mask |= LOG_MASK(LOG_DEBUG);
+		*flags |= G_LOG_LEVEL_DEBUG;
 	}
 
-	if (flags)
-		flags |= G_LOG_FLAG_RECURSION | G_LOG_FLAG_FATAL;
+	if (*flags)
+		*flags |= G_LOG_FLAG_RECURSION | G_LOG_FLAG_FATAL;
+}
 
-	log_context->mask = mask;
-	log_context->flags = flags;
+static void prv_msu_log_set_flags_from_param(void)
+{
+	int mask;
+	GLogLevelFlags flags;
 
-	log_context->log_type = MSU_LOG_TYPE;
+	prv_msu_log_get_mf(MSU_LOG_LEVEL, &mask, &flags);
+
+	s_log_context.mask = mask;
+	s_log_context.flags = flags;
+	s_log_context.log_type = MSU_LOG_TYPE;
+}
+
+void msu_log_update_type_level(msu_log_type_t log_type, int log_level)
+{
+	int mask;
+	int compile_mask;
+	GLogLevelFlags flags;
+	GLogLevelFlags compile_flags;
+
+	s_log_context.log_type = log_type;
+
+	prv_msu_log_get_mf(log_level, &mask, &flags);
+	prv_msu_log_get_mf(MSU_LOG_LEVEL, &compile_mask, &compile_flags);
+
+	/* log level read from conf file is a subset of log level
+	 * set at compile time.
+	 * Only keep subset flags from compile flags */
+
+	mask &= compile_mask;
+	flags &= compile_flags;
+
+	MSU_LOG_INFO("Type [%d]-Level [0x%02X] - Mask [0x%02X]-Flags [0x%02X]",
+		     log_type, log_level, mask, flags);
+
+	s_log_context.mask = mask;
+	s_log_context.flags = flags;
+
+	(void) setlogmask(mask);
 }
 
 static void prv_msu_log_handler(const gchar *log_domain,
@@ -97,7 +140,7 @@ void msu_log_init(const char *program)
 #endif
 
 	memset(&s_log_context, 0, sizeof(s_log_context));
-	prv_msu_log_set_flags_from_param(&s_log_context);
+	prv_msu_log_set_flags_from_param();
 
 	openlog(basename(program), option, LOG_DAEMON);
 
@@ -107,8 +150,12 @@ void msu_log_init(const char *program)
 
 	s_log_context.old_mask = old;
 	s_log_context.old_handler = g_log_set_default_handler(
-					prv_msu_log_handler,
-					&s_log_context);
+							prv_msu_log_handler,
+							&s_log_context);
+
+	MSU_LOG_INFO("Type [%d]-Level [0x%02X] - Mask [0x%02X]-Flags [0x%02X]",
+		     MSU_LOG_TYPE, MSU_LOG_LEVEL, s_log_context.mask,
+		     s_log_context.flags);
 
 	if (s_log_context.log_type != MSU_LOG_TYPE_SYSLOG) {
 		MSU_LOG_INFO("Media Service UPnP version %s", VERSION);
@@ -140,10 +187,12 @@ void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 
 	switch (s_log_context.log_type) {
 	case MSU_LOG_TYPE_SYSLOG:
-		vsyslog(priority, format, args);
+		if (s_log_context.mask)
+			vsyslog(priority, format, args);
 		break;
 	case MSU_LOG_TYPE_GLIB:
-		g_logv(G_LOG_DOMAIN, flags, format, args);
+		if (s_log_context.flags)
+			g_logv(G_LOG_DOMAIN, flags, format, args);
 		break;
 	case MSU_LOG_TYPE_FILE:
 		break;

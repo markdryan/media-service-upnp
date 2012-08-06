@@ -1,9 +1,10 @@
 INCLUDES = -DG_LOG_DOMAIN=\"MSU\"
 
-AM_CFLAGS =	$(GLIB_CFLAGS)		\
-		$(GIO_CFLAGS)		\
-		$(GUPNP_CFLAGS)		\
-		$(GUPNPAV_CFLAGS)	\
+AM_CFLAGS =	$(GLIB_CFLAGS)				\
+		$(GIO_CFLAGS)				\
+		$(GUPNP_CFLAGS)				\
+		$(GUPNPAV_CFLAGS)			\
+		-DSYS_CONFIG_DIR="\"$(sysconfdir)\""	\
 		-include config.h
 
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
@@ -18,6 +19,7 @@ media_service_upnp_sources = 	src/async.c		 \
 				src/path.c		 \
 				src/props.c		 \
 				src/search.c		 \
+				src/settings.c		 \
 				src/sort.c		 \
 				src/task.c		 \
 				src/upnp.c
@@ -29,6 +31,7 @@ media_service_upnp_headers =	src/async.h	\
 				src/path.h	\
 				src/props.h	\
 				src/search.h	\
+				src/settings.h	\
 				src/sort.h	\
 				src/task.h	\
 				src/upnp.h

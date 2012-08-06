@@ -34,18 +34,11 @@ enum msu_log_type_t_ {
 };
 typedef enum msu_log_type_t_ msu_log_type_t;
 
-typedef struct msu_log_t_ msu_log_t;
-struct msu_log_t_ {
-	int old_mask;
-	int mask;
-	msu_log_type_t log_type;
-	GLogLevelFlags flags;
-	GLogFunc old_handler;
-};
-
 void msu_log_init(const char *program);
 
 void msu_log_finalize(void);
+
+void msu_log_update_type_level(msu_log_type_t log_type, int log_level);
 
 void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 			__attribute__((format(printf, 3, 4)));
