@@ -82,7 +82,7 @@ void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 	#define MSU_LOG_CRITICAL(...) \
 		MSU_LOG_HELPER(LOG_CRIT, G_LOG_LEVEL_CRITICAL, __VA_ARGS__, 0)
 #else
-	#define MSU_LOG_CRITICAL(fmt, ...)
+	#define MSU_LOG_CRITICAL(...)
 #endif
 
 
@@ -92,7 +92,7 @@ void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 	#define MSU_LOG_WARNING(...) \
 		MSU_LOG_HELPER(LOG_WARNING, G_LOG_LEVEL_WARNING, __VA_ARGS__, 0)
 #else
-	#define MSU_LOG_WARNING(fmt, ...)
+	#define MSU_LOG_WARNING(...)
 #endif
 
 
@@ -102,7 +102,7 @@ void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 	#define MSU_LOG_MESSAGE(...) \
 		MSU_LOG_HELPER(LOG_NOTICE, G_LOG_LEVEL_MESSAGE, __VA_ARGS__, 0)
 #else
-	#define MSU_LOG_MESSAGE(fmt, ...)
+	#define MSU_LOG_MESSAGE(...)
 #endif
 
 
@@ -112,7 +112,7 @@ void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 	#define MSU_LOG_INFO(...) \
 		MSU_LOG_HELPER(LOG_INFO, G_LOG_LEVEL_INFO, __VA_ARGS__, 0)
 #else
-	#define MSU_LOG_INFO(fmt, ...)
+	#define MSU_LOG_INFO(...)
 #endif
 
 
@@ -122,7 +122,7 @@ void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 	#define MSU_LOG_DEBUG(...) \
 		MSU_LOG_HELPER(LOG_DEBUG, G_LOG_LEVEL_DEBUG, __VA_ARGS__, 0)
 #else
-	#define MSU_LOG_DEBUG(fmt, ...)
+	#define MSU_LOG_DEBUG(...)
 #endif
 
 #endif /* MSU_LOG_H__ */

@@ -110,8 +110,9 @@ void msu_log_init(const char *program)
 					prv_msu_log_handler,
 					&s_log_context);
 
-	if (s_log_context.log_type != MSU_LOG_TYPE_SYSLOG)
+	if (s_log_context.log_type != MSU_LOG_TYPE_SYSLOG) {
 		MSU_LOG_INFO("Media Service UPnP version %s", VERSION);
+	}
 }
 
 void msu_log_finalize(void)
@@ -119,8 +120,9 @@ void msu_log_finalize(void)
 	(void) setlogmask(LOG_MASK(LOG_INFO));
 	syslog(LOG_INFO, "Media Service UPnP: Exit");
 
-	if (s_log_context.log_type != MSU_LOG_TYPE_SYSLOG)
+	if (s_log_context.log_type != MSU_LOG_TYPE_SYSLOG) {
 		MSU_LOG_INFO("Media Service UPnP: Exit");
+	}
 
 	(void) g_log_set_default_handler(s_log_context.old_handler, NULL);
 
