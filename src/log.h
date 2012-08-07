@@ -125,4 +125,16 @@ void msu_log_trace(int priority, GLogLevelFlags flags, const char *format, ...)
 	#define MSU_LOG_DEBUG(...)
 #endif
 
+
+/* Logging macro to display an empty line
+ */
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+	#define MSU_LOG_DEBUG_NL() \
+		do { \
+			msu_log_trace(LOG_DEBUG, G_LOG_LEVEL_DEBUG, "\n"); \
+		} while (0)
+#else
+	#define MSU_LOG_DEBUG_NL()
+#endif
+
 #endif /* MSU_LOG_H__ */
