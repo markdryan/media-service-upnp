@@ -107,11 +107,11 @@ void msu_log_update_type_level(msu_log_type_t log_type, int log_level)
 	mask &= compile_mask;
 	flags &= compile_flags;
 
-	MSU_LOG_INFO("Type [%d]-Level [0x%02X] - Mask [0x%02X]-Flags [0x%02X]",
-		     log_type, log_level, mask, flags);
-
 	s_log_context.mask = mask;
 	s_log_context.flags = flags;
+
+	MSU_LOG_INFO("Type [%d]-Level [0x%02X] - Mask [0x%02X]-Flags [0x%02X]",
+		     log_type, log_level, mask, flags);
 
 	(void) setlogmask(mask);
 }
@@ -152,10 +152,6 @@ void msu_log_init(const char *program)
 	s_log_context.old_handler = g_log_set_default_handler(
 							prv_msu_log_handler,
 							&s_log_context);
-
-	MSU_LOG_INFO("Type [%d]-Level [0x%02X] - Mask [0x%02X]-Flags [0x%02X]",
-		     MSU_LOG_TYPE, MSU_LOG_LEVEL, s_log_context.mask,
-		     s_log_context.flags);
 
 	if (s_log_context.log_type != MSU_LOG_TYPE_SYSLOG) {
 		MSU_LOG_INFO("Media Service UPnP version %s", VERSION);
