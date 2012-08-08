@@ -375,7 +375,7 @@ static void prv_get_children_cb(GUPnPServiceProxy *proxy,
 					    &upnp_error,
 					    "Result", G_TYPE_STRING,
 					    &result, NULL)) {
-		MSU_LOG_ERROR("Browse operation failed: %s",
+		MSU_LOG_WARNING("Browse operation failed: %s",
 			      upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
@@ -397,7 +397,7 @@ static void prv_get_children_cb(GUPnPServiceProxy *proxy,
 
 	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)
 		&& upnp_error->code != GUPNP_XML_ERROR_EMPTY_NODE) {
-		MSU_LOG_ERROR("Unable to parse results of browse: %s",
+		MSU_LOG_WARNING("Unable to parse results of browse: %s",
 			      upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
@@ -600,7 +600,7 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 					    &upnp_error,
 					    "Result", G_TYPE_STRING,
 					    &result, NULL)) {
-		MSU_LOG_ERROR("Browse operation failed: %s",
+		MSU_LOG_WARNING("Browse operation failed: %s",
 			      upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
@@ -619,14 +619,14 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 
 	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)) {
 		if (upnp_error->code == GUPNP_XML_ERROR_EMPTY_NODE) {
-			MSU_LOG_ERROR("Property not defined for object");
+			MSU_LOG_WARNING("Property not defined for object");
 
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_UNKNOWN_PROPERTY,
 					    "Property not defined for object");
 		} else {
-			MSU_LOG_ERROR("Unable to parse results of browse: %s",
+			MSU_LOG_WARNING("Unable to parse results of browse: %s",
 				      upnp_error->message);
 
 			cb_data->error =
@@ -691,7 +691,7 @@ static void prv_get_all_ms2spec_props(msu_device_context_t *context,
 	else  if (!strcmp("", task_data->interface_name))
 		cb_task_data->prop_func = G_CALLBACK(prv_get_all);
 	else {
-		MSU_LOG_ERROR("Interface is unknown.");
+		MSU_LOG_WARNING("Interface is unknown.");
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_UNKNOWN_INTERFACE,
@@ -893,7 +893,7 @@ static void prv_count_children_cb(GUPnPServiceProxy *proxy,
 					    "TotalMatches", G_TYPE_INT,
 					    &count,
 					    NULL)) {
-		MSU_LOG_ERROR("Browse operation failed: %s",
+		MSU_LOG_WARNING("Browse operation failed: %s",
 			      upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
@@ -972,7 +972,7 @@ static void prv_get_ms2spec_prop_cb(GUPnPServiceProxy *proxy,
 					    &upnp_error,
 					    "Result", G_TYPE_STRING,
 					    &result, NULL)) {
-		MSU_LOG_ERROR("Browse operation failed: %s",
+		MSU_LOG_WARNING("Browse operation failed: %s",
 			      upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
@@ -991,14 +991,14 @@ static void prv_get_ms2spec_prop_cb(GUPnPServiceProxy *proxy,
 
 	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)) {
 		if (upnp_error->code == GUPNP_XML_ERROR_EMPTY_NODE) {
-			MSU_LOG_ERROR("Property not defined for object");
+			MSU_LOG_WARNING("Property not defined for object");
 
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_UNKNOWN_PROPERTY,
 					    "Property not defined for object");
 		} else {
-			MSU_LOG_ERROR("Unable to parse results of browse: %s",
+			MSU_LOG_WARNING("Unable to parse results of browse: %s",
 				      upnp_error->message);
 
 			cb_data->error =
@@ -1012,7 +1012,7 @@ static void prv_get_ms2spec_prop_cb(GUPnPServiceProxy *proxy,
 	}
 
 	if (!cb_data->result) {
-		MSU_LOG_ERROR("Property not defined for object");
+		MSU_LOG_WARNING("Property not defined for object");
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_UNKNOWN_PROPERTY,
@@ -1080,7 +1080,7 @@ static void prv_get_ms2spec_prop(msu_device_context_t *context,
 	} else  if (!strcmp("", task_data->interface_name)) {
 		cb_task_data->prop_func = G_CALLBACK(prv_get_all_property);
 	} else {
-		MSU_LOG_ERROR("Interface is unknown.%s",
+		MSU_LOG_WARNING("Interface is unknown.%s",
 			      task_data->interface_name);
 
 		cb_data->error = g_error_new(MSU_ERROR,
@@ -1263,7 +1263,7 @@ static void prv_search_cb(GUPnPServiceProxy *proxy,
 					    &cb_task_data->max_count,
 					    NULL)) {
 
-		MSU_LOG_ERROR("Search operation failed %s",
+		MSU_LOG_WARNING("Search operation failed %s",
 			      upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
@@ -1285,7 +1285,7 @@ static void prv_search_cb(GUPnPServiceProxy *proxy,
 
 	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)
 		&& upnp_error->code != GUPNP_XML_ERROR_EMPTY_NODE) {
-		MSU_LOG_ERROR("Unable to parse results of search: %s",
+		MSU_LOG_WARNING("Unable to parse results of search: %s",
 			      upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
