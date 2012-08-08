@@ -33,6 +33,10 @@
 #define MSU_SETTINGS_KEY_LOG_TYPE	"log-type"
 #define MSU_SETTINGS_KEY_LOG_LEVEL	"log-level"
 
+#define MSU_SETTINGS_DEFAULT_NEVER_QUIT	FALSE
+#define MSU_SETTINGS_DEFAULT_LOG_TYPE	MSU_LOG_TYPE
+#define MSU_SETTINGS_DEFAULT_LOG_LEVEL	MSU_LOG_LEVEL
+
 #define MSU_SETTINGS_LOG_KEYS(sys, loc, settings) \
 do { \
 	MSU_LOG_DEBUG_NL(); \
@@ -211,10 +215,10 @@ static void prv_msu_settings_read_keys(msu_settings_context_t *settings)
 
 static void prv_msu_settings_init_default(msu_settings_context_t *settings)
 {
-	settings->never_quit = FALSE;
+	settings->never_quit = MSU_SETTINGS_DEFAULT_NEVER_QUIT;
 
-	settings->log_type = MSU_LOG_TYPE;
-	settings->log_level = MSU_LOG_LEVEL;
+	settings->log_type = MSU_SETTINGS_DEFAULT_LOG_TYPE;
+	settings->log_level = MSU_SETTINGS_DEFAULT_LOG_LEVEL;
 }
 
 static void prv_msu_settings_keyfile_init(msu_settings_context_t *settings,
