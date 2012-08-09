@@ -24,6 +24,20 @@
 
 #include "settings.h"
 
+struct msu_settings_context_t_ {
+	GKeyFile *keyfile;
+	GFileMonitor *monitor;
+	gulong handler_id;
+	guint ev_id;
+
+	/* Global section */
+	gboolean never_quit;
+
+	/* Log section */
+	msu_log_type_t log_type;
+	int log_level;
+};
+
 #define MSU_SETTINGS_KEYFILE_NAME	"media-service-upnp.conf"
 
 #define MSU_SETTINGS_GROUP_GENERAL	"general"
@@ -43,11 +57,11 @@ do { \
 	MSU_LOG_INFO("Load file [%s]", loc ? loc : sys); \
 	MSU_LOG_DEBUG_NL(); \
 	MSU_LOG_DEBUG("[General settings]"); \
-	MSU_LOG_DEBUG("Never Quit: %s", settings->never_quit ? "T" : "F"); \
+	MSU_LOG_DEBUG("Never Quit: %s", (settings)->never_quit ? "T" : "F"); \
 	MSU_LOG_DEBUG_NL(); \
 	MSU_LOG_DEBUG("[Logging settings]"); \
-	MSU_LOG_DEBUG("Log Type : %d", settings->log_type); \
-	MSU_LOG_DEBUG("Log Level: 0x%02X", settings->log_level); \
+	MSU_LOG_DEBUG("Log Type : %d", (settings)->log_type); \
+	MSU_LOG_DEBUG("Log Level: 0x%02X", (settings)->log_level); \
 	MSU_LOG_DEBUG_NL(); \
 } while (0)
 
@@ -331,25 +345,25 @@ gboolean msu_settings_is_never_quit(msu_settings_context_t *settings)
 	return settings->never_quit;
 }
 
-void msu_settings_init(msu_settings_context_t *settings)
+void msu_settings_init(msu_settings_context_t **settings)
 {
 	gchar *sys_path = NULL;
 	gchar *loc_path = NULL;
 
-	memset(settings, 0, sizeof(*settings));
-	prv_msu_settings_init_default(settings);
+	*settings = g_malloc0(sizeof(**settings));
+	prv_msu_settings_init_default(*settings);
 
 	prv_msu_settings_get_keyfile_path(&sys_path, &loc_path);
 
 	if (loc_path) {
 		prv_msu_settings_check_local_keyfile(sys_path, loc_path);
-		prv_msu_settings_monitor_local_keyfile(settings, loc_path);
+		prv_msu_settings_monitor_local_keyfile(*settings, loc_path);
 	}
 
 	if (sys_path || loc_path)
-		prv_msu_settings_keyfile_init(settings, sys_path, loc_path);
+		prv_msu_settings_keyfile_init(*settings, sys_path, loc_path);
 
-	MSU_SETTINGS_LOG_KEYS(sys_path, loc_path, settings);
+	MSU_SETTINGS_LOG_KEYS(sys_path, loc_path, *settings);
 
 	g_free(sys_path);
 	g_free(loc_path);
@@ -367,4 +381,6 @@ void msu_settings_finalize(msu_settings_context_t *settings)
 	}
 
 	prv_msu_settings_keyfile_finalize(settings);
+
+	g_free(settings);
 }
