@@ -326,6 +326,11 @@ static void prv_msu_settings_monitor_local_keyfile(
 	}
 }
 
+gboolean msu_settings_is_never_quit(msu_settings_context_t *settings)
+{
+	return settings->never_quit;
+}
+
 void msu_settings_init(msu_settings_context_t *settings)
 {
 	gchar *sys_path = NULL;
