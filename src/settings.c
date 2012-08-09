@@ -345,7 +345,7 @@ gboolean msu_settings_is_never_quit(msu_settings_context_t *settings)
 	return settings->never_quit;
 }
 
-void msu_settings_init(msu_settings_context_t **settings)
+void msu_settings_new(msu_settings_context_t **settings)
 {
 	gchar *sys_path = NULL;
 	gchar *loc_path = NULL;
@@ -369,7 +369,7 @@ void msu_settings_init(msu_settings_context_t **settings)
 	g_free(loc_path);
 }
 
-void msu_settings_finalize(msu_settings_context_t *settings)
+void msu_settings_delete(msu_settings_context_t *settings)
 {
 	if (settings->monitor) {
 		if (settings->handler_id)

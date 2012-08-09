@@ -30,8 +30,8 @@
 
 typedef struct msu_settings_context_t_ msu_settings_context_t;
 
-void msu_settings_init(msu_settings_context_t **settings);
-void msu_settings_finalize(msu_settings_context_t *settings);
+void msu_settings_new(msu_settings_context_t **settings);
+void msu_settings_delete(msu_settings_context_t *settings);
 
 gboolean msu_settings_is_never_quit(msu_settings_context_t *settings);
 
