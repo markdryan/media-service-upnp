@@ -101,6 +101,7 @@ struct msu_context_t_ {
 	GHashTable *watchers;
 	GCancellable *cancellable;
 	msu_upnp_t *upnp;
+	msu_settings_context_t settings;
 };
 
 static const gchar g_msu_root_introspection[] =
@@ -575,6 +576,8 @@ static void prv_msu_context_free(msu_context_t *context)
 
 	if (context->root_node_info)
 		g_dbus_node_info_unref(context->root_node_info);
+
+	msu_settings_finalize(&context.settings);
 }
 
 static void prv_quit(msu_context_t *context)
@@ -869,7 +872,6 @@ static void prv_unregister_client(gpointer user_data)
 int main(int argc, char *argv[])
 {
 	msu_context_t context;
-	msu_settings_context_t settings;
 
 	sigset_t mask;
 	int retval = 1;
@@ -886,7 +888,7 @@ int main(int argc, char *argv[])
 	g_type_init();
 
 	msu_log_init(argv[0]);
-	msu_settings_init(&settings);
+	msu_settings_init(&context.settings);
 
 	context.root_node_info =
 		g_dbus_node_info_new_for_xml(g_msu_root_introspection, NULL);
@@ -921,8 +923,6 @@ int main(int argc, char *argv[])
 	retval = 0;
 
 on_error:
-
-	msu_settings_finalize(&settings);
 
 	prv_msu_context_free(&context);
 
