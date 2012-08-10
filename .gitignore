@@ -31,6 +31,7 @@ INSTALL
 
 src/com.intel.media-service-upnp.service
 media-service-upnp
+media-service-upnp.conf
 dms-info
 mediaconsole.pyc
 valgrind-ubuntu-11.10.supp
