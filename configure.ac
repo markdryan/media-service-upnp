@@ -177,9 +177,14 @@ AC_DEFINE([MSU_INTERFACE_MEDIA_DEVICE], "com.intel.UPnP.MediaDevice",
 			       [d-Bus Name of media-service-upnp device interface])
 
 
+AC_SUBST([never_quit])
+AC_SUBST([with_log_level])
+AC_SUBST([with_log_type])
+
 AC_CONFIG_FILES([Makefile \
 		 src/com.intel.media-service-upnp.service \
-		 media-service-upnp.pc])
+		 media-service-upnp.pc \
+		 media-service-upnp.conf])
 
 AC_OUTPUT
 
