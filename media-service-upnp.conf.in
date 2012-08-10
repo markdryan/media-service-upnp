@@ -6,7 +6,7 @@
 [general]
 
 # true: Service always stay in memory running
-# false: Service quit when the last client disconnect.
+# false: Service quit when the last client disconnects.
 never-quit=@never_quit@
 
 # Log configuration options
