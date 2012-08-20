@@ -381,6 +381,8 @@ static void prv_async_task_complete(msu_task_t *task, GVariant *result,
 {
 	msu_context_t *context = user_data;
 
+	MSU_LOG_DEBUG("Enter");
+
 	g_object_unref(context->cancellable);
 	context->cancellable = NULL;
 
@@ -396,6 +398,8 @@ static void prv_async_task_complete(msu_task_t *task, GVariant *result,
 		g_main_loop_quit(context->main_loop);
 	else if (context->tasks->len > 0)
 		context->idle_id = g_idle_add(prv_process_task, context);
+
+	MSU_LOG_DEBUG("Exit");
 }
 
 static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
@@ -403,6 +407,8 @@ static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
 	const gchar *client_name;
 	msu_client_t *client;
 	const gchar *protocol_info = NULL;
+
+	MSU_LOG_DEBUG("Enter");
 
 	context->cancellable = g_cancellable_new();
 	client_name =
@@ -440,6 +446,8 @@ static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
 	default:
 		break;
 	}
+
+	MSU_LOG_DEBUG("Exit");
 }
 
 static gboolean prv_process_task(gpointer user_data)
@@ -603,6 +611,8 @@ static void prv_remove_client(msu_context_t *context, const gchar *name)
 static void prv_lost_client(GDBusConnection *connection, const gchar *name,
 			    gpointer user_data)
 {
+	MSU_LOG_DEBUG("Lost Client %s", name);
+
 	prv_remove_client(user_data, name);
 }
 
