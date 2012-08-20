@@ -608,6 +608,39 @@ static void prv_quit(msu_context_t *context)
 
 static void prv_remove_client(msu_context_t *context, const gchar *name)
 {
+	const gchar *client_name;
+	msu_task_t *task;
+	guint pos;
+
+	if (context->cancellable) {
+		client_name = g_dbus_method_invocation_get_sender(
+					context->current_task->invocation);
+		if (!strcmp(client_name, name)) {
+			MSU_LOG_DEBUG("Cancelling current task, type is %d",
+						context->current_task->type);
+
+			g_cancellable_cancel(context->cancellable);
+		}
+	}
+
+	pos = 0;
+	while (pos < context->tasks->len) {
+		task = (msu_task_t *) g_ptr_array_index(context->tasks, pos);
+
+		client_name = g_dbus_method_invocation_get_sender(
+							task->invocation);
+
+		if (strcmp(client_name, name)) {
+			pos++;
+			continue;
+		}
+
+		MSU_LOG_DEBUG("Removing task type %d from array", task->type);
+
+		(void) g_ptr_array_remove_index(context->tasks, pos);
+		msu_task_cancel_and_delete(task);
+	}
+
 	(void) g_hash_table_remove(context->watchers, name);
 
 	if (g_hash_table_size(context->watchers) == 0)
