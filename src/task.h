@@ -123,6 +123,7 @@ msu_task_t *msu_task_set_protocol_info_new(GDBusMethodInvocation *invocation,
 					   GVariant *parameters);
 void msu_task_complete_and_delete(msu_task_t *task);
 void msu_task_fail_and_delete(msu_task_t *task, GError *error);
+void msu_task_cancel_and_delete(msu_task_t *task);
 void msu_task_delete(msu_task_t *task);
 
 #endif

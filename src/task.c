@@ -279,6 +279,27 @@ finished:
 	return;
 }
 
+void msu_task_cancel_and_delete(msu_task_t *task)
+{
+	GError *error;
+
+	if (!task)
+		goto finished;
+
+	if (task->invocation) {
+		error = g_error_new(MSU_ERROR, MSU_ERROR_CANCELLED,
+				    "Operation cancelled.");
+		g_dbus_method_invocation_return_gerror(task->invocation, error);
+		g_error_free(error);
+	}
+
+	prv_msu_task_delete(task);
+
+finished:
+
+	return;
+}
+
 void msu_task_delete(msu_task_t *task)
 {
 	GError *error;
