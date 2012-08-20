@@ -100,6 +100,7 @@ struct msu_context_t_ {
 	GPtrArray *tasks;
 	GHashTable *watchers;
 	GCancellable *cancellable;
+	msu_task_t *current_task;
 	msu_upnp_t *upnp;
 	msu_settings_context_t *settings;
 };
@@ -346,6 +347,8 @@ static void prv_process_sync_task(msu_context_t *context, msu_task_t *task)
 	const gchar *client_name;
 	msu_client_t *client;
 
+	context->current_task = task;
+
 	switch (task->type) {
 	case MSU_TASK_GET_VERSION:
 		msu_task_complete_and_delete(task);
@@ -374,6 +377,8 @@ static void prv_process_sync_task(msu_context_t *context, msu_task_t *task)
 	default:
 		break;
 	}
+
+	context->current_task = NULL;
 }
 
 static void prv_async_task_complete(msu_task_t *task, GVariant *result,
@@ -385,6 +390,7 @@ static void prv_async_task_complete(msu_task_t *task, GVariant *result,
 
 	g_object_unref(context->cancellable);
 	context->cancellable = NULL;
+	context->current_task = NULL;
 
 	if (error) {
 		msu_task_fail_and_delete(task, error);
@@ -411,6 +417,7 @@ static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
 	MSU_LOG_DEBUG("Enter");
 
 	context->cancellable = g_cancellable_new();
+	context->current_task = task;
 	client_name =
 		g_dbus_method_invocation_get_sender(task->invocation);
 	client = g_hash_table_lookup(context->watchers, client_name);
