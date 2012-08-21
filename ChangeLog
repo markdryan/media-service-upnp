@@ -1,3 +1,14 @@
+version 0.0.2
+	- Fixed bug (MSU executes dead client's commands)
+	    https://github.com/01org/media-service-upnp/issues/30
+	- Control exit behaviour of MSU
+	    https://github.com/01org/media-service-upnp/issues/29
+	    https://github.com/01org/media-service-upnp/issues/23
+	- Added logging
+	- Added settings management
+	- Fixed an issue with unicode strings in mediaconsole.py
+	- Tidied up the build system and introduced maintainer mode
+
 version 0.0.1
 	- Initial version of media-service-upnp
 
