@@ -113,4 +113,9 @@
 #define MSU_INTERFACE_SORT_BY "SortBy"
 #define MSU_INTERFACE_TOTAL_ITEMS "TotalItems"
 
+#define MSU_INTERFACE_SYSTEM_UPDATE "SystemUpdate"
+#define MSU_INTERFACE_SYSTEM_UPDATE_ID "SystemUpdateId"
+#define MSU_INTERFACE_CONTAINER_UPDATE "ContainerUpdate"
+#define MSU_INTERFACE_CONTAINER_PATHS "ContainerPaths"
+
 #endif

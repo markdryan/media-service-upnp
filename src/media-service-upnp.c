@@ -288,6 +288,12 @@ static const gchar g_msu_server_introspection[] =
 	"       access='read'/>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_ICON_URL"'"
 	"       access='read'/>"
+	"    <signal name='"MSU_INTERFACE_SYSTEM_UPDATE"'>"
+	"      <arg type='u' name='"MSU_INTERFACE_SYSTEM_UPDATE_ID"'/>"
+	"    </signal>"
+	"    <signal name='"MSU_INTERFACE_CONTAINER_UPDATE"'>"
+	"      <arg type='ao' name='"MSU_INTERFACE_CONTAINER_PATHS"'/>"
+	"    </signal>"
 	"  </interface>"
 	"</node>";
 

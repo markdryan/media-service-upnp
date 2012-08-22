@@ -28,19 +28,24 @@
 #include "async.h"
 #include "props.h"
 
+typedef struct msu_device_t_ msu_device_t;
+
 typedef struct msu_device_context_t_ msu_device_context_t;
 struct msu_device_context_t_ {
 	gchar *ip_address;
 	GUPnPDeviceProxy *device_proxy;
 	GUPnPServiceProxy *service_proxy;
+	msu_device_t *device;
+	gboolean subscribed;
+	guint timeout_id;
 };
 
-typedef struct msu_device_t_ msu_device_t;
 struct msu_device_t_ {
 	GDBusConnection *connection;
 	guint id;
 	gchar *path;
 	GPtrArray *contexts;
+	guint timeout_id;
 };
 
 void msu_device_append_new_context(msu_device_t *device,
@@ -76,6 +81,6 @@ void msu_device_get_resource(msu_device_t *device,  msu_task_t *task,
 			     msu_async_cb_data_t *cb_data,
 			     const gchar *upnp_filter,
 			     GCancellable *cancellable);
-
+void msu_device_subscribe_to_contents_change(msu_device_t *device);
 
 #endif

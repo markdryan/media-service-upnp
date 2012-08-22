@@ -227,6 +227,16 @@ on_error:
 	return;
 }
 
+static gboolean prv_subscribe_to_contents_change(gpointer user_data)
+{
+	msu_device_t *device = user_data;
+
+	device->timeout_id = 0;
+	msu_device_subscribe_to_contents_change(device);
+
+	return FALSE;
+}
+
 static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 				      GUPnPDeviceProxy *proxy,
 				      gpointer user_data)
@@ -237,6 +247,7 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 	const gchar *ip_address;
 	unsigned int i;
 	msu_device_context_t *context;
+	gboolean subscribed;
 
 	MSU_LOG_DEBUG("Enter");
 
@@ -263,11 +274,17 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 	}
 
 	if (i < device->contexts->len) {
+		subscribed = context->subscribed;
+
 		(void) g_ptr_array_remove_index(device->contexts, i);
 		if (device->contexts->len == 0) {
 			MSU_LOG_DEBUG("Last Context lost. Delete device");
 			upnp->lost_server(device->path, upnp->user_data);
 			g_hash_table_remove(upnp->server_udn_map, udn);
+		} else if (subscribed && !device->timeout_id) {
+			device->timeout_id = g_timeout_add_seconds(1,
+					prv_subscribe_to_contents_change,
+					device);
 		}
 	}
 

@@ -29,6 +29,9 @@
 #include "log.h"
 #include "path.h"
 
+#define MSU_SYSTEM_UPDATE_VAR "SystemUpdateID"
+#define MSU_CONTAINER_UPDATE_VAR "ContainerUpdateIDs"
+
 typedef gboolean (*msu_device_count_cb_t)(msu_async_cb_data_t *cb_data,
 					  gint count);
 
@@ -48,6 +51,14 @@ struct msu_device_object_builder_t_ {
 static void prv_get_child_count(msu_async_cb_data_t *cb_data,
 				msu_device_count_cb_t cb, const gchar *id);
 static void prv_retrieve_child_count_for_list(msu_async_cb_data_t *cb_data);
+static void prv_container_update_cb(GUPnPServiceProxy *proxy,
+				const char *variable,
+				GValue *value,
+				gpointer user_data);
+static void prv_system_update_cb(GUPnPServiceProxy *proxy,
+				const char *variable,
+				GValue *value,
+				gpointer user_data);
 
 static void prv_msu_device_object_builder_delete(void *dob)
 {
@@ -80,6 +91,20 @@ static void prv_msu_context_delete(gpointer context)
 	msu_device_context_t *ctx = context;
 
 	if (ctx) {
+		if (ctx->timeout_id)
+			(void) g_source_remove(ctx->timeout_id);
+
+		if (ctx->subscribed) {
+			gupnp_service_proxy_remove_notify(ctx->service_proxy,
+						MSU_SYSTEM_UPDATE_VAR,
+						prv_system_update_cb,
+						ctx->device);
+			gupnp_service_proxy_remove_notify(ctx->service_proxy,
+						MSU_CONTAINER_UPDATE_VAR,
+						prv_container_update_cb,
+						ctx->device);
+		}
+
 		if (ctx->device_proxy)
 			g_object_unref(ctx->device_proxy);
 
@@ -93,6 +118,7 @@ static void prv_msu_context_delete(gpointer context)
 
 static void prv_msu_context_new(const gchar *ip_address,
 				GUPnPDeviceProxy *proxy,
+				msu_device_t *device,
 				msu_device_context_t **context)
 {
 	const gchar *service_type =
@@ -101,6 +127,7 @@ static void prv_msu_context_new(const gchar *ip_address,
 
 	ctx->ip_address = g_strdup(ip_address);
 	ctx->device_proxy = proxy;
+	ctx->device = device;
 	g_object_ref(proxy);
 	ctx->service_proxy = (GUPnPServiceProxy *)
 		gupnp_device_info_get_service((GUPnPDeviceInfo *) proxy,
@@ -113,6 +140,9 @@ void msu_device_delete(void *device)
 	msu_device_t *dev = device;
 
 	if (dev) {
+		if (dev->timeout_id)
+			(void) g_source_remove(dev->timeout_id);
+
 		if (dev->id)
 			(void) g_dbus_connection_unregister_subtree(
 				dev->connection, dev->id);
@@ -121,6 +151,125 @@ void msu_device_delete(void *device)
 		g_free(dev->path);
 		g_free(dev);
 	}
+}
+
+static void prv_build_container_update_array(const gchar *root_path,
+						const gchar *value,
+						GVariantBuilder *builder)
+{
+	gchar **str_array;
+	int pos = 0;
+	gchar *path;
+
+	/*
+	 * value contains (id, version) pairs
+	 * we must extract ids only
+	 */
+	str_array = g_strsplit(value, ",", 0);
+
+	while (str_array[pos]) {
+		if ((pos % 2) == 0) {
+			path = msu_path_from_id(root_path, str_array[pos]);
+			g_variant_builder_add(builder, "o", path);
+			g_free(path);
+		}
+
+		pos++;
+	}
+
+	g_strfreev(str_array);
+}
+
+static void prv_container_update_cb(GUPnPServiceProxy *proxy,
+				const char *variable,
+				GValue *value,
+				gpointer user_data)
+{
+	msu_device_t *device = user_data;
+	GVariantBuilder array;
+
+	g_variant_builder_init(&array, G_VARIANT_TYPE("ao"));
+	prv_build_container_update_array(device->path,
+					g_value_get_string(value),
+					&array);
+
+	(void) g_dbus_connection_emit_signal(device->connection,
+			NULL,
+			device->path,
+			MSU_INTERFACE_MEDIA_DEVICE,
+			MSU_INTERFACE_CONTAINER_UPDATE,
+			g_variant_new("(@ao)", g_variant_builder_end(&array)),
+			NULL);
+}
+
+static void prv_system_update_cb(GUPnPServiceProxy *proxy,
+				const char *variable,
+				GValue *value,
+				gpointer user_data)
+{
+	msu_device_t *device = user_data;
+
+	(void) g_dbus_connection_emit_signal(device->connection,
+			NULL,
+			device->path,
+			MSU_INTERFACE_MEDIA_DEVICE,
+			MSU_INTERFACE_SYSTEM_UPDATE,
+			g_variant_new("(u)", g_value_get_uint(value)),
+			NULL);
+}
+
+static gboolean prv_re_enable_subscription(gpointer user_data)
+{
+	msu_device_context_t *context = user_data;
+
+	context->timeout_id = 0;
+
+	return FALSE;
+}
+
+static void prv_subscription_lost_cb(GUPnPServiceProxy *proxy,
+					const GError *reason,
+					gpointer user_data)
+{
+	msu_device_context_t *context = user_data;
+
+	if (!context->timeout_id) {
+		gupnp_service_proxy_set_subscribed(context->service_proxy,
+									TRUE);
+		context->timeout_id = g_timeout_add_seconds(10,
+						prv_re_enable_subscription,
+						context);
+	} else {
+		g_source_remove(context->timeout_id);
+		context->timeout_id = 0;
+		context->subscribed = FALSE;
+	}
+}
+
+void msu_device_subscribe_to_contents_change(msu_device_t *device)
+{
+	msu_device_context_t *context;
+
+	context = msu_device_get_context(device);
+
+	gupnp_service_proxy_add_notify(context->service_proxy,
+				MSU_SYSTEM_UPDATE_VAR,
+				G_TYPE_UINT,
+				prv_system_update_cb,
+				device);
+	gupnp_service_proxy_add_notify(context->service_proxy,
+				MSU_CONTAINER_UPDATE_VAR,
+				G_TYPE_STRING,
+				prv_container_update_cb,
+				device);
+
+	context->subscribed = TRUE;
+	gupnp_service_proxy_set_subscribed(context->service_proxy, TRUE);
+
+	g_signal_connect(context->service_proxy,
+				"subscription-lost",
+				G_CALLBACK(prv_subscription_lost_cb),
+				context);
 }
 
 gboolean msu_device_new(GDBusConnection *connection,
@@ -141,6 +290,8 @@ gboolean msu_device_new(GDBusConnection *connection,
 	dev->connection = connection;
 	dev->contexts = g_ptr_array_new_with_free_func(prv_msu_context_delete);
 	msu_device_append_new_context(dev, ip_address, proxy);
+
+	msu_device_subscribe_to_contents_change(dev);
 
 	new_path = g_string_new("");
 	g_string_printf(new_path, "%s/%u", MSU_SERVER_PATH, counter);
@@ -180,7 +331,7 @@ void msu_device_append_new_context(msu_device_t *device,
 {
 	msu_device_context_t *context;
 
-	prv_msu_context_new(ip_address, proxy, &context);
+	prv_msu_context_new(ip_address, proxy, device, &context);
 	g_ptr_array_add(device->contexts, context);
 }
 
