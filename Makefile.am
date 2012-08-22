@@ -27,6 +27,7 @@ media_service_upnp_sources = 	src/async.c		 \
 media_service_upnp_headers =	src/async.h	\
 				src/device.h	\
 				src/error.h	\
+				src/interface.h	\
 				src/log.h	\
 				src/path.h	\
 				src/props.h	\

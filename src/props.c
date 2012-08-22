@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include "interface.h"
 #include "log.h"
 #include "path.h"
 #include "props.h"

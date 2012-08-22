@@ -25,6 +25,7 @@
 
 #include "device.h"
 #include "error.h"
+#include "interface.h"
 #include "log.h"
 #include "path.h"
 

@@ -29,55 +29,11 @@
 #include <syslog.h>
 #include <sys/signalfd.h>
 
+#include "interface.h"
 #include "log.h"
-#include "props.h"
 #include "settings.h"
 #include "task.h"
 #include "upnp.h"
-
-#define MSU_INTERFACE_GET_VERSION "GetVersion"
-#define MSU_INTERFACE_GET_SERVERS "GetServers"
-#define MSU_INTERFACE_RELEASE "Release"
-#define MSU_INTERFACE_SET_PROTOCOL_INFO "SetProtocolInfo"
-
-#define MSU_INTERFACE_FOUND_SERVER "FoundServer"
-#define MSU_INTERFACE_LOST_SERVER "LostServer"
-
-#define MSU_INTERFACE_LIST_CHILDREN "ListChildren"
-#define MSU_INTERFACE_LIST_CHILDREN_EX "ListChildrenEx"
-#define MSU_INTERFACE_LIST_ITEMS "ListItems"
-#define MSU_INTERFACE_LIST_ITEMS_EX "ListItemsEx"
-#define MSU_INTERFACE_LIST_CONTAINERS "ListContainers"
-#define MSU_INTERFACE_LIST_CONTAINERS_EX "ListContainersEx"
-#define MSU_INTERFACE_SEARCH_OBJECTS "SearchObjects"
-#define MSU_INTERFACE_SEARCH_OBJECTS_EX "SearchObjectsEx"
-
-#define MSU_INTERFACE_GET_COMPATIBLE_RESOURCE "GetCompatibleResource"
-
-#define MSU_INTERFACE_GET "Get"
-#define MSU_INTERFACE_GET_ALL "GetAll"
-#define MSU_INTERFACE_INTERFACE_NAME "InterfaceName"
-#define MSU_INTERFACE_PROPERTY_NAME "PropertyName"
-#define MSU_INTERFACE_PROPERTIES_VALUE "Properties"
-#define MSU_INTERFACE_VALUE "value"
-
-#define MSU_INTERFACE_VERSION "Version"
-#define MSU_INTERFACE_SERVERS "Servers"
-
-
-#define MSU_INTERFACE_CRITERIA "Criteria"
-#define MSU_INTERFACE_DICT "Dictionary"
-#define MSU_INTERFACE_PATH "Path"
-#define MSU_INTERFACE_QUERY "Query"
-#define MSU_INTERFACE_PROTOCOL_INFO "ProtocolInfo"
-
-
-#define MSU_INTERFACE_OFFSET "Offset"
-#define MSU_INTERFACE_MAX "Max"
-#define MSU_INTERFACE_FILTER "Filter"
-#define MSU_INTERFACE_CHILDREN "Children"
-#define MSU_INTERFACE_SORT_BY "SortBy"
-#define MSU_INTERFACE_TOTAL_ITEMS "TotalItems"
 
 typedef struct msu_client_t_ msu_client_t;
 struct msu_client_t_ {
