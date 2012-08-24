@@ -191,6 +191,8 @@ static void prv_container_update_cb(GUPnPServiceProxy *proxy,
 	msu_device_t *device = user_data;
 	GVariantBuilder array;
 
+	MSU_LOG_DEBUG("Container Update %s", g_value_get_string(value));
+
 	g_variant_builder_init(&array, G_VARIANT_TYPE("ao"));
 	prv_build_container_update_array(device->path,
 					g_value_get_string(value),
@@ -211,6 +213,8 @@ static void prv_system_update_cb(GUPnPServiceProxy *proxy,
 				 gpointer user_data)
 {
 	msu_device_t *device = user_data;
+
+	MSU_LOG_DEBUG("System Update %u", g_value_get_uint(value));
 
 	(void) g_dbus_connection_emit_signal(device->connection,
 			NULL,
@@ -254,6 +258,9 @@ void msu_device_subscribe_to_contents_change(msu_device_t *device)
 	msu_device_context_t *context;
 
 	context = msu_device_get_context(device);
+
+	MSU_LOG_DEBUG("Subscribe for events on context: %s",
+		      context->ip_address);
 
 	gupnp_service_proxy_add_notify(context->service_proxy,
 				MSU_SYSTEM_UPDATE_VAR,

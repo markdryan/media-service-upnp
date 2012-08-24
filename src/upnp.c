@@ -282,6 +282,9 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 			upnp->lost_server(device->path, upnp->user_data);
 			g_hash_table_remove(upnp->server_udn_map, udn);
 		} else if (subscribed && !device->timeout_id) {
+
+			MSU_LOG_DEBUG("Subscribe on new context");
+
 			device->timeout_id = g_timeout_add_seconds(1,
 					prv_subscribe_to_contents_change,
 					device);
