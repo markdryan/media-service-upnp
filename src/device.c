@@ -157,8 +157,8 @@ void msu_device_delete(void *device)
 }
 
 static void prv_build_container_update_array(const gchar *root_path,
-						const gchar *value,
-						GVariantBuilder *builder)
+					     const gchar *value,
+					     GVariantBuilder *builder)
 {
 	gchar **str_array;
 	int pos = 0;
@@ -184,9 +184,9 @@ static void prv_build_container_update_array(const gchar *root_path,
 }
 
 static void prv_container_update_cb(GUPnPServiceProxy *proxy,
-				const char *variable,
-				GValue *value,
-				gpointer user_data)
+				    const char *variable,
+				    GValue *value,
+				    gpointer user_data)
 {
 	msu_device_t *device = user_data;
 	GVariantBuilder array;
@@ -206,9 +206,9 @@ static void prv_container_update_cb(GUPnPServiceProxy *proxy,
 }
 
 static void prv_system_update_cb(GUPnPServiceProxy *proxy,
-				const char *variable,
-				GValue *value,
-				gpointer user_data)
+				 const char *variable,
+				 GValue *value,
+				 gpointer user_data)
 {
 	msu_device_t *device = user_data;
 
@@ -231,8 +231,8 @@ static gboolean prv_re_enable_subscription(gpointer user_data)
 }
 
 static void prv_subscription_lost_cb(GUPnPServiceProxy *proxy,
-					const GError *reason,
-					gpointer user_data)
+				     const GError *reason,
+				     gpointer user_data)
 {
 	msu_device_context_t *context = user_data;
 
