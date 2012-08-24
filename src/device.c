@@ -132,6 +132,9 @@ static void prv_msu_context_new(const gchar *ip_address,
 	ctx->service_proxy = (GUPnPServiceProxy *)
 		gupnp_device_info_get_service((GUPnPDeviceInfo *) proxy,
 					      service_type);
+	ctx->subscribed = FALSE;
+	ctx->timeout_id = 0;
+
 	*context = ctx;
 }
 
