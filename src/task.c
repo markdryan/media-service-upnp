@@ -198,6 +198,22 @@ msu_task_t *msu_task_set_protocol_info_new(GDBusMethodInvocation *invocation,
 	return task;
 }
 
+msu_task_t *msu_task_upload_to_any_new(GDBusMethodInvocation *invocation,
+				       const gchar *path, GVariant *parameters)
+{
+	msu_task_t *task;
+
+	task = prv_m2spec_task_new(MSU_TASK_UPLOAD_TO_ANY, invocation,
+				   path, "(uo)");
+
+	g_variant_get(parameters, "(ss)", &task->ut.upload.display_name,
+		      &task->ut.upload.file_path);
+	g_strstrip(task->ut.upload.file_path);
+	task->multiple_retvals = TRUE;
+
+	return task;
+}
+
 static void prv_msu_task_delete(msu_task_t *task)
 {
 	switch (task->type) {
@@ -227,6 +243,10 @@ static void prv_msu_task_delete(msu_task_t *task)
 	case MSU_TASK_SET_PROTOCOL_INFO:
 		if (task->ut.protocol_info.protocol_info)
 			g_free(task->ut.protocol_info.protocol_info);
+		break;
+	case MSU_TASK_UPLOAD_TO_ANY:
+		g_free(task->ut.upload.display_name);
+		g_free(task->ut.upload.file_path);
 		break;
 	default:
 		break;

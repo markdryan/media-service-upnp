@@ -57,6 +57,10 @@ void msu_async_cb_data_delete(msu_async_cb_data_t *cb_data)
 			if (cb_data->ut.get_all.vb)
 				g_variant_builder_unref(cb_data->ut.get_all.vb);
 			break;
+		case MSU_TASK_UPLOAD_TO_ANY:
+			g_free(cb_data->ut.upload.root_path);
+			g_free(cb_data->ut.upload.mime_type);
+			break;
 		default:
 			break;
 		}

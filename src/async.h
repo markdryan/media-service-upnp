@@ -29,6 +29,7 @@
 #include "upnp.h"
 
 typedef struct msu_async_cb_data_t_ msu_async_cb_data_t;
+typedef struct msu_device_t_ msu_device_t;
 
 typedef void (*msu_async_cb_t)(msu_async_cb_data_t *cb_data);
 
@@ -61,6 +62,14 @@ struct msu_async_get_all_t_ {
 	gboolean need_child_count;
 };
 
+typedef struct msu_async_upload_t_ msu_async_upload_t;
+struct msu_async_upload_t_ {
+	const gchar *object_class;
+	gchar *root_path;
+	gchar *mime_type;
+	msu_device_t *device;
+};
+
 struct msu_async_cb_data_t_ {
 	msu_task_type_t type;
 	msu_task_t *task;
@@ -77,6 +86,7 @@ struct msu_async_cb_data_t_ {
 		msu_async_bas_t bas;
 		msu_async_get_prop_t get_prop;
 		msu_async_get_all_t get_all;
+		msu_async_upload_t upload;
 	} ut;
 };
 

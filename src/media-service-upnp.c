@@ -262,6 +262,16 @@ static const gchar g_msu_server_introspection[] =
 	"       access='read'/>"
 	"  </interface>"
 	"  <interface name='"MSU_INTERFACE_MEDIA_DEVICE"'>"
+	"    <method name='"MSU_INTERFACE_UPLOAD_TO_ANY"'>"
+	"      <arg type='s' name='"MSU_INTERFACE_PROP_DISPLAY_NAME"'"
+	"           direction='in'/>"
+	"      <arg type='s' name='"MSU_INTERFACE_FILE_PATH"'"
+	"           direction='in'/>"
+	"      <arg type='u' name='"MSU_INTERFACE_UPLOAD_ID"'"
+	"           direction='out'/>"
+	"      <arg type='o' name='"MSU_INTERFACE_PATH"'"
+	"           direction='out'/>"
+	"    </method>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_LOCATION"'"
 	"       access='read'/>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_UDN"'"
@@ -412,6 +422,11 @@ static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
 				      context->cancellable,
 				      prv_async_task_complete, context);
 		break;
+	case MSU_TASK_UPLOAD_TO_ANY:
+		msu_upnp_upload_to_any(context->upnp, task,
+				       context->cancellable,
+				       prv_async_task_complete, context);
+		break;
 	default:
 		break;
 	}
@@ -478,6 +493,15 @@ static void prv_props_method_call(GDBusConnection *conn,
 				  GDBusMethodInvocation *invocation,
 				  gpointer user_data);
 
+static void prv_device_method_call(GDBusConnection *conn,
+				   const gchar *sender,
+				   const gchar *object,
+				   const gchar *interface,
+				   const gchar *method,
+				   GVariant *parameters,
+				   GDBusMethodInvocation *invocation,
+				   gpointer user_data);
+
 static const GDBusInterfaceVTable g_msu_vtable = {
 	prv_msu_method_call,
 	NULL,
@@ -502,11 +526,18 @@ static const GDBusInterfaceVTable g_props_vtable = {
 	NULL
 };
 
+static const GDBusInterfaceVTable g_device_vtable = {
+	prv_device_method_call,
+	NULL,
+	NULL
+};
+
 static const GDBusInterfaceVTable *g_server_vtables[MSU_INTERFACE_INFO_MAX] = {
 	&g_props_vtable,
 	NULL,
 	&g_ms_vtable,
-	&g_item_vtable
+	&g_item_vtable,
+	&g_device_vtable
 };
 
 static void prv_msu_context_init(msu_context_t *context)
@@ -756,6 +787,23 @@ static void prv_props_method_call(GDBusConnection *conn,
 finished:
 
 	return;
+}
+
+static void prv_device_method_call(GDBusConnection *conn,
+				   const gchar *sender, const gchar *object,
+				   const gchar *interface,
+				   const gchar *method, GVariant *parameters,
+				   GDBusMethodInvocation *invocation,
+				   gpointer user_data)
+{
+	msu_context_t *context = user_data;
+	msu_task_t *task;
+
+	if (!strcmp(method, MSU_INTERFACE_UPLOAD_TO_ANY)) {
+		task = msu_task_upload_to_any_new(invocation, object,
+						  parameters);
+		prv_add_task(context, task);
+	}
 }
 
 static void prv_found_media_server(const gchar *path, void *user_data)

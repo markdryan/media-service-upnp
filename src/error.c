@@ -37,6 +37,8 @@ static const GDBusErrorEntry g_error_entries[] = {
 	{ MSU_ERROR_DEVICE_NOT_FOUND, MSU_SERVICE".DeviceNotFound" },
 	{ MSU_ERROR_DIED, MSU_SERVICE".Died" },
 	{ MSU_ERROR_CANCELLED, MSU_SERVICE".Cancelled" },
+	{ MSU_ERROR_BAD_MIME, MSU_SERVICE".BadMime" },
+	{ MSU_ERROR_IO, MSU_SERVICE".IO" }
 };
 
 GQuark msu_error_quark(void)

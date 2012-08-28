@@ -130,6 +130,20 @@ class Container(MediaObject):
             if props["Type"] == "container":
                 Container(props["Path"]).tree(level + 1)
 
+class Device(Container):
+
+    def __init__(self, path):
+        Container.__init__(self, path)
+        bus = dbus.SessionBus()
+        self.__deviceIF = dbus.Interface(bus.get_object(
+                'com.intel.media-service-upnp', path),
+                                        'com.intel.UPnP.MediaDevice')
+
+    def upload_to_any(self, name, file_path):
+        (tid, path) = self.__deviceIF.UploadToAnyContainer(name, file_path)
+        print "Transfer ID: " + str(tid)
+        print "Path: " + path
+
 class UPNP(object):
 
     def __init__(self):

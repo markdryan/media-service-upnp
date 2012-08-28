@@ -35,7 +35,9 @@ enum msu_error_t_ {
 	MSU_ERROR_UNKNOWN_PROPERTY,
 	MSU_ERROR_DEVICE_NOT_FOUND,
 	MSU_ERROR_DIED,
-	MSU_ERROR_CANCELLED
+	MSU_ERROR_CANCELLED,
+	MSU_ERROR_BAD_MIME,
+	MSU_ERROR_IO
 };
 typedef enum msu_error_t_ msu_error_t;
 

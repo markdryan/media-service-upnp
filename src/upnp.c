@@ -163,6 +163,10 @@ static const GDBusInterfaceVTable *prv_subtree_dispatch(
 	else if (!strcmp(MSU_INTERFACE_MEDIA_ITEM, interface_name))
 		retval = upnp->interface_info[
 			MSU_INTERFACE_INFO_ITEM].vtable;
+	else if (!strcmp(MSU_INTERFACE_MEDIA_DEVICE, interface_name))
+		retval = upnp->interface_info[
+			MSU_INTERFACE_INFO_DEVICE].vtable;
+
 
 	return retval;
 }
@@ -732,3 +736,139 @@ on_error:
 
 	MSU_LOG_DEBUG("Exit with %s", !cb_data->action ? "FAIL" : "SUCCESS");
 }
+
+static gboolean prv_compute_mime_and_class(msu_task_t *task,
+					   msu_async_upload_t *cb_task_data,
+					   GError **error)
+{
+	gchar *content_type = NULL;
+
+	if (!g_file_test(task->ut.upload.file_path,
+			 G_FILE_TEST_IS_REGULAR | G_FILE_TEST_EXISTS)) {
+
+		MSU_LOG_WARNING("File %s does not exist or is not"
+				" a regular file", task->ut.upload.file_path);
+
+		*error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
+				     "File %s does not exist or is not"
+				     " a regular file",
+				     task->ut.upload.file_path);
+		goto on_error;
+	}
+
+	content_type = g_content_type_guess(task->ut.upload.file_path, NULL, 0,
+					    NULL);
+
+	if (!content_type) {
+
+		MSU_LOG_WARNING("Unable to determine Content Type "
+				"for %s", task->ut.upload.file_path);
+
+		*error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_MIME,
+				     "Unable to determine Content Type "
+				     "for %s", task->ut.upload.file_path);
+		goto on_error;
+	}
+
+	cb_task_data->mime_type = g_content_type_get_mime_type(content_type);
+	g_free(content_type);
+
+	if (!cb_task_data->mime_type) {
+
+		MSU_LOG_WARNING("Unable to determine MIME Type for"
+				" %s", task->ut.upload.file_path);
+
+		*error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_MIME,
+				     "Unable to determine MIME Type for"
+				     " %s", task->ut.upload.file_path);
+		goto on_error;
+	}
+
+	if (g_content_type_is_a(cb_task_data->mime_type, "image/*")) {
+		cb_task_data->object_class = "object.item.imageItem";
+	} else if (g_content_type_is_a(cb_task_data->mime_type, "audio/*")) {
+		cb_task_data->object_class = "object.item.audioItem";
+	} else if (g_content_type_is_a(cb_task_data->mime_type, "video/*")) {
+		cb_task_data->object_class = "object.item.videoItem";
+	} else {
+
+		MSU_LOG_WARNING("Unsupported MIME Type"
+				" %s", cb_task_data->mime_type);
+
+		*error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_MIME,
+				     "Unsupported MIME Type"
+				     " %s", cb_task_data->mime_type);
+		goto on_error;
+	}
+
+	return TRUE;
+
+on_error:
+
+	return FALSE;
+}
+
+void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_task_t *task,
+			    GCancellable *cancellable,
+			    msu_upnp_task_complete_t cb,
+			    void *user_data)
+{
+	msu_async_cb_data_t *cb_data;
+	msu_async_upload_t *cb_task_data;
+	msu_device_t *device;
+
+	MSU_LOG_DEBUG("Enter");
+
+	cb_data = msu_async_cb_data_new(task, cb, user_data);
+	cb_task_data = &cb_data->ut.upload;
+
+	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
+				      &cb_data->id, &cb_data->error)) {
+		MSU_LOG_WARNING("Bad path %s", task->path);
+
+		goto on_error;
+	}
+
+	MSU_LOG_DEBUG("Root Path %s Id %s", cb_task_data->root_path,
+		      cb_data->id);
+
+	device = msu_device_from_path(cb_task_data->root_path,
+				      upnp->server_udn_map);
+	if (!device) {
+		MSU_LOG_WARNING("Cannot locate device for %s",
+				cb_task_data->root_path);
+
+		cb_data->error =
+			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
+				    "Cannot locate device corresponding to"
+				    " the specified path");
+		goto on_error;
+	}
+
+	if (strcmp(cb_data->id, "0")) {
+		MSU_LOG_WARNING("Bad path %s", task->path);
+
+		cb_data->error =
+			g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
+				    "UploadToAnyContainer must be executed "
+				    " on a root path");
+		goto on_error;
+	}
+
+	if (!prv_compute_mime_and_class(task, cb_task_data, &cb_data->error))
+		goto on_error;
+
+	MSU_LOG_DEBUG("MIME Type %s", cb_task_data->mime_type);
+	MSU_LOG_DEBUG("Object class %s", cb_task_data->object_class);
+
+	msu_device_upload(device, task, "DLNA.ORG_AnyContainer", cb_data,
+			  cancellable);
+
+on_error:
+
+	if (!cb_data->action)
+		(void) g_idle_add(msu_async_complete_task, cb_data);
+
+	MSU_LOG_DEBUG("Exit");
+}
+

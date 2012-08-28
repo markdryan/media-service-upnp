@@ -28,8 +28,6 @@
 #include "async.h"
 #include "props.h"
 
-typedef struct msu_device_t_ msu_device_t;
-
 typedef struct msu_device_context_t_ msu_device_context_t;
 struct msu_device_context_t_ {
 	gchar *ip_address;
@@ -46,6 +44,8 @@ struct msu_device_t_ {
 	gchar *path;
 	GPtrArray *contexts;
 	guint timeout_id;
+	GHashTable *uploads;
+	guint upload_id;
 };
 
 void msu_device_append_new_context(msu_device_t *device,
@@ -82,5 +82,9 @@ void msu_device_get_resource(msu_device_t *device,  msu_task_t *task,
 			     const gchar *upnp_filter,
 			     GCancellable *cancellable);
 void msu_device_subscribe_to_contents_change(msu_device_t *device);
+void msu_device_upload(msu_device_t *device,  msu_task_t *task,
+		       const gchar *parent_id, msu_async_cb_data_t *cb_data,
+		       GCancellable *cancellable);
+
 
 #endif

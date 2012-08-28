@@ -118,4 +118,8 @@
 #define MSU_INTERFACE_CONTAINER_UPDATE "ContainerUpdate"
 #define MSU_INTERFACE_CONTAINER_PATHS "ContainerPaths"
 
+#define MSU_INTERFACE_UPLOAD_TO_ANY "UploadToAnyContainer"
+#define MSU_INTERFACE_FILE_PATH "FilePath"
+#define MSU_INTERFACE_UPLOAD_ID "UploadId"
+
 #endif

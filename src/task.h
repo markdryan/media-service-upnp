@@ -34,7 +34,8 @@ enum msu_task_type_t_ {
 	MSU_TASK_GET_PROP,
 	MSU_TASK_SEARCH,
 	MSU_TASK_GET_RESOURCE,
-	MSU_TASK_SET_PROTOCOL_INFO
+	MSU_TASK_SET_PROTOCOL_INFO,
+	MSU_TASK_UPLOAD_TO_ANY
 };
 typedef enum msu_task_type_t_ msu_task_type_t;
 
@@ -81,6 +82,12 @@ struct msu_task_set_protocol_info_t_ {
 	gchar *protocol_info;
 };
 
+typedef struct msu_task_upload_t_ msu_task_upload_t;
+struct msu_task_upload_t_ {
+	gchar *display_name;
+	gchar *file_path;
+};
+
 typedef struct msu_task_t_ msu_task_t;
 struct msu_task_t_ {
 	msu_task_type_t type;
@@ -97,6 +104,7 @@ struct msu_task_t_ {
 		msu_task_search_t search;
 		msu_task_get_resource_t resource;
 		msu_task_set_protocol_info_t protocol_info;
+		msu_task_upload_t upload;
 	} ut;
 };
 
@@ -121,6 +129,8 @@ msu_task_t *msu_task_get_resource_new(GDBusMethodInvocation *invocation,
 				      const gchar *path, GVariant *parameters);
 msu_task_t *msu_task_set_protocol_info_new(GDBusMethodInvocation *invocation,
 					   GVariant *parameters);
+msu_task_t *msu_task_upload_to_any_new(GDBusMethodInvocation *invocation,
+				       const gchar *path, GVariant *parameters);
 void msu_task_complete_and_delete(msu_task_t *task);
 void msu_task_fail_and_delete(msu_task_t *task, GError *error);
 void msu_task_cancel_and_delete(msu_task_t *task);

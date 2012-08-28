@@ -22,6 +22,7 @@
 
 #include <string.h>
 #include <libgupnp/gupnp-error.h>
+#include <libsoup/soup.h>
 
 #include "device.h"
 #include "error.h"
@@ -48,6 +49,19 @@ struct msu_device_object_builder_t_ {
 	gboolean needs_child_count;
 };
 
+typedef struct msu_device_upload_t_ msu_device_upload_t;
+struct msu_device_upload_t_ {
+	SoupSession *soup_session;
+	SoupMessage *msg;
+	GMappedFile *mapped_file;
+};
+
+typedef struct msu_device_upload_job_t_ msu_device_upload_job_t;
+struct msu_device_upload_job_t_ {
+	gint upload_id;
+	msu_device_t *device;
+};
+
 static void prv_get_child_count(msu_async_cb_data_t *cb_data,
 				msu_device_count_cb_t cb, const gchar *id);
 static void prv_retrieve_child_count_for_list(msu_async_cb_data_t *cb_data);
@@ -59,6 +73,7 @@ static void prv_system_update_cb(GUPnPServiceProxy *proxy,
 				const char *variable,
 				GValue *value,
 				gpointer user_data);
+static void prv_msu_device_upload_delete(gpointer up);
 
 static void prv_msu_device_object_builder_delete(void *dob)
 {
@@ -143,6 +158,8 @@ void msu_device_delete(void *device)
 	msu_device_t *dev = device;
 
 	if (dev) {
+		g_hash_table_unref(dev->uploads);
+
 		if (dev->timeout_id)
 			(void) g_source_remove(dev->timeout_id);
 
@@ -317,6 +334,9 @@ gboolean msu_device_new(GDBusConnection *connection,
 
 	dev->path = g_string_free(new_path, FALSE);
 	dev->id = id;
+
+	dev->uploads = g_hash_table_new_full(g_int_hash, g_int_equal, g_free,
+					     prv_msu_device_upload_delete);
 
 	*device = dev;
 
@@ -1574,6 +1594,364 @@ void msu_device_get_resource(msu_device_t *device,  msu_task_t *task,
 				      G_CALLBACK(msu_async_task_cancelled),
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static gchar *prv_create_upload_didl(const gchar *parent_id, msu_task_t *task,
+				     const gchar *object_class,
+				     const gchar *mime_type)
+{
+	GUPnPDIDLLiteWriter *writer;
+	GUPnPDIDLLiteObject *item;
+	gchar *retval;
+	GUPnPProtocolInfo *protocol_info;
+	GUPnPDIDLLiteResource *res;
+
+	writer = gupnp_didl_lite_writer_new(NULL);
+	item = GUPNP_DIDL_LITE_OBJECT(gupnp_didl_lite_writer_add_item(writer));
+
+	gupnp_didl_lite_object_set_id(item, "");
+	gupnp_didl_lite_object_set_title(item, task->ut.upload.display_name);
+	gupnp_didl_lite_object_set_parent_id(item, parent_id);
+	gupnp_didl_lite_object_set_upnp_class(item, object_class);
+	gupnp_didl_lite_object_set_restricted(item, FALSE);
+
+	protocol_info = gupnp_protocol_info_new();
+	gupnp_protocol_info_set_mime_type(protocol_info, mime_type);
+	gupnp_protocol_info_set_protocol(protocol_info, "*");
+	gupnp_protocol_info_set_network(protocol_info, "*");
+
+	res = gupnp_didl_lite_object_add_resource(item);
+	gupnp_didl_lite_resource_set_protocol_info(res, protocol_info);
+
+	/* TODO: Need to compute DLNA Profile */
+
+	retval = gupnp_didl_lite_writer_get_string(writer);
+
+	g_object_unref(res);
+	g_object_unref(protocol_info);
+	g_object_unref(item);
+	g_object_unref(writer);
+
+	return retval;
+}
+
+static void prv_extract_import_uri(GUPnPDIDLLiteParser *parser,
+				   GUPnPDIDLLiteObject *object,
+				   gpointer user_data)
+{
+	gchar **import_uri = user_data;
+	GList *resources;
+	GList *ptr;
+	GUPnPDIDLLiteResource *res;
+	const gchar *uri;
+
+	if (!*import_uri) {
+		ptr = resources = gupnp_didl_lite_object_get_resources(object);
+		while (ptr) {
+			res = ptr->data;
+			if (!*import_uri) {
+				uri = gupnp_didl_lite_resource_get_import_uri(
+					res);
+				if (uri)
+					*import_uri = g_strdup(uri);
+			}
+			g_object_unref(res);
+			ptr = ptr->next;
+		}
+
+		g_list_free(resources);
+	}
+}
+
+static void prv_upload_delete_cb(GUPnPServiceProxy *proxy,
+				 GUPnPServiceProxyAction *action,
+				 gpointer user_data)
+{
+	msu_async_cb_data_t *cb_data = user_data;
+
+	MSU_LOG_DEBUG("Enter");
+
+	(void) gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
+					      NULL, NULL);
+	(void) g_idle_add(msu_async_complete_task, cb_data);
+	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static void prv_post_finished(SoupSession *session, SoupMessage *msg,
+			      gpointer user_data)
+{
+	msu_device_upload_job_t *upload_job = user_data;
+
+	MSU_LOG_DEBUG("Enter");
+
+	MSU_LOG_DEBUG("Upload %u finished.  Code %u Message %s",
+		      upload_job->upload_id, msg->status_code,
+		      msg->reason_phrase);
+
+	if (msg->status_code != SOUP_STATUS_CANCELLED)
+		g_hash_table_remove(upload_job->device->uploads,
+				    &upload_job->upload_id);
+	g_free(upload_job);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static void prv_msu_device_upload_delete(gpointer up)
+{
+	msu_device_upload_t *upload = up;
+
+	MSU_LOG_DEBUG("Enter");
+
+	if (upload) {
+		if (upload->msg) {
+			soup_session_cancel_message(upload->soup_session,
+						    upload->msg,
+						    SOUP_STATUS_CANCELLED);
+			g_object_unref(upload->msg);
+		}
+
+		if (upload->soup_session)
+			g_object_unref(upload->soup_session);
+
+		if (upload->mapped_file)
+			g_mapped_file_unref(upload->mapped_file);
+
+		g_free(upload);
+	}
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static msu_device_upload_t *prv_msu_device_upload_new(const gchar *file_path,
+						      const gchar *import_uri,
+						      const gchar *mime_type,
+						      GError **error)
+{
+	const char *body;
+	gsize body_length;
+	msu_device_upload_t *upload;
+
+	MSU_LOG_DEBUG("Enter");
+
+	upload = g_new0(msu_device_upload_t, 1);
+
+	upload->mapped_file = g_mapped_file_new(file_path, FALSE, NULL);
+	if (!upload->mapped_file) {
+		MSU_LOG_WARNING("Unable to map %s into memory", file_path);
+
+		*error = g_error_new(MSU_ERROR, MSU_ERROR_IO,
+				     "Unable to map %s into memory",
+				     file_path);
+		goto on_error;
+	}
+
+	body = g_mapped_file_get_contents(upload->mapped_file);
+	body_length = g_mapped_file_get_length(upload->mapped_file);
+
+	upload->soup_session = soup_session_async_new();
+	upload->msg = soup_message_new("POST", import_uri);
+
+	if (!upload->msg) {
+		MSU_LOG_WARNING("Invalid URI %s", import_uri);
+
+		*error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_RESULT,
+				     "Invalid URI %s", import_uri);
+		goto on_error;
+	}
+
+	soup_message_set_request(upload->msg, mime_type, SOUP_MEMORY_STATIC,
+				 body, body_length);
+
+	MSU_LOG_DEBUG("Exit with Success");
+
+	return upload;
+
+on_error:
+
+	prv_msu_device_upload_delete(upload);
+
+	MSU_LOG_WARNING("Exit with Fail");
+
+	return NULL;
+}
+
+static void prv_create_object_cb(GUPnPServiceProxy *proxy,
+				 GUPnPServiceProxyAction *action,
+				 gpointer user_data)
+{
+	gchar *result = NULL;
+	GUPnPDIDLLiteParser *parser = NULL;
+	GError *upnp_error = NULL;
+	msu_async_cb_data_t *cb_data = user_data;
+	msu_async_upload_t *cb_task_data = &cb_data->ut.upload;
+	gchar *import_uri = NULL;
+	gchar *object_id = NULL;
+	gboolean delete_needed = FALSE;
+	GVariant *out_params[2];
+	gchar *object_path;
+	msu_device_upload_t *upload;
+	gint *upload_id;
+	msu_device_upload_job_t *upload_job;
+
+	MSU_LOG_DEBUG("Enter");
+
+	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
+					    &upnp_error,
+					    "ObjectID", G_TYPE_STRING,
+					    &object_id,
+					    "Result", G_TYPE_STRING,
+					    &result,
+					    NULL)) {
+		MSU_LOG_WARNING("Create Object operation failed: %s",
+				upnp_error->message);
+
+		cb_data->error = g_error_new(MSU_ERROR,
+					     MSU_ERROR_OPERATION_FAILED,
+					     "Create Object operation "
+					     " failed: %s",
+					     upnp_error->message);
+		goto on_error;
+	}
+
+	delete_needed = TRUE;
+	parser = gupnp_didl_lite_parser_new();
+
+	g_signal_connect(parser, "object-available" ,
+			 G_CALLBACK(prv_extract_import_uri), &import_uri);
+
+	MSU_LOG_DEBUG("Create Object Result: %s", result);
+
+	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)
+		&& upnp_error->code != GUPNP_XML_ERROR_EMPTY_NODE) {
+
+		MSU_LOG_WARNING("Unable to parse results of CreateObject: %s",
+				upnp_error->message);
+
+		cb_data->error = g_error_new(MSU_ERROR,
+					     MSU_ERROR_OPERATION_FAILED,
+					     "Unable to parse results of "
+					     "CreateObject: %s",
+					     upnp_error->message);
+		goto on_error;
+	}
+
+	if (!import_uri) {
+		MSU_LOG_WARNING("Missing Import URI");
+
+		cb_data->error = g_error_new(MSU_ERROR,
+					     MSU_ERROR_OPERATION_FAILED,
+					     "Missing Import URI");
+		goto on_error;
+	}
+
+	MSU_LOG_DEBUG("Import URI %s", import_uri);
+
+	upload = prv_msu_device_upload_new(cb_data->task->ut.upload.file_path,
+					   import_uri, cb_task_data->mime_type,
+					   &cb_data->error);
+	if (!upload)
+		goto on_error;
+
+	upload_job = g_new(msu_device_upload_job_t, 1);
+	upload_job->device = cb_task_data->device;
+	upload_job->upload_id = (gint) cb_task_data->device->upload_id;
+
+	soup_session_queue_message(upload->soup_session, upload->msg,
+				   prv_post_finished, upload_job);
+	g_object_ref(upload->msg);
+
+	upload_id = g_new(gint, 1);
+	*upload_id = upload_job->upload_id;
+	g_hash_table_insert(cb_task_data->device->uploads, upload_id, upload);
+
+	object_path = msu_path_from_id(cb_task_data->root_path, object_id);
+
+	MSU_LOG_DEBUG("Upload ID %u", *upload_id);
+	MSU_LOG_DEBUG("Object ID %s", object_id);
+	MSU_LOG_DEBUG("Object Path %s", object_path);
+
+	out_params[0] = g_variant_new_uint32(*upload_id);
+	out_params[1] = g_variant_new_object_path(object_path);
+	cb_data->result = g_variant_ref_sink(g_variant_new_tuple(out_params,
+								 2));
+
+	++cb_task_data->device->upload_id;
+	if (cb_task_data->device->upload_id > G_MAXINT)
+		cb_task_data->device->upload_id = 0;
+
+	g_free(object_path);
+
+on_error:
+
+	if (cb_data->error && delete_needed) {
+		MSU_LOG_WARNING("Upload failed deleting created object "
+				"with id %s", object_id);
+
+		cb_data->action = gupnp_service_proxy_begin_action(
+			cb_data->proxy, "DestroyObject", prv_upload_delete_cb,
+			cb_data, "ObjectID", G_TYPE_STRING,
+			object_id, NULL);
+	} else {
+		(void) g_idle_add(msu_async_complete_task, cb_data);
+		g_cancellable_disconnect(cb_data->cancellable,
+					 cb_data->cancel_id);
+	}
+
+	g_free(object_id);
+	g_free(import_uri);
+
+	if (parser)
+		g_object_unref(parser);
+
+	g_free(result);
+
+	if (upnp_error)
+		g_error_free(upnp_error);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+void msu_device_upload(msu_device_t *device,  msu_task_t *task,
+		       const gchar *parent_id, msu_async_cb_data_t *cb_data,
+		       GCancellable *cancellable)
+{
+	msu_device_context_t *context;
+	gchar *didl;
+	msu_async_upload_t *cb_task_data;
+
+	MSU_LOG_DEBUG("Enter");
+	MSU_LOG_DEBUG("Uploading file to %s", parent_id);
+
+	context = msu_device_get_context(device);
+	cb_task_data = &cb_data->ut.upload;
+
+	didl = prv_create_upload_didl(parent_id, task,
+				      cb_task_data->object_class,
+				      cb_task_data->mime_type);
+
+	MSU_LOG_DEBUG("DIDL: %s", didl);
+
+	cb_data->action = gupnp_service_proxy_begin_action(
+		context->service_proxy, "CreateObject",
+		prv_create_object_cb, cb_data,
+		"ContainerID", G_TYPE_STRING, parent_id,
+		"Elements", G_TYPE_STRING, didl,
+		NULL);
+
+	cb_data->proxy = context->service_proxy;
+	cb_task_data->device = device;
+
+	cb_data->cancel_id =
+		g_cancellable_connect(cancellable,
+				      G_CALLBACK(msu_async_task_cancelled),
+				      cb_data, NULL);
+	cb_data->cancellable = cancellable;
+
+	g_free(didl);
 
 	MSU_LOG_DEBUG("Exit");
 }
