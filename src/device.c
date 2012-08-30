@@ -265,6 +265,15 @@ static void prv_subscription_lost_cb(GUPnPServiceProxy *proxy,
 						context);
 	} else {
 		g_source_remove(context->timeout_id);
+		gupnp_service_proxy_remove_notify(context->service_proxy,
+						  MSU_SYSTEM_UPDATE_VAR,
+						  prv_system_update_cb,
+						  context->device);
+		gupnp_service_proxy_remove_notify(context->service_proxy,
+						  MSU_CONTAINER_UPDATE_VAR,
+						  prv_container_update_cb,
+						  context->device);
+
 		context->timeout_id = 0;
 		context->subscribed = FALSE;
 	}
