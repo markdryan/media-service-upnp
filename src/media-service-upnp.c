@@ -407,7 +407,6 @@ static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
 {
 	const gchar *client_name;
 	msu_client_t *client;
-	const gchar *protocol_info = NULL;
 
 	MSU_LOG_DEBUG("Enter");
 
@@ -416,42 +415,41 @@ static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
 	client_name =
 		g_dbus_method_invocation_get_sender(task->invocation);
 	client = g_hash_table_lookup(context->watchers, client_name);
-	if (client)
-		protocol_info = client->protocol_info;
 
 	switch (task->type) {
 	case MSU_TASK_GET_CHILDREN:
-		msu_upnp_get_children(context->upnp, task, protocol_info,
+		msu_upnp_get_children(context->upnp, client, task,
 				      context->cancellable,
 				      prv_async_task_complete, context);
 		break;
 	case MSU_TASK_GET_PROP:
-		msu_upnp_get_prop(context->upnp, task, protocol_info,
+		msu_upnp_get_prop(context->upnp, client, task,
 				  context->cancellable,
 				  prv_async_task_complete, context);
 		break;
 	case MSU_TASK_GET_ALL_PROPS:
-		msu_upnp_get_all_props(context->upnp, task, protocol_info,
+		msu_upnp_get_all_props(context->upnp, client, task,
 				       context->cancellable,
 				       prv_async_task_complete, context);
 		break;
 	case MSU_TASK_SEARCH:
-		msu_upnp_search(context->upnp, task, protocol_info,
+		msu_upnp_search(context->upnp, client, task,
 				context->cancellable,
 				prv_async_task_complete, context);
 		break;
 	case MSU_TASK_GET_RESOURCE:
-		msu_upnp_get_resource(context->upnp, task,
+		msu_upnp_get_resource(context->upnp, client, task,
 				      context->cancellable,
 				      prv_async_task_complete, context);
 		break;
 	case MSU_TASK_UPLOAD_TO_ANY:
-		msu_upnp_upload_to_any(context->upnp, task,
+		msu_upnp_upload_to_any(context->upnp, client, task,
 				       context->cancellable,
 				       prv_async_task_complete, context);
 		break;
 	case MSU_TASK_UPLOAD:
-		msu_upnp_upload(context->upnp, task, context->cancellable,
+		msu_upnp_upload(context->upnp, client, task,
+				context->cancellable,
 				prv_async_task_complete, context);
 		break;
 	default:

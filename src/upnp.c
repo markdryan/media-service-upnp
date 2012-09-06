@@ -389,8 +389,8 @@ GVariant *msu_upnp_get_server_ids(msu_upnp_t *upnp)
 	return retval;
 }
 
-void msu_upnp_get_children(msu_upnp_t *upnp, msu_task_t *task,
-			   const gchar *protocol_info,
+void msu_upnp_get_children(msu_upnp_t *upnp, msu_client_t *client,
+			   msu_task_t *task,
 			   GCancellable *cancellable,
 			   msu_upnp_task_complete_t cb,
 			   void *user_data)
@@ -449,9 +449,9 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_task_t *task,
 
 	MSU_LOG_DEBUG("Sort By %s", sort_by);
 
-	cb_task_data->protocol_info = protocol_info;
+	cb_task_data->protocol_info = client->protocol_info;
 
-	msu_device_get_children(device, task, cb_data,
+	msu_device_get_children(device, client, task, cb_data,
 				upnp_filter, sort_by, cancellable);
 
 on_error:
@@ -465,8 +465,8 @@ on_error:
 	MSU_LOG_DEBUG("Exit with %s", !cb_data->action ? "FAIL" : "SUCCESS");
 }
 
-void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_task_t *task,
-			    const gchar *protocol_info,
+void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_client_t *client,
+			    msu_task_t *task,
 			    GCancellable *cancellable,
 			    msu_upnp_task_complete_t cb,
 			    void *user_data)
@@ -508,9 +508,9 @@ void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_task_t *task,
 		goto on_error;
 	}
 
-	cb_task_data->protocol_info = protocol_info;
+	cb_task_data->protocol_info = client->protocol_info;
 
-	msu_device_get_all_props(device, task, cb_data, root_object,
+	msu_device_get_all_props(device, client, task, cb_data, root_object,
 				 cancellable);
 
 	MSU_LOG_DEBUG("Exit with SUCCESS");
@@ -524,8 +524,8 @@ on_error:
 	MSU_LOG_DEBUG("Exit with FAIL");
 }
 
-void msu_upnp_get_prop(msu_upnp_t *upnp, msu_task_t *task,
-		       const gchar *protocol_info,
+void msu_upnp_get_prop(msu_upnp_t *upnp, msu_client_t *client,
+		       msu_task_t *task,
 		       GCancellable *cancellable,
 		       msu_upnp_task_complete_t cb,
 		       void *user_data)
@@ -572,10 +572,10 @@ void msu_upnp_get_prop(msu_upnp_t *upnp, msu_task_t *task,
 		goto on_error;
 	}
 
-	cb_task_data->protocol_info = protocol_info;
+	cb_task_data->protocol_info = client->protocol_info;
 	prop_map = g_hash_table_lookup(upnp->filter_map, task_data->prop_name);
 
-	msu_device_get_prop(device, task, cb_data, prop_map,
+	msu_device_get_prop(device, client, task, cb_data, prop_map,
 			    root_object, cancellable);
 
 	MSU_LOG_DEBUG("Exit with SUCCESS");
@@ -589,8 +589,8 @@ on_error:
 	MSU_LOG_DEBUG("Exit with FAIL");
 }
 
-void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
-		     const gchar *protocol_info,
+void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
+		     msu_task_t *task,
 		     GCancellable *cancellable,
 		     msu_upnp_task_complete_t cb,
 		     void *user_data)
@@ -663,9 +663,9 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
 
 	MSU_LOG_DEBUG("Sort By %s", sort_by);
 
-	cb_task_data->protocol_info = protocol_info;
+	cb_task_data->protocol_info = client->protocol_info;
 
-	msu_device_search(device, task, cb_data, upnp_filter,
+	msu_device_search(device, client, task, cb_data, upnp_filter,
 			  upnp_query, sort_by, cancellable);
 on_error:
 
@@ -679,7 +679,8 @@ on_error:
 	MSU_LOG_DEBUG("Exit with %s", !cb_data->action ? "FAIL" : "SUCCESS");
 }
 
-void msu_upnp_get_resource(msu_upnp_t *upnp, msu_task_t *task,
+void msu_upnp_get_resource(msu_upnp_t *upnp, msu_client_t *client,
+			   msu_task_t *task,
 			   GCancellable *cancellable,
 			   msu_upnp_task_complete_t cb,
 			   void *user_data)
@@ -723,7 +724,7 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_task_t *task,
 
 	MSU_LOG_DEBUG("Filter Mask 0x%x", cb_task_data->filter_mask);
 
-	msu_device_get_resource(device, task, cb_data, upnp_filter,
+	msu_device_get_resource(device, client, task, cb_data, upnp_filter,
 				cancellable);
 
 on_error:
@@ -808,7 +809,8 @@ on_error:
 	return FALSE;
 }
 
-void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_task_t *task,
+void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_client_t *client,
+			    msu_task_t *task,
 			    GCancellable *cancellable,
 			    msu_upnp_task_complete_t cb,
 			    void *user_data)
@@ -861,8 +863,8 @@ void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_task_t *task,
 	MSU_LOG_DEBUG("MIME Type %s", cb_task_data->mime_type);
 	MSU_LOG_DEBUG("Object class %s", cb_task_data->object_class);
 
-	msu_device_upload(device, task, "DLNA.ORG_AnyContainer", cb_data,
-			  cancellable);
+	msu_device_upload(device, client, task, "DLNA.ORG_AnyContainer",
+			  cb_data, cancellable);
 
 on_error:
 
@@ -872,7 +874,7 @@ on_error:
 	MSU_LOG_DEBUG("Exit");
 }
 
-void msu_upnp_upload(msu_upnp_t *upnp, msu_task_t *task,
+void msu_upnp_upload(msu_upnp_t *upnp, msu_client_t *client, msu_task_t *task,
 		     GCancellable *cancellable,
 		     msu_upnp_task_complete_t cb,
 		     void *user_data)
@@ -912,7 +914,7 @@ void msu_upnp_upload(msu_upnp_t *upnp, msu_task_t *task,
 	MSU_LOG_DEBUG("MIME Type %s", cb_task_data->mime_type);
 	MSU_LOG_DEBUG("Object class %s", cb_task_data->object_class);
 
-	msu_device_upload(device, task, cb_data->id, cb_data, cancellable);
+	msu_device_upload(device, client, task, cb_data->id, cb_data, cancellable);
 
 on_error:
 

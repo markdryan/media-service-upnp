@@ -283,7 +283,7 @@ void msu_device_subscribe_to_contents_change(msu_device_t *device)
 {
 	msu_device_context_t *context;
 
-	context = msu_device_get_context(device);
+	context = msu_device_get_context(device, NULL);
 
 	MSU_LOG_DEBUG("Subscribe for events on context: %s",
 		      context->ip_address);
@@ -395,19 +395,26 @@ msu_device_t *msu_device_from_path(const gchar *path, GHashTable *device_list)
 	return retval;
 }
 
-msu_device_context_t *msu_device_get_context(msu_device_t *device)
+msu_device_context_t *msu_device_get_context(msu_device_t *device,
+					     msu_client_t *client)
 {
 	msu_device_context_t *context;
 	unsigned int i;
 	const char ip4_local_prefix[] = "127.0.0.";
+	gboolean prefer_local;
+	gboolean is_local;
+
+	prefer_local = (client && client->prefer_local_addresses);
 
 	for (i = 0; i < device->contexts->len; ++i) {
 		context = g_ptr_array_index(device->contexts, i);
 
-		if (!strncmp(context->ip_address, ip4_local_prefix,
-			     sizeof(ip4_local_prefix) - 1) ||
-		    !strcmp(context->ip_address, "::1") ||
-		    !strcmp(context->ip_address, "0:0:0:0:0:0:0:1"))
+		is_local = (!strncmp(context->ip_address, ip4_local_prefix,
+						sizeof(ip4_local_prefix) - 1) ||
+			    !strcmp(context->ip_address, "::1") ||
+			    !strcmp(context->ip_address, "0:0:0:0:0:0:0:1"));
+
+		if (prefer_local == is_local)
 			break;
 	}
 
@@ -627,8 +634,8 @@ no_complete:
 	MSU_LOG_DEBUG("Exit");
 }
 
-void msu_device_get_children(msu_device_t *device,  msu_task_t *task,
-			     msu_async_cb_data_t *cb_data,
+void msu_device_get_children(msu_device_t *device, msu_client_t *client,
+			     msu_task_t *task, msu_async_cb_data_t *cb_data,
 			     const gchar *upnp_filter, const gchar *sort_by,
 			     GCancellable *cancellable)
 {
@@ -636,7 +643,7 @@ void msu_device_get_children(msu_device_t *device,  msu_task_t *task,
 
 	MSU_LOG_DEBUG("Enter");
 
-	context = msu_device_get_context(device);
+	context = msu_device_get_context(device, client);
 
 	cb_data->action =
 		gupnp_service_proxy_begin_action(context->service_proxy,
@@ -927,8 +934,8 @@ on_error:
 	return;
 }
 
-void msu_device_get_all_props(msu_device_t *device,  msu_task_t *task,
-			      msu_async_cb_data_t *cb_data,
+void msu_device_get_all_props(msu_device_t *device,  msu_client_t *client,
+			      msu_task_t *task, msu_async_cb_data_t *cb_data,
 			      gboolean root_object,
 			      GCancellable *cancellable)
 {
@@ -938,7 +945,7 @@ void msu_device_get_all_props(msu_device_t *device,  msu_task_t *task,
 
 	MSU_LOG_DEBUG("Enter");
 
-	context = msu_device_get_context(device);
+	context = msu_device_get_context(device, client);
 	cb_task_data = &cb_data->ut.get_all;
 
 	cb_task_data->vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
@@ -1322,8 +1329,8 @@ on_error:
 	return;
 }
 
-void msu_device_get_prop(msu_device_t *device,  msu_task_t *task,
-			 msu_async_cb_data_t *cb_data,
+void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
+			 msu_task_t *task, msu_async_cb_data_t *cb_data,
 			 msu_prop_map_t *prop_map, gboolean root_object,
 			 GCancellable *cancellable)
 {
@@ -1332,7 +1339,7 @@ void msu_device_get_prop(msu_device_t *device,  msu_task_t *task,
 
 	MSU_LOG_DEBUG("Enter");
 
-	context = msu_device_get_context(device);
+	context = msu_device_get_context(device, client);
 
 	if (!strcmp(task_data->interface_name, MSU_INTERFACE_MEDIA_DEVICE)) {
 		if (root_object) {
@@ -1530,8 +1537,8 @@ no_complete:
 	MSU_LOG_DEBUG("Exit");
 }
 
-void msu_device_search(msu_device_t *device,  msu_task_t *task,
-		       msu_async_cb_data_t *cb_data,
+void msu_device_search(msu_device_t *device, msu_client_t *client,
+		       msu_task_t *task, msu_async_cb_data_t *cb_data,
 		       const gchar *upnp_filter, const gchar *upnp_query,
 		       const gchar *sort_by, GCancellable *cancellable)
 {
@@ -1539,7 +1546,7 @@ void msu_device_search(msu_device_t *device,  msu_task_t *task,
 
 	MSU_LOG_DEBUG("Enter");
 
-	context = msu_device_get_context(device);
+	context = msu_device_get_context(device, client);
 
 	cb_data->action = gupnp_service_proxy_begin_action(
 		context->service_proxy, "Search",
@@ -1580,15 +1587,15 @@ static void prv_get_resource(GUPnPDIDLLiteParser *parser,
 			       task_data->protocol_info);
 }
 
-void msu_device_get_resource(msu_device_t *device,  msu_task_t *task,
-			     msu_async_cb_data_t *cb_data,
+void msu_device_get_resource(msu_device_t *device, msu_client_t *client,
+			     msu_task_t *task, msu_async_cb_data_t *cb_data,
 			     const gchar *upnp_filter,
 			     GCancellable *cancellable)
 {
 	msu_async_get_all_t *cb_task_data;
 	msu_device_context_t *context;
 
-	context = msu_device_get_context(device);
+	context = msu_device_get_context(device, client);
 	cb_task_data = &cb_data->ut.get_all;
 
 	cb_task_data->vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
@@ -1936,9 +1943,9 @@ on_error:
 	MSU_LOG_DEBUG("Exit");
 }
 
-void msu_device_upload(msu_device_t *device,  msu_task_t *task,
-		       const gchar *parent_id, msu_async_cb_data_t *cb_data,
-		       GCancellable *cancellable)
+void msu_device_upload(msu_device_t *device, msu_client_t *client,
+		       msu_task_t *task, const gchar *parent_id,
+		       msu_async_cb_data_t *cb_data, GCancellable *cancellable)
 {
 	msu_device_context_t *context;
 	gchar *didl;
@@ -1947,7 +1954,7 @@ void msu_device_upload(msu_device_t *device,  msu_task_t *task,
 	MSU_LOG_DEBUG("Enter");
 	MSU_LOG_DEBUG("Uploading file to %s", parent_id);
 
-	context = msu_device_get_context(device);
+	context = msu_device_get_context(device, client);
 	cb_task_data = &cb_data->ut.upload;
 
 	didl = prv_create_upload_didl(parent_id, task,

@@ -23,6 +23,7 @@
 #ifndef MSU_UPNP_H__
 #define MSU_UPNP_H__
 
+#include "client.h"
 #include "task.h"
 
 typedef struct msu_upnp_t_ msu_upnp_t;
@@ -53,35 +54,38 @@ msu_upnp_t *msu_upnp_new(GDBusConnection *connection,
 			 void *user_data);
 void msu_upnp_delete(msu_upnp_t *upnp);
 GVariant *msu_upnp_get_server_ids(msu_upnp_t *upnp);
-void msu_upnp_get_children(msu_upnp_t *upnp, msu_task_t *task,
-			   const gchar *protocol_info,
+void msu_upnp_get_children(msu_upnp_t *upnp, msu_client_t *client,
+			   msu_task_t *task,
 			   GCancellable *cancellable,
 			   msu_upnp_task_complete_t cb,
 			   void *user_data);
-void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_task_t *task,
-			    const gchar *protocol_info,
+void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_client_t *client,
+			    msu_task_t *task,
 			    GCancellable *cancellable,
 			    msu_upnp_task_complete_t cb,
 			    void *user_data);
-void msu_upnp_get_prop(msu_upnp_t *upnp, msu_task_t *task,
-		       const gchar *protocol_info,
+void msu_upnp_get_prop(msu_upnp_t *upnp, msu_client_t *client,
+		       msu_task_t *task,
 		       GCancellable *cancellable,
 		       msu_upnp_task_complete_t cb,
 		       void *user_data);
-void msu_upnp_search(msu_upnp_t *upnp, msu_task_t *task,
-		     const gchar *protocol_info,
+void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
+		     msu_task_t *task,
 		     GCancellable *cancellable,
 		     msu_upnp_task_complete_t cb,
 		     void *user_data);
-void msu_upnp_get_resource(msu_upnp_t *upnp, msu_task_t *task,
+void msu_upnp_get_resource(msu_upnp_t *upnp, msu_client_t *client,
+			   msu_task_t *task,
 			   GCancellable *cancellable,
 			   msu_upnp_task_complete_t cb,
 			   void *user_data);
-void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_task_t *task,
+void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_client_t *client,
+			    msu_task_t *task,
 			    GCancellable *cancellable,
 			    msu_upnp_task_complete_t cb,
 			    void *user_data);
-void msu_upnp_upload(msu_upnp_t *upnp, msu_task_t *task,
+void msu_upnp_upload(msu_upnp_t *upnp, msu_client_t *client,
+		     msu_task_t *task,
 		     GCancellable *cancellable,
 		     msu_upnp_task_complete_t cb,
 		     void *user_data);
