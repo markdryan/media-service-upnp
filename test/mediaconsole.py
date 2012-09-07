@@ -32,6 +32,10 @@ class MediaObject(object):
         self.__propsIF = dbus.Interface(bus.get_object(
                 'com.intel.media-service-upnp', path),
                                         'org.freedesktop.DBus.Properties')
+        self.__objIF = dbus.Interface(bus.get_object(
+        'com.intel.media-service-upnp', path),
+                                'org.gnome.UPnP.MediaObject2')
+
     def get_props(self, iface = ""):
         return self.__propsIF.GetAll(iface)
 
@@ -53,6 +57,9 @@ class MediaObject(object):
             sys.stdout.write(unichr(int(num, 16)))
             i = i + 2
         print
+
+    def delete(self):
+        return self.__objIF.Delete()
 
 class Item(MediaObject):
     def __init__(self, path):
