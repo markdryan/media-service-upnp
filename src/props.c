@@ -416,9 +416,44 @@ static void prv_add_int64_prop(GVariantBuilder *vb, const gchar *key,
 	}
 }
 
+static void prv_add_list_dlna_str(gpointer data, gpointer user_data)
+{
+	GVariantBuilder *vb = (GVariantBuilder *) user_data;
+	gchar *cap_str = (gchar *) data;
+	gchar *str;
+	int value = 0;
+
+	if (g_str_has_prefix(cap_str, "srs-rt-retention-period-")) {
+		str = cap_str + strlen("srs-rt-retention-period-");
+		cap_str = "srs-rt-retention-period";
+
+		if (*str) {
+			if (!g_strcmp0(str, "infinity"))
+				value = -1;
+			else
+				value = atoi(str);
+		}
+	}
+
+	prv_add_uint_prop(vb, cap_str, value);
+}
+
+static GVariant *prv_add_list_dlna_prop(GList* list)
+{
+	GVariantBuilder vb;
+
+	g_variant_builder_init(&vb, G_VARIANT_TYPE("a{sv}"));
+
+	g_list_foreach(list, prv_add_list_dlna_str, &vb);
+
+	return g_variant_builder_end(&vb);
+}
+
 void msu_props_add_device(GUPnPDeviceInfo *proxy, GVariantBuilder *vb)
 {
 	gchar *str;
+	GList *list;
+	GVariant *dlna_caps;
 
 	prv_add_string_prop(vb, MSU_INTERFACE_PROP_LOCATION,
 			    gupnp_device_info_get_location(proxy));
@@ -469,13 +504,21 @@ void msu_props_add_device(GUPnPDeviceInfo *proxy, GVariantBuilder *vb)
 					     NULL, NULL, NULL, NULL);
 	prv_add_string_prop(vb, MSU_INTERFACE_PROP_ICON_URL, str);
 	g_free(str);
+
+	list = gupnp_device_info_list_dlna_capabilities(proxy);
+	dlna_caps = prv_add_list_dlna_prop(list);
+	g_variant_builder_add(vb, "{sv}", MSU_INTERFACE_PROP_DLNA_CAPABILITIES,
+			      dlna_caps);
+	g_list_free_full(list, g_free);
 }
 
 GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy, const gchar *prop)
 {
+	GVariant *dlna_caps = NULL;
 	GVariant *retval = NULL;
 	const gchar *str = NULL;
 	gchar *copy = NULL;
+	GList *list;
 
 	if (!strcmp(MSU_INTERFACE_PROP_LOCATION, prop)) {
 		str = gupnp_device_info_get_location(proxy);
@@ -515,6 +558,17 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy, const gchar *prop)
 						      -1, -1, -1, FALSE,
 						      NULL, NULL, NULL, NULL);
 		str = copy;
+	} else if (!strcmp(MSU_INTERFACE_PROP_DLNA_CAPABILITIES, prop)) {
+		list = gupnp_device_info_list_dlna_capabilities(proxy);
+		dlna_caps = prv_add_list_dlna_prop(list);
+		g_list_free_full(list, g_free);
+
+		retval = g_variant_ref_sink(dlna_caps);
+
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+		copy = g_variant_print(dlna_caps, FALSE);
+		MSU_LOG_DEBUG("Prop %s = %s", prop, copy);
+#endif
 	}
 
 	if (str) {
@@ -524,7 +578,7 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy, const gchar *prop)
 	}
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_WARNING
 	else
-		MSU_LOG_WARNING("Property %s not defined for device", prop);
+		MSU_LOG_WARNING("Property %s not defined", prop);
 #endif
 
 	g_free(copy);
