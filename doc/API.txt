@@ -289,7 +289,7 @@ with MediaServer2Spec.
 New Methods:
 ------------
 
-Four new methods have been added.  These methods are:
+Five new methods have been added.  These methods are:
 
 ListChildrenEx(u Offset, u Max, as Filter, s SortBy) -> aa{sv}
 
@@ -299,10 +299,13 @@ ListContainersEx(u Offset, u Max, as Filter, s SortBy) -> aa{sv}
 
 SearchObjectsEx(s Query, u Offset, u Max, as Filter, s SortBy) -> aa{sv}
 
-They are identical in function and behaviour to existing the
-MediaServer2Spec functions ListChildren, ListItems, ListContainers,
-and SearchObjects, with the exception that they take one extra
-parameter, and in the case of SearchObjectsEx, return an extra result.
+Upload(s DisplayName, s FilePath) -> (u UploadId, o ObjectPath)
+
+The first four methods are identical in function and behaviour to
+existing the MediaServer2Spec functions ListChildren, ListItems,
+ListContainers, and SearchObjects, with the exception that they take
+one extra parameter, and in the case of SearchObjectsEx, return an
+extra result.
 
 This extra parameter allows clients to specify a sort
 order for the returned items.  It is a string that specifies a comma
@@ -349,6 +352,15 @@ DisplayName                   Music
 DisplayName                   Files & Folders
 
 when the server_path parameter contains the path of a server object.
+
+The fifth new method, Upload, allows clients to upload a local file to
+the org.gnome.UPnP.MediaContainer2 object upon which it was executed.
+It is identical in function and behavior to
+com.intel.UPnP.MediaDevice.UploadToAnyContainer with the sole
+exception that Upload allows the client to specify the server-side
+container into which the file is to be uploaded whereas
+UploadToAnyContainer leaves it up to the server to determine the most
+suitable location for the file.
 
 
 Recommended Usage:
