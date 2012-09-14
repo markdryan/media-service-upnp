@@ -210,6 +210,16 @@ static const gchar g_msu_server_introspection[] =
 	"      <arg type='u' name='"MSU_INTERFACE_TOTAL_ITEMS"'"
 	"           direction='out'/>"
 	"    </method>"
+	"    <method name='"MSU_INTERFACE_UPLOAD"'>"
+	"      <arg type='s' name='"MSU_INTERFACE_PROP_DISPLAY_NAME"'"
+	"           direction='in'/>"
+	"      <arg type='s' name='"MSU_INTERFACE_FILE_PATH"'"
+	"           direction='in'/>"
+	"      <arg type='u' name='"MSU_INTERFACE_UPLOAD_ID"'"
+	"           direction='out'/>"
+	"      <arg type='o' name='"MSU_INTERFACE_PATH"'"
+	"           direction='out'/>"
+	"    </method>"
 	"    <property type='u' name='"MSU_INTERFACE_PROP_CHILD_COUNT"'"
 	"       access='read'/>"
 	"    <property type='b' name='"MSU_INTERFACE_PROP_SEARCHABLE"'"
@@ -426,6 +436,10 @@ static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
 		msu_upnp_upload_to_any(context->upnp, task,
 				       context->cancellable,
 				       prv_async_task_complete, context);
+		break;
+	case MSU_TASK_UPLOAD:
+		msu_upnp_upload(context->upnp, task, context->cancellable,
+				prv_async_task_complete, context);
 		break;
 	default:
 		break;
@@ -753,6 +767,8 @@ static void prv_con_method_call(GDBusConnection *conn,
 	else if (!strcmp(method, MSU_INTERFACE_SEARCH_OBJECTS_EX))
 		task = msu_task_search_ex_new(invocation, object,
 					      parameters);
+	else if (!strcmp(method, MSU_INTERFACE_UPLOAD))
+		task = msu_task_upload_new(invocation, object, parameters);
 	else
 		goto finished;
 

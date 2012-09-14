@@ -23,6 +23,11 @@
 #include "error.h"
 #include "task.h"
 
+static msu_task_t *prv_upload_new_generic(msu_task_type_t type,
+					  GDBusMethodInvocation *invocation,
+					  const gchar *path,
+					  GVariant *parameters);
+
 msu_task_t *msu_task_get_version_new(GDBusMethodInvocation *invocation)
 {
 	msu_task_t *task = g_new0(msu_task_t, 1);
@@ -198,13 +203,14 @@ msu_task_t *msu_task_set_protocol_info_new(GDBusMethodInvocation *invocation,
 	return task;
 }
 
-msu_task_t *msu_task_upload_to_any_new(GDBusMethodInvocation *invocation,
-				       const gchar *path, GVariant *parameters)
+static msu_task_t *prv_upload_new_generic(msu_task_type_t type,
+					  GDBusMethodInvocation *invocation,
+					  const gchar *path,
+					  GVariant *parameters)
 {
 	msu_task_t *task;
 
-	task = prv_m2spec_task_new(MSU_TASK_UPLOAD_TO_ANY, invocation,
-				   path, "(uo)");
+	task = prv_m2spec_task_new(type, invocation, path, "(uo)");
 
 	g_variant_get(parameters, "(ss)", &task->ut.upload.display_name,
 		      &task->ut.upload.file_path);
@@ -212,6 +218,21 @@ msu_task_t *msu_task_upload_to_any_new(GDBusMethodInvocation *invocation,
 	task->multiple_retvals = TRUE;
 
 	return task;
+}
+
+
+msu_task_t *msu_task_upload_to_any_new(GDBusMethodInvocation *invocation,
+				       const gchar *path, GVariant *parameters)
+{
+	return prv_upload_new_generic(MSU_TASK_UPLOAD_TO_ANY, invocation,
+				      path, parameters);
+}
+
+msu_task_t *msu_task_upload_new(GDBusMethodInvocation *invocation,
+				const gchar *path, GVariant *parameters)
+{
+	return prv_upload_new_generic(MSU_TASK_UPLOAD, invocation,
+				      path, parameters);
 }
 
 static void prv_msu_task_delete(msu_task_t *task)
@@ -245,6 +266,7 @@ static void prv_msu_task_delete(msu_task_t *task)
 			g_free(task->ut.protocol_info.protocol_info);
 		break;
 	case MSU_TASK_UPLOAD_TO_ANY:
+	case MSU_TASK_UPLOAD:
 		g_free(task->ut.upload.display_name);
 		g_free(task->ut.upload.file_path);
 		break;

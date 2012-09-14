@@ -872,3 +872,52 @@ on_error:
 	MSU_LOG_DEBUG("Exit");
 }
 
+void msu_upnp_upload(msu_upnp_t *upnp, msu_task_t *task,
+		     GCancellable *cancellable,
+		     msu_upnp_task_complete_t cb,
+		     void *user_data)
+{
+	msu_async_cb_data_t *cb_data;
+	msu_async_upload_t *cb_task_data;
+	msu_device_t *device;
+
+	MSU_LOG_DEBUG("Enter");
+
+	cb_data = msu_async_cb_data_new(task, cb, user_data);
+	cb_task_data = &cb_data->ut.upload;
+
+	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
+				      &cb_data->id, &cb_data->error)) {
+		MSU_LOG_WARNING("Bad path %s", task->path);
+
+		goto on_error;
+	}
+
+	device = msu_device_from_path(cb_task_data->root_path,
+				      upnp->server_udn_map);
+	if (!device) {
+		MSU_LOG_WARNING("Cannot locate device for %s",
+				cb_task_data->root_path);
+
+		cb_data->error =
+			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
+				    "Cannot locate device corresponding to"
+				    " the specified path");
+		goto on_error;
+	}
+
+	if (!prv_compute_mime_and_class(task, cb_task_data, &cb_data->error))
+		goto on_error;
+
+	MSU_LOG_DEBUG("MIME Type %s", cb_task_data->mime_type);
+	MSU_LOG_DEBUG("Object class %s", cb_task_data->object_class);
+
+	msu_device_upload(device, task, cb_data->id, cb_data, cancellable);
+
+on_error:
+
+	if (!cb_data->action)
+		(void) g_idle_add(msu_async_complete_task, cb_data);
+
+	MSU_LOG_DEBUG("Exit");
+}

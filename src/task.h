@@ -35,7 +35,8 @@ enum msu_task_type_t_ {
 	MSU_TASK_SEARCH,
 	MSU_TASK_GET_RESOURCE,
 	MSU_TASK_SET_PROTOCOL_INFO,
-	MSU_TASK_UPLOAD_TO_ANY
+	MSU_TASK_UPLOAD_TO_ANY,
+	MSU_TASK_UPLOAD
 };
 typedef enum msu_task_type_t_ msu_task_type_t;
 
@@ -131,6 +132,8 @@ msu_task_t *msu_task_set_protocol_info_new(GDBusMethodInvocation *invocation,
 					   GVariant *parameters);
 msu_task_t *msu_task_upload_to_any_new(GDBusMethodInvocation *invocation,
 				       const gchar *path, GVariant *parameters);
+msu_task_t *msu_task_upload_new(GDBusMethodInvocation *invocation,
+				const gchar *path, GVariant *parameters);
 void msu_task_complete_and_delete(msu_task_t *task);
 void msu_task_fail_and_delete(msu_task_t *task, GError *error);
 void msu_task_cancel_and_delete(msu_task_t *task);
