@@ -87,6 +87,7 @@
 #define MSU_INTERFACE_LIST_CONTAINERS_EX "ListContainersEx"
 #define MSU_INTERFACE_SEARCH_OBJECTS "SearchObjects"
 #define MSU_INTERFACE_SEARCH_OBJECTS_EX "SearchObjectsEx"
+#define MSU_INTERFACE_UPLOAD "Upload"
 
 #define MSU_INTERFACE_GET_COMPATIBLE_RESOURCE "GetCompatibleResource"
 
