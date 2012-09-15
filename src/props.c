@@ -645,19 +645,19 @@ const gchar *msu_props_upnp_class_to_media_spec(const gchar *upnp_class)
 		ptr = upnp_class + gUPnPAudioItemLen;
 		if (!strcmp(ptr, ".musicTrack"))
 			retval = gMediaSpec2AudioMusic;
-		else if (!*ptr)
+		else
 			retval = gMediaSpec2Audio;
 	} else if (!strncmp(upnp_class, gUPnPVideoItem, gUPnPVideoItemLen)) {
 		ptr = upnp_class + gUPnPVideoItemLen;
 		if (!strcmp(ptr, ".movie"))
 			retval = gMediaSpec2VideoMovie;
-		else if (!*ptr)
+		else
 			retval = gMediaSpec2Video;
 	}  else if (!strncmp(upnp_class, gUPnPImageItem, gUPnPImageItemLen)) {
 		ptr = upnp_class + gUPnPImageItemLen;
 		if (!strcmp(ptr, ".photo"))
 			retval = gMediaSpec2ImagePhoto;
-		else if (!*ptr)
+		else
 			retval = gMediaSpec2Image;
 	}
 
