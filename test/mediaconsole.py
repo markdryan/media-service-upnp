@@ -20,23 +20,10 @@
 
 import dbus
 import sys
+import json
 
-def print_array_of_props(aprops):
-    i = 0
-    while i < len(aprops):
-        print ""
-        print "Resource " + str(i)
-        for key, value in aprops[i].iteritems():
-            print u'{0:<30}{1:<30}'.format(key,value)
-        i = i + 1
-
-def print_prop_array(props):
-    for key, value in props.iteritems():
-        if key != "Resources":
-            print u'{0:<30}{1:<30}'.format(key,value)
-    for key, value in props.iteritems():
-        if key == "Resources":
-            print_array_of_props(value)
+def print_properties(props):
+    print json.dumps(props, indent=4, sort_keys=True)
 
 class MediaObject(object):
 
@@ -52,14 +39,10 @@ class MediaObject(object):
         return self.__propsIF.Get(iface, prop_name)
 
     def print_prop(self, prop_name, iface = ""):
-        prop = self.__propsIF.Get(iface, prop_name)
-        if (prop_name == "Resources"):
-            print_array_of_props(prop)
-        else:
-            print prop
+        print_properties(self.__propsIF.Get(iface, prop_name))
 
     def print_props(self, iface = ""):
-        print_prop_array(self.__propsIF.GetAll(iface))
+        print_properties(self.__propsIF.GetAll(iface))
 
     def print_dms_id(self):
         path = self.__propsIF.Get("", "Path")
@@ -80,9 +63,8 @@ class Item(MediaObject):
                                         'org.gnome.UPnP.MediaItem2')
 
     def print_compatible_resource(self, protocol_info, fltr):
-        props = self.__itemIF.GetCompatibleResource(protocol_info, fltr);
-        for key, value in props.iteritems():
-            print u'{0:<30}{1:<30}'.format(key,value)
+        print_properties(self.__itemIF.GetCompatibleResource(protocol_info,
+                                        fltr))
 
 class Container(MediaObject):
 
@@ -96,20 +78,19 @@ class Container(MediaObject):
     def list_children(self, offset, count, fltr, sort=""):
         objects = self.__containerIF.ListChildrenEx(offset, count, fltr, sort)
         for item in objects:
-            print_prop_array(item)
+            print_properties(item)
             print ""
 
     def list_containers(self, offset, count, fltr, sort=""):
         objects = self.__containerIF.ListContainersEx(offset, count, fltr, sort)
         for item in objects:
-            for key, value in item.iteritems():
-                print u'{0:<30}{1:<30}'.format(key, value)
+            print_properties(item)
             print ""
 
     def list_items(self, offset, count, fltr, sort=""):
         objects = self.__containerIF.ListItemsEx(offset, count, fltr, sort)
         for item in objects:
-            print_prop_array(item)
+            print_properties(item)
             print ""
 
     def search(self, query, offset, count, fltr, sort=""):
@@ -118,7 +99,7 @@ class Container(MediaObject):
         print "Total Items: " + str(total)
         print
         for item in objects:
-            print_prop_array(item)
+            print_properties(item)
             print ""
 
     def tree(self, level=0):
