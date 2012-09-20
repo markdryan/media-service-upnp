@@ -461,6 +461,7 @@ static void prv_found_child(GUPnPDIDLLiteParser *parser,
 		}
 	} else {
 		msu_props_add_item(builder->vb, object,
+				   cb_task_data->root_path,
 				   cb_task_data->filter_mask,
 				   cb_task_data->protocol_info);
 	}
@@ -677,7 +678,9 @@ static void prv_get_item(GUPnPDIDLLiteParser *parser,
 	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
 
 	if (!GUPNP_IS_DIDL_LITE_CONTAINER(object))
-		msu_props_add_item(cb_task_data->vb, object, 0xffffffff,
+		msu_props_add_item(cb_task_data->vb, object,
+				   cb_task_data->root_path,
+				   0xffffffff,
 				   cb_task_data->protocol_info);
 	else
 		cb_data->error = g_error_new(MSU_ERROR,
@@ -757,7 +760,9 @@ static void prv_get_all(GUPnPDIDLLiteParser *parser,
 			if (!have_child_count)
 				cb_task_data->need_child_count = TRUE;
 		} else {
-			msu_props_add_item(cb_task_data->vb, object,
+			msu_props_add_item(cb_task_data->vb,
+					   object,
+					   cb_task_data->root_path,
 					   0xffffffff,
 					   cb_task_data->protocol_info);
 		}
@@ -1004,7 +1009,9 @@ static void prv_get_item_property(GUPnPDIDLLiteParser *parser,
 	if (cb_data->result)
 		goto on_error;
 
-	cb_data->result = msu_props_get_item_prop(task_data->prop_name, object,
+	cb_data->result = msu_props_get_item_prop(task_data->prop_name,
+						  cb_task_data->root_path,
+						  object,
 						  cb_task_data->protocol_info);
 
 on_error:
@@ -1414,7 +1421,9 @@ static void prv_found_target(GUPnPDIDLLiteParser *parser,
 			cb_task_data->need_child_count = TRUE;
 		}
 	} else {
-		msu_props_add_item(builder->vb, object,
+		msu_props_add_item(builder->vb,
+				   object,
+				   cb_task_data->root_path,
 				   cb_task_data->filter_mask,
 				   cb_task_data->protocol_info);
 	}

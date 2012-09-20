@@ -566,6 +566,18 @@ The AlbumArtURL is described in more detail in the table below:
 |---------------------------------------------------------------------------|
 
 
+Additional properties unsupported by org.gnome.UPnP.MediaItem2
+--------------------------------------------------------------
+
+|---------------------------------------------------------------------------|
+|     Name        | Type | m/o* |              Description                  |
+|---------------------------------------------------------------------------|
+| RefPath         |  s   |  o   |  The presence of this property indicate   |
+|                 |      |      |  that the item is actually referencing    |
+|                 |      |      |  another existing item.                   |
+|---------------------------------------------------------------------------|
+
+
 Unimplemented Properties
 -----------------------
 

@@ -250,6 +250,11 @@ GHashTable *msu_prop_maps_new()
 	g_hash_table_insert(filter_map,
 			    (gpointer) MSU_INTERFACE_PROP_URL, prop_map);
 
+	prop_map = prv_msu_prop_map_new("@refID", MSU_UPNP_MASK_PROP_REFPATH,
+					TRUE, TRUE);
+	g_hash_table_insert(filter_map,
+			    (gpointer) MSU_INTERFACE_PROP_REFPATH, prop_map);
+
 	return filter_map;
 }
 
@@ -884,12 +889,14 @@ static void prv_add_resources(GVariantBuilder *item_vb,
 
 void msu_props_add_item(GVariantBuilder *item_vb,
 			GUPnPDIDLLiteObject *object,
+			const gchar *root_path,
 			guint32 filter_mask,
 			const gchar *protocol_info)
 {
 	int track_number;
 	GUPnPDIDLLiteResource *res;
 	const char *str_val;
+	char *path;
 
 	if (filter_mask & MSU_UPNP_MASK_PROP_ARTIST)
 		prv_add_string_prop(item_vb, MSU_INTERFACE_PROP_ARTIST,
@@ -919,6 +926,17 @@ void msu_props_add_item(GVariantBuilder *item_vb,
 		prv_add_string_prop(item_vb, MSU_INTERFACE_PROP_ALBUM_ART_URL,
 				    gupnp_didl_lite_object_get_album_art(
 					    object));
+
+	if (filter_mask & MSU_UPNP_MASK_PROP_REFPATH) {
+		str_val = gupnp_didl_lite_item_get_ref_id(
+						GUPNP_DIDL_LITE_ITEM(object));
+		if (str_val != NULL) {
+			path = msu_path_from_id(root_path, str_val);
+			prv_add_path_prop(item_vb, MSU_INTERFACE_PROP_REFPATH,
+					    path);
+			g_free(path);
+		}
+	}
 
 	res = prv_get_matching_resource(object, protocol_info);
 	if (res) {
@@ -1099,11 +1117,12 @@ on_error:
 	return retval;
 }
 
-GVariant *msu_props_get_item_prop(const gchar *prop,
+GVariant *msu_props_get_item_prop(const gchar *prop, const gchar *root_path,
 				  GUPnPDIDLLiteObject *object,
 				  const gchar *protocol_info)
 {
 	const gchar *str;
+	gchar *path;
 	gint track_number;
 	GUPnPDIDLLiteResource *res;
 	GVariant *retval = NULL;
@@ -1160,6 +1179,17 @@ GVariant *msu_props_get_item_prop(const gchar *prop,
 		MSU_LOG_DEBUG("Prop %s = %s", prop, str);
 
 		retval = g_variant_ref_sink(g_variant_new_string(str));
+	} else if (!strcmp(prop, MSU_INTERFACE_PROP_REFPATH)) {
+		str = gupnp_didl_lite_item_get_ref_id(
+					GUPNP_DIDL_LITE_ITEM(object));
+		if (!str)
+			goto on_error;
+
+		MSU_LOG_DEBUG("Prop %s = %s", prop, str);
+
+		path = msu_path_from_id(root_path, str);
+		retval = g_variant_ref_sink(g_variant_new_string(path));
+		g_free(path);
 	} else if (!strcmp(prop, MSU_INTERFACE_PROP_RESOURCES)) {
 		retval = g_variant_ref_sink(
 			prv_compute_resources(object, 0xffffffff));

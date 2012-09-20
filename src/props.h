@@ -50,7 +50,8 @@ enum msu_upnp_prop_mask_ {
 	MSU_UPNP_MASK_PROP_COLOR_DEPTH = 1 << 21,
 	MSU_UPNP_MASK_PROP_ALBUM_ART_URL = 1 << 22,
 	MSU_UPNP_MASK_PROP_RESOURCES = 1 << 23,
-	MSU_UPNP_MASK_PROP_URL = 1 << 24
+	MSU_UPNP_MASK_PROP_URL = 1 << 24,
+	MSU_UPNP_MASK_PROP_REFPATH = 1 << 25
 };
 typedef enum msu_upnp_prop_mask_ msu_upnp_prop_mask;
 
@@ -91,9 +92,10 @@ void msu_props_add_resource(GVariantBuilder *item_vb,
 			    const gchar *protocol_info);
 void msu_props_add_item(GVariantBuilder *item_vb,
 			GUPnPDIDLLiteObject *object,
+			const gchar *root_path,
 			guint32 filter_mask,
 			const gchar *protocol_info);
-GVariant *msu_props_get_item_prop(const gchar *prop,
+GVariant *msu_props_get_item_prop(const gchar *prop, const gchar *root_path,
 				  GUPnPDIDLLiteObject *object,
 				  const gchar *protocol_info);
 

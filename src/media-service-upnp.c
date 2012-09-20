@@ -268,6 +268,8 @@ static const gchar g_msu_server_introspection[] =
 	"       access='read'/>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_ALBUM_ART_URL"'"
 	"       access='read'/>"
+	"    <property type='o' name='"MSU_INTERFACE_PROP_REFPATH"'"
+	"       access='read'/>"
 	"    <property type='aa{sv}' name='"MSU_INTERFACE_PROP_RESOURCES"'"
 	"       access='read'/>"
 	"  </interface>"
