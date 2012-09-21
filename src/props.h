@@ -51,7 +51,8 @@ enum msu_upnp_prop_mask_ {
 	MSU_UPNP_MASK_PROP_ALBUM_ART_URL = 1 << 22,
 	MSU_UPNP_MASK_PROP_RESOURCES = 1 << 23,
 	MSU_UPNP_MASK_PROP_URL = 1 << 24,
-	MSU_UPNP_MASK_PROP_REFPATH = 1 << 25
+	MSU_UPNP_MASK_PROP_REFPATH = 1 << 25,
+	MSU_UPNP_MASK_PROP_RESTRICTED = 1 << 26
 };
 typedef enum msu_upnp_prop_mask_ msu_upnp_prop_mask;
 

@@ -462,6 +462,16 @@ documented elsewhere, there are some peculiarities of its
 implementation in media-service-upnp that merit further explanation.
 These are described in the sections below.
 
+Additional properties unsupported by org.gnome.UPnP.MediaObject2
+--------------------------------------------------------------
+
+|---------------------------------------------------------------------------|
+|     Name        | Type | m/o* |              Description                  |
+|---------------------------------------------------------------------------|
+| Restricted      |  b   |  m   |  Indicates whether the object is          |
+|                 |      |      |  modifiable.                              |
+|---------------------------------------------------------------------------|
+
 
 Transcoding and org.gnome.UPnP.MediaItem2
 -----------------------------------------

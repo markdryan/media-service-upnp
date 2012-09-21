@@ -114,6 +114,8 @@ static const gchar g_msu_server_introspection[] =
 	"       access='read'/>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_DISPLAY_NAME"'"
 	"       access='read'/>"
+	"    <property type='b' name='"MSU_INTERFACE_PROP_RESTRICTED"'"
+	"       access='read'/>"
 	"  </interface>"
 	"  <interface name='"MSU_INTERFACE_MEDIA_CONTAINER"'>"
 	"    <method name='"MSU_INTERFACE_LIST_CHILDREN"'>"

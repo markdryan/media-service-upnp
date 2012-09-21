@@ -255,6 +255,12 @@ GHashTable *msu_prop_maps_new()
 	g_hash_table_insert(filter_map,
 			    (gpointer) MSU_INTERFACE_PROP_REFPATH, prop_map);
 
+	prop_map = prv_msu_prop_map_new("@restricted",
+					MSU_UPNP_MASK_PROP_RESTRICTED,
+					TRUE, TRUE);
+	g_hash_table_insert(filter_map,
+			    (gpointer) MSU_INTERFACE_PROP_RESTRICTED, prop_map);
+
 	return filter_map;
 }
 
@@ -767,6 +773,7 @@ gboolean msu_props_add_object(GVariantBuilder *item_vb,
 	const char *upnp_class;
 	const char *media_spec_type;
 	gboolean retval = FALSE;
+	gboolean rest;
 
 	id = gupnp_didl_lite_object_get_id(object);
 	if (!id)
@@ -779,6 +786,7 @@ gboolean msu_props_add_object(GVariantBuilder *item_vb,
 		goto on_error;
 
 	title = gupnp_didl_lite_object_get_title(object);
+	rest = gupnp_didl_lite_object_get_restricted(object);
 	path = msu_path_from_id(root_path, id);
 
 	if (filter_mask & MSU_UPNP_MASK_PROP_DISPLAY_NAME)
@@ -795,6 +803,9 @@ gboolean msu_props_add_object(GVariantBuilder *item_vb,
 	if (filter_mask & MSU_UPNP_MASK_PROP_TYPE)
 		prv_add_string_prop(item_vb, MSU_INTERFACE_PROP_TYPE,
 				    media_spec_type);
+
+	if (filter_mask & MSU_UPNP_MASK_PROP_RESTRICTED)
+		prv_add_bool_prop(item_vb, MSU_INTERFACE_PROP_RESTRICTED, rest);
 
 	retval = TRUE;
 
@@ -1062,6 +1073,7 @@ GVariant *msu_props_get_object_prop(const gchar *prop, const gchar *root_path,
 	const char *upnp_class;
 	const char *media_spec_type;
 	const char *title;
+	gboolean rest;
 	GVariant *retval = NULL;
 
 	if (!strcmp(prop, MSU_INTERFACE_PROP_PARENT)) {
@@ -1110,6 +1122,12 @@ GVariant *msu_props_get_object_prop(const gchar *prop, const gchar *root_path,
 		MSU_LOG_DEBUG("Prop %s = %s", prop, title);
 
 		retval = g_variant_ref_sink(g_variant_new_string(title));
+	} else if (!strcmp(prop, MSU_INTERFACE_PROP_RESTRICTED)) {
+		rest = gupnp_didl_lite_object_get_restricted(object);
+
+		MSU_LOG_DEBUG("Prop %s = %d", prop, rest);
+
+		retval = g_variant_ref_sink(g_variant_new_boolean(rest));
 	}
 
 on_error:
