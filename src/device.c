@@ -1772,6 +1772,9 @@ static msu_device_upload_t *prv_msu_device_upload_new(const gchar *file_path,
 		goto on_error;
 	}
 
+	soup_message_headers_set_expectations(upload->msg->request_headers,
+					      SOUP_EXPECTATION_CONTINUE);
+
 	soup_message_set_request(upload->msg, mime_type, SOUP_MEMORY_STATIC,
 				 body, body_length);
 
