@@ -1,3 +1,20 @@
+version 0.1.0
+	- Implemented Upload
+	        https://github.com/01org/media-service-upnp/issues/34
+	        https://github.com/01org/media-service-upnp/issues/62
+	- Fixed bug #33: Local conf file not created if ~/.config does not exist
+		https://github.com/01org/media-service-upnp/issues/33
+	- Fixed a memory leak when event subscriptions are lost
+	- Fixed bug #57: Search does not work on Windows 7 DMS
+	        https://github.com/01org/media-service-upnp/issues/57
+	- Added the Restricted property
+	        https://github.com/01org/media-service-upnp/issues/64
+	- Added the RefPath property
+	        https://github.com/01org/media-service-upnp/issues/59
+	- Improve the printing of objects in mediaconsole
+	- Added more object types
+	        https://github.com/01org/media-service-upnp/issues/44
+
 version 0.0.3
 	- Add SystemUpdate and ContainerUpdate signals to com.intel.UPnP.MediaDevice
 		https://github.com/01org/media-service-upnp/issues/27
