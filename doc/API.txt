@@ -264,10 +264,11 @@ org.gnome.MediaObject2
 
 The org.gnome.MediaObject2 interface exposes some basic properties of
 the server's root directory.  This interface is described
-MediaServer2Spec specification (3) and will not be described further
-in this document exept for the Type property which tells what kind of object we
-are dealing with and which can take the below values in addition to those
-described in MediaServer2Spec specification (3).
+MediaServer2Spec specification (3). However, media-service-upnp's
+implementation adds an extra property as well as a new method.
+The Type property tells what kind of object we are dealing with and
+which can take the below values in addition to those described 
+in MediaServer2Spec specification (3).
 in case of Items:
  'video.musicclip', 'video.broadcast'
  'audio.broadcast', 'audio.book'
@@ -275,6 +276,16 @@ and in case of Containers:
  'album', 'album.music', 'album.photo'
  'person', 'person.musicartist'
  'genre', 'genre.music', 'genre.movie'
+
+New Method:
+-----------
+
+Delete() -> void
+
+Delete will simply call the UPnP DestroyObject method on the relevant
+server side object. Note that calling Delete on the root object of a
+server will delete all the contents on the server but not the
+device object itself.
 
 
 org.gnome.MediaContainer2
