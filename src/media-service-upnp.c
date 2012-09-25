@@ -29,18 +29,12 @@
 #include <syslog.h>
 #include <sys/signalfd.h>
 
+#include "client.h"
 #include "interface.h"
 #include "log.h"
 #include "settings.h"
 #include "task.h"
 #include "upnp.h"
-
-typedef struct msu_client_t_ msu_client_t;
-struct msu_client_t_ {
-	guint id;
-	gchar *protocol_info;
-	gboolean prefer_local_addresses;
-};
 
 typedef struct msu_context_t_ msu_context_t;
 struct msu_context_t_ {
