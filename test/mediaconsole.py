@@ -158,3 +158,5 @@ class UPNP(object):
     def set_protocol_info(self, protocol_info):
         self.__manager.SetProtocolInfo(protocol_info)
 
+    def prefer_local_addresses(self, prefer):
+        self.__manager.PreferLocalAddresses(prefer)
