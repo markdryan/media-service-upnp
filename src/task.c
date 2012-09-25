@@ -249,6 +249,16 @@ msu_task_t *msu_task_upload_new(GDBusMethodInvocation *invocation,
 				      path, parameters);
 }
 
+msu_task_t *msu_task_delete_new(GDBusMethodInvocation *invocation,
+				const gchar *path)
+{
+	msu_task_t *task;
+
+	task = prv_m2spec_task_new(MSU_TASK_DELETE_OBJECT, invocation,
+				   path, NULL);
+	return task;
+}
+
 static void prv_msu_task_delete(msu_task_t *task)
 {
 	switch (task->type) {

@@ -89,6 +89,9 @@ void msu_device_subscribe_to_contents_change(msu_device_t *device);
 void msu_device_upload(msu_device_t *device, msu_client_t *client,
 		       msu_task_t *task, const gchar *parent_id,
 		       msu_async_cb_data_t *cb_data, GCancellable *cancellable);
-
+void msu_device_delete_object(msu_device_t *device, msu_client_t *client,
+			      msu_task_t *task,
+			      msu_async_cb_data_t *cb_data,
+			      GCancellable *cancellable);
 
 #endif

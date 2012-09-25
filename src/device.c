@@ -1983,3 +1983,61 @@ void msu_device_upload(msu_device_t *device, msu_client_t *client,
 
 	MSU_LOG_DEBUG("Exit");
 }
+
+static void prv_destroy_object_cb(GUPnPServiceProxy *proxy,
+				  GUPnPServiceProxyAction *action,
+				  gpointer user_data)
+{
+	GError *upnp_error = NULL;
+	msu_async_cb_data_t *cb_data = user_data;
+
+	MSU_LOG_DEBUG("Enter");
+
+	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
+					    &upnp_error,
+					    NULL)) {
+		MSU_LOG_WARNING("Destroy Object operation failed: %s",
+				upnp_error->message);
+
+		cb_data->error = g_error_new(MSU_ERROR,
+					     MSU_ERROR_OPERATION_FAILED,
+					     "Destroy Object operation "
+					     " failed: %s",
+					     upnp_error->message);
+	}
+
+	(void) g_idle_add(msu_async_complete_task, cb_data);
+	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
+
+	if (upnp_error)
+		g_error_free(upnp_error);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+void msu_device_delete_object(msu_device_t *device, msu_client_t *client,
+			      msu_task_t *task,
+			      msu_async_cb_data_t *cb_data,
+			      GCancellable *cancellable)
+{
+	msu_device_context_t *context;
+
+	MSU_LOG_DEBUG("Enter");
+
+	context = msu_device_get_context(device, client);
+
+	cb_data->action = gupnp_service_proxy_begin_action(
+				context->service_proxy, "DestroyObject",
+				prv_destroy_object_cb, cb_data,
+				"ObjectID", G_TYPE_STRING, cb_data->id,
+				NULL);
+
+	cb_data->proxy = context->service_proxy;
+
+	cb_data->cancel_id = g_cancellable_connect(cancellable,
+					G_CALLBACK(msu_async_task_cancelled),
+					cb_data, NULL);
+	cb_data->cancellable = cancellable;
+
+	MSU_LOG_DEBUG("Exit");
+}

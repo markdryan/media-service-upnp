@@ -91,6 +91,7 @@
 #define MSU_INTERFACE_SEARCH_OBJECTS "SearchObjects"
 #define MSU_INTERFACE_SEARCH_OBJECTS_EX "SearchObjectsEx"
 #define MSU_INTERFACE_UPLOAD "Upload"
+#define MSU_INTERFACE_DELETE "Delete"
 
 #define MSU_INTERFACE_GET_COMPATIBLE_RESOURCE "GetCompatibleResource"
 

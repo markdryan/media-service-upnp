@@ -89,6 +89,10 @@ void msu_upnp_upload(msu_upnp_t *upnp, msu_client_t *client,
 		     GCancellable *cancellable,
 		     msu_upnp_task_complete_t cb,
 		     void *user_data);
-
+void msu_upnp_delete_object(msu_upnp_t *upnp, msu_client_t *client,
+			    msu_task_t *task,
+			    GCancellable *cancellable,
+			    msu_upnp_task_complete_t cb,
+			    void *user_data);
 
 #endif

@@ -115,6 +115,8 @@ static const gchar g_msu_server_introspection[] =
 	"       access='read'/>"
 	"    <property type='b' name='"MSU_INTERFACE_PROP_RESTRICTED"'"
 	"       access='read'/>"
+	"    <method name='"MSU_INTERFACE_DELETE"'>"
+	"    </method>"
 	"  </interface>"
 	"  <interface name='"MSU_INTERFACE_MEDIA_CONTAINER"'>"
 	"    <method name='"MSU_INTERFACE_LIST_CHILDREN"'>"
@@ -452,6 +454,12 @@ static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
 				context->cancellable,
 				prv_async_task_complete, context);
 		break;
+	case MSU_TASK_DELETE_OBJECT:
+		msu_upnp_delete_object(context->upnp, client, task,
+				       context->cancellable,
+				       prv_async_task_complete, context);
+		break;
+
 	default:
 		break;
 	}
@@ -490,6 +498,15 @@ static void prv_msu_method_call(GDBusConnection *conn,
 				GVariant *parameters,
 				GDBusMethodInvocation *invocation,
 				gpointer user_data);
+
+static void prv_object_method_call(GDBusConnection *conn,
+				   const gchar *sender,
+				   const gchar *object,
+				   const gchar *interface,
+				   const gchar *method,
+				   GVariant *parameters,
+				   GDBusMethodInvocation *invocation,
+				   gpointer user_data);
 
 static void prv_item_method_call(GDBusConnection *conn,
 				 const gchar *sender,
@@ -533,6 +550,12 @@ static const GDBusInterfaceVTable g_msu_vtable = {
 	NULL
 };
 
+static const GDBusInterfaceVTable g_object_vtable = {
+	prv_object_method_call,
+	NULL,
+	NULL
+};
+
 static const GDBusInterfaceVTable g_item_vtable = {
 	prv_item_method_call,
 	NULL,
@@ -559,7 +582,7 @@ static const GDBusInterfaceVTable g_device_vtable = {
 
 static const GDBusInterfaceVTable *g_server_vtables[MSU_INTERFACE_INFO_MAX] = {
 	&g_props_vtable,
-	NULL,
+	&g_object_vtable,
 	&g_ms_vtable,
 	&g_item_vtable,
 	&g_device_vtable
@@ -725,6 +748,22 @@ static void prv_msu_method_call(GDBusConnection *conn,
 	} else if (!strcmp(method, MSU_INTERFACE_PREFER_LOCAL_ADDRESSES)) {
 		task = msu_task_prefer_local_addresses_new(invocation,
 							   parameters);
+		prv_add_task(context, task);
+	}
+}
+
+static void prv_object_method_call(GDBusConnection *conn,
+				   const gchar *sender, const gchar *object,
+				   const gchar *interface,
+				   const gchar *method, GVariant *parameters,
+				   GDBusMethodInvocation *invocation,
+				   gpointer user_data)
+{
+	msu_context_t *context = user_data;
+	msu_task_t *task;
+
+	if (!strcmp(method, MSU_INTERFACE_DELETE)) {
+		task = msu_task_delete_new(invocation, object);
 		prv_add_task(context, task);
 	}
 }

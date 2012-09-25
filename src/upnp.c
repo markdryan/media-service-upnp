@@ -157,6 +157,9 @@ static const GDBusInterfaceVTable *prv_subtree_dispatch(
 	if (!strcmp(MSU_INTERFACE_MEDIA_CONTAINER, interface_name))
 		retval = upnp->interface_info[
 			MSU_INTERFACE_INFO_CONTAINER].vtable;
+	else if (!strcmp(MSU_INTERFACE_MEDIA_OBJECT, interface_name))
+		retval = upnp->interface_info[
+			MSU_INTERFACE_INFO_OBJECT].vtable;
 	else if (!strcmp(MSU_INTERFACE_PROPERTIES, interface_name))
 		retval = upnp->interface_info[
 			MSU_INTERFACE_INFO_PROPERTIES].vtable;
@@ -918,6 +921,54 @@ void msu_upnp_upload(msu_upnp_t *upnp, msu_client_t *client, msu_task_t *task,
 
 on_error:
 
+	if (!cb_data->action)
+		(void) g_idle_add(msu_async_complete_task, cb_data);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+void msu_upnp_delete_object(msu_upnp_t *upnp, msu_client_t *client,
+			    msu_task_t *task,
+			    GCancellable *cancellable,
+			    msu_upnp_task_complete_t cb,
+			    void *user_data)
+{
+	msu_async_cb_data_t *cb_data;
+	msu_device_t *device;
+	gchar *root_path = NULL;
+
+	MSU_LOG_DEBUG("Enter");
+
+	cb_data = msu_async_cb_data_new(task, cb, user_data);
+
+	if (!msu_path_get_path_and_id(task->path, &root_path,
+				      &cb_data->id, &cb_data->error)) {
+		MSU_LOG_WARNING("Bad path %s", task->path);
+
+		goto on_error;
+	}
+
+	MSU_LOG_DEBUG("Root Path %s Id %s", root_path,
+		      cb_data->id);
+
+	device = msu_device_from_path(root_path, upnp->server_udn_map);
+	if (!device) {
+		MSU_LOG_WARNING("Cannot locate device for %s",
+				root_path);
+
+		cb_data->error =
+			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
+				    "Cannot locate device corresponding to"
+				    " the specified path");
+		goto on_error;
+	}
+
+	msu_device_delete_object(device, client, task, cb_data, cancellable);
+
+on_error:
+
+	if (root_path)
+		g_free(root_path);
 	if (!cb_data->action)
 		(void) g_idle_add(msu_async_complete_task, cb_data);
 
