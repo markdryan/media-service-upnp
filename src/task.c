@@ -220,6 +220,20 @@ static msu_task_t *prv_upload_new_generic(msu_task_type_t type,
 	return task;
 }
 
+msu_task_t *msu_task_prefer_local_addresses_new(
+					GDBusMethodInvocation *invocation,
+					GVariant *parameters)
+{
+	msu_task_t *task = g_new0(msu_task_t, 1);
+
+	task->type = MSU_TASK_SET_PREFER_LOCAL_ADDRESSES;
+	task->invocation = invocation;
+	task->synchronous = TRUE;
+	g_variant_get(parameters, "(b)",
+		      &task->ut.prefer_local_addresses.prefer);
+
+	return task;
+}
 
 msu_task_t *msu_task_upload_to_any_new(GDBusMethodInvocation *invocation,
 				       const gchar *path, GVariant *parameters)

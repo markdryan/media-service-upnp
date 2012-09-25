@@ -39,6 +39,7 @@ typedef struct msu_client_t_ msu_client_t;
 struct msu_client_t_ {
 	guint id;
 	gchar *protocol_info;
+	gboolean prefer_local_addresses;
 };
 
 typedef struct msu_context_t_ msu_context_t;
@@ -76,6 +77,10 @@ static const gchar g_msu_root_introspection[] =
 	"    </method>"
 	"    <method name='"MSU_INTERFACE_SET_PROTOCOL_INFO"'>"
 	"      <arg type='s' name='"MSU_INTERFACE_PROTOCOL_INFO"'"
+	"           direction='in'/>"
+	"    </method>"
+	"    <method name='"MSU_INTERFACE_PREFER_LOCAL_ADDRESSES"'>"
+	"      <arg type='b' name='"MSU_INTERFACE_PREFER"'"
 	"           direction='in'/>"
 	"    </method>"
 	"    <signal name='"MSU_INTERFACE_FOUND_SERVER"'>"
@@ -356,6 +361,16 @@ static void prv_process_sync_task(msu_context_t *context, msu_task_t *task)
 			} else {
 				client->protocol_info = NULL;
 			}
+		}
+		msu_task_complete_and_delete(task);
+		break;
+	case MSU_TASK_SET_PREFER_LOCAL_ADDRESSES:
+		client_name =
+			g_dbus_method_invocation_get_sender(task->invocation);
+		client = g_hash_table_lookup(context->watchers, client_name);
+		if (client) {
+			client->prefer_local_addresses =
+					task->ut.prefer_local_addresses.prefer;
 		}
 		msu_task_complete_and_delete(task);
 		break;
@@ -676,6 +691,7 @@ static void prv_add_task(msu_context_t *context, msu_task_t *task)
 
 	if (!g_hash_table_lookup(context->watchers, client_name)) {
 		client = g_new0(msu_client_t, 1);
+		client->prefer_local_addresses = TRUE;
 		client->id = g_bus_watch_name(G_BUS_TYPE_SESSION, client_name,
 					      G_BUS_NAME_WATCHER_FLAGS_NONE,
 					      NULL, prv_lost_client, context,
@@ -713,6 +729,10 @@ static void prv_msu_method_call(GDBusConnection *conn,
 		prv_add_task(context, task);
 	} else if (!strcmp(method, MSU_INTERFACE_SET_PROTOCOL_INFO)) {
 		task = msu_task_set_protocol_info_new(invocation, parameters);
+		prv_add_task(context, task);
+	} else if (!strcmp(method, MSU_INTERFACE_PREFER_LOCAL_ADDRESSES)) {
+		task = msu_task_prefer_local_addresses_new(invocation,
+							   parameters);
 		prv_add_task(context, task);
 	}
 }

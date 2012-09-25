@@ -77,6 +77,7 @@
 #define MSU_INTERFACE_GET_SERVERS "GetServers"
 #define MSU_INTERFACE_RELEASE "Release"
 #define MSU_INTERFACE_SET_PROTOCOL_INFO "SetProtocolInfo"
+#define MSU_INTERFACE_PREFER_LOCAL_ADDRESSES "PreferLocalAddresses"
 
 #define MSU_INTERFACE_FOUND_SERVER "FoundServer"
 #define MSU_INTERFACE_LOST_SERVER "LostServer"
@@ -108,6 +109,7 @@
 #define MSU_INTERFACE_PATH "Path"
 #define MSU_INTERFACE_QUERY "Query"
 #define MSU_INTERFACE_PROTOCOL_INFO "ProtocolInfo"
+#define MSU_INTERFACE_PREFER "Prefer"
 
 #define MSU_INTERFACE_OFFSET "Offset"
 #define MSU_INTERFACE_MAX "Max"

@@ -34,6 +34,7 @@ enum msu_task_type_t_ {
 	MSU_TASK_GET_PROP,
 	MSU_TASK_SEARCH,
 	MSU_TASK_GET_RESOURCE,
+	MSU_TASK_SET_PREFER_LOCAL_ADDRESSES,
 	MSU_TASK_SET_PROTOCOL_INFO,
 	MSU_TASK_UPLOAD_TO_ANY,
 	MSU_TASK_UPLOAD
@@ -78,6 +79,12 @@ struct msu_task_get_resource_t_ {
 	GVariant *filter;
 };
 
+typedef struct msu_task_set_prefer_local_addresses_t_
+					msu_task_set_prefer_local_addresses_t;
+struct msu_task_set_prefer_local_addresses_t_ {
+	gboolean prefer;
+};
+
 typedef struct msu_task_set_protocol_info_t_ msu_task_set_protocol_info_t;
 struct msu_task_set_protocol_info_t_ {
 	gchar *protocol_info;
@@ -104,6 +111,7 @@ struct msu_task_t_ {
 		msu_task_get_prop_t get_prop;
 		msu_task_search_t search;
 		msu_task_get_resource_t resource;
+		msu_task_set_prefer_local_addresses_t prefer_local_addresses;
 		msu_task_set_protocol_info_t protocol_info;
 		msu_task_upload_t upload;
 	} ut;
@@ -130,6 +138,9 @@ msu_task_t *msu_task_get_resource_new(GDBusMethodInvocation *invocation,
 				      const gchar *path, GVariant *parameters);
 msu_task_t *msu_task_set_protocol_info_new(GDBusMethodInvocation *invocation,
 					   GVariant *parameters);
+msu_task_t *msu_task_prefer_local_addresses_new(
+					GDBusMethodInvocation *invocation,
+					GVariant *parameters);
 msu_task_t *msu_task_upload_to_any_new(GDBusMethodInvocation *invocation,
 				       const gchar *path, GVariant *parameters);
 msu_task_t *msu_task_upload_new(GDBusMethodInvocation *invocation,
