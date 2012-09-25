@@ -46,7 +46,7 @@ com.intel.MediaServiceUPnP.Manager
 Methods:
 ----------
 
-The interface com.intel.MediaServiceUPnP.Manager contains 4 methods.
+The interface com.intel.MediaServiceUPnP.Manager contains 5 methods.
 Descriptions of each of these methods along with their d-Bus
 signatures are given below.
 
@@ -107,6 +107,22 @@ http-get:*:image/jpeg:DLNA.ORG_PN=JPEG_MED"
 The protocol info value above indicates that the client supports the
 retrieval, via HTTP, and the playback of audio MP4 and JPEG files.
 
+PreferLocalAddresses(b Prefer) -> void
+
+Indicates whether local address should be prioritized or not.
+DMCs should call this function with the value FALSE before requesting
+any URLs from any servers.
+
+DMSs tend to make their services available on multiple interfaces.
+If a DMP and a DMS are running on the same device, the DMP will have
+the option of communicating with the DMS over the loopback or the LAN.
+Currently, media-service-upnp always returns URLs containing the loopback
+address to clients if they are trying to access servers running on
+the same physical device. This is the correct behavior for DMPs
+but it is incorrect for DMCs. If the DMC were to run on the same device
+as the DMS, the DMC would only receive loopback address based URLs
+from media-service-upnp. It cannot pass those URLs to a renderer running
+on a different device.
 
 Signals:
 ---------
