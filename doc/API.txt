@@ -265,7 +265,8 @@ org.gnome.MediaObject2
 The org.gnome.MediaObject2 interface exposes some basic properties of
 the server's root directory.  This interface is described
 MediaServer2Spec specification (3). However, media-service-upnp's
-implementation adds an extra property as well as a new method.
+implementation introduces new values for the Type property and adds
+a new property and a new method.
 The Type property tells what kind of object we are dealing with and
 which can take the below values in addition to those described 
 in MediaServer2Spec specification (3).
@@ -276,6 +277,19 @@ and in case of Containers:
  'album', 'album.music', 'album.photo'
  'person', 'person.musicartist'
  'genre', 'genre.music', 'genre.movie'
+ 
+Additional property:
+----------------------
+
+|---------------------------------------------------------------------------|
+|     Name        | Type  | m/o* |              Description                 |
+|---------------------------------------------------------------------------|
+| DLNAManaged     | a{sb} |  o   |  A dictionary of boolean values          |
+|                 |       |      |  indicating the values of the various    |
+|                 |       |      |  DLNA managed attributes. There are 5    |
+|                 |       |      |  keys: Upload, CreateContainer, Delete,  |
+|                 |       |      |  UploadDelete, ChangeMeta                |
+|---------------------------------------------------------------------------|
 
 New Method:
 -----------
