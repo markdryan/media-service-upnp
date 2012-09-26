@@ -126,6 +126,13 @@ GHashTable *msu_prop_maps_new()
 			    (gpointer) MSU_INTERFACE_PROP_DISPLAY_NAME,
 			    prop_map);
 
+	prop_map = prv_msu_prop_map_new("dlna:dlnaManaged",
+					MSU_UPNP_MASK_PROP_DLNA_MANAGED,
+					TRUE, FALSE);
+	g_hash_table_insert(filter_map,
+			    (gpointer) MSU_INTERFACE_PROP_DLNA_MANAGED,
+			    prop_map);
+
 	prop_map = prv_msu_prop_map_new("@childCount",
 					MSU_UPNP_MASK_PROP_CHILD_COUNT,
 					TRUE, TRUE);
@@ -376,6 +383,13 @@ static void prv_add_int_prop(GVariantBuilder *vb, const gchar *key,
 	if (value != -1)
 		g_variant_builder_add(vb, "{sv}", key,
 				      g_variant_new_int32(value));
+}
+
+static void prv_add_variant_prop(GVariantBuilder *vb, const gchar *key,
+				 GVariant *prop)
+{
+	if (prop)
+		g_variant_builder_add(vb, "{sv}", key, prop);
 }
 
 void msu_props_add_child_count(GVariantBuilder *item_vb, gint value)
@@ -761,6 +775,31 @@ const gchar *msu_props_upnp_class_to_media_spec(const gchar *upnp_class)
 	return retval;
 }
 
+static GVariant *prv_props_get_dlna_managed_dict(GUPnPOCMFlags flags)
+{
+	GVariantBuilder builder;
+	gboolean managed;
+
+	g_variant_builder_init(&builder, G_VARIANT_TYPE("a{sb}"));
+
+	managed = (flags & GUPNP_OCM_FLAGS_UPLOAD);
+	g_variant_builder_add(&builder, "{sb}", "Upload", managed);
+
+	managed = (flags & GUPNP_OCM_FLAGS_CREATE_CONTAINER);
+	g_variant_builder_add(&builder, "{sb}", "CreateContainer", managed);
+
+	managed = (flags & GUPNP_OCM_FLAGS_DESTROYABLE);
+	g_variant_builder_add(&builder, "{sb}", "Delete", managed);
+
+	managed = (flags & GUPNP_OCM_FLAGS_UPLOAD_DESTROYABLE);
+	g_variant_builder_add(&builder, "{sb}", "UploadDelete", managed);
+
+	managed = (flags & GUPNP_OCM_FLAGS_CHANGE_METADATA);
+	g_variant_builder_add(&builder, "{sb}", "ChangeMeta", managed);
+
+	return g_variant_builder_end(&builder);
+}
+
 gboolean msu_props_add_object(GVariantBuilder *item_vb,
 			      GUPnPDIDLLiteObject *object,
 			      const char *root_path,
@@ -774,6 +813,7 @@ gboolean msu_props_add_object(GVariantBuilder *item_vb,
 	const char *media_spec_type;
 	gboolean retval = FALSE;
 	gboolean rest;
+	GUPnPOCMFlags flags;
 
 	id = gupnp_didl_lite_object_get_id(object);
 	if (!id)
@@ -806,6 +846,13 @@ gboolean msu_props_add_object(GVariantBuilder *item_vb,
 
 	if (filter_mask & MSU_UPNP_MASK_PROP_RESTRICTED)
 		prv_add_bool_prop(item_vb, MSU_INTERFACE_PROP_RESTRICTED, rest);
+
+	if (filter_mask & MSU_UPNP_MASK_PROP_DLNA_MANAGED) {
+		flags = gupnp_didl_lite_object_get_dlna_managed(object);
+		prv_add_variant_prop(item_vb,
+				     MSU_INTERFACE_PROP_DLNA_MANAGED,
+				     prv_props_get_dlna_managed_dict(flags));
+	}
 
 	retval = TRUE;
 
@@ -1075,6 +1122,7 @@ GVariant *msu_props_get_object_prop(const gchar *prop, const gchar *root_path,
 	const char *title;
 	gboolean rest;
 	GVariant *retval = NULL;
+	GUPnPOCMFlags dlna_managed;
 
 	if (!strcmp(prop, MSU_INTERFACE_PROP_PARENT)) {
 		id = gupnp_didl_lite_object_get_parent_id(object);
@@ -1128,6 +1176,13 @@ GVariant *msu_props_get_object_prop(const gchar *prop, const gchar *root_path,
 		MSU_LOG_DEBUG("Prop %s = %d", prop, rest);
 
 		retval = g_variant_ref_sink(g_variant_new_boolean(rest));
+	} else if (!strcmp(prop, MSU_INTERFACE_PROP_DLNA_MANAGED)) {
+		dlna_managed = gupnp_didl_lite_object_get_dlna_managed(object);
+
+		MSU_LOG_DEBUG("Prop %s = %0x", prop, dlna_managed);
+
+		retval = g_variant_ref_sink(
+				prv_props_get_dlna_managed_dict(dlna_managed));
 	}
 
 on_error:

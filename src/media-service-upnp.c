@@ -115,6 +115,8 @@ static const gchar g_msu_server_introspection[] =
 	"       access='read'/>"
 	"    <property type='b' name='"MSU_INTERFACE_PROP_RESTRICTED"'"
 	"       access='read'/>"
+	"    <property type='a{sb}' name='"MSU_INTERFACE_PROP_DLNA_MANAGED"'"
+	"       access='read'/>"
 	"    <method name='"MSU_INTERFACE_DELETE"'>"
 	"    </method>"
 	"  </interface>"
