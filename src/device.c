@@ -1673,7 +1673,8 @@ static void prv_extract_import_uri(GUPnPDIDLLiteParser *parser,
 	const gchar *uri;
 
 	if (!*import_uri) {
-		ptr = resources = gupnp_didl_lite_object_get_resources(object);
+		resources = gupnp_didl_lite_object_get_resources(object);
+		ptr = resources;
 		while (ptr) {
 			res = ptr->data;
 			if (!*import_uri) {

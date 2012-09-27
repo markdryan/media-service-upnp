@@ -917,7 +917,8 @@ void msu_upnp_upload(msu_upnp_t *upnp, msu_client_t *client, msu_task_t *task,
 	MSU_LOG_DEBUG("MIME Type %s", cb_task_data->mime_type);
 	MSU_LOG_DEBUG("Object class %s", cb_task_data->object_class);
 
-	msu_device_upload(device, client, task, cb_data->id, cb_data, cancellable);
+	msu_device_upload(device, client, task, cb_data->id, cb_data,
+			  cancellable);
 
 on_error:
 
