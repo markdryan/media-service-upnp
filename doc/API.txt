@@ -109,20 +109,16 @@ retrieval, via HTTP, and the playback of audio MP4 and JPEG files.
 
 PreferLocalAddresses(b Prefer) -> void
 
-Indicates whether local address should be prioritized or not.
-DMCs should call this function with the value FALSE before requesting
-any URLs from any servers.
+Indicates whether  local addresses should be prioritized  or not. DMSs
+tend to make their services available on multiple interfaces. If a DMP
+and a DMS are running on the same device, the DMP will have the option
+of  communicating with  the  DMS over  the  loopback or  the LAN.   By
+default media-service-upnp  will return loopback  addresses to clients
+running on  the same device.   This is not  very helpful for  DMCs who
+need  non-local  addresses  to  pass  to renderers  running  on  other
+devices.   DMCs should  therefore call  this function  with  the value
+FALSE before requesting any URLs from any servers.
 
-DMSs tend to make their services available on multiple interfaces.
-If a DMP and a DMS are running on the same device, the DMP will have
-the option of communicating with the DMS over the loopback or the LAN.
-Currently, media-service-upnp always returns URLs containing the loopback
-address to clients if they are trying to access servers running on
-the same physical device. This is the correct behavior for DMPs
-but it is incorrect for DMCs. If the DMC were to run on the same device
-as the DMS, the DMC would only receive loopback address based URLs
-from media-service-upnp. It cannot pass those URLs to a renderer running
-on a different device.
 
 Signals:
 ---------
@@ -270,9 +266,13 @@ org.gnome.MediaObject2
 
 The org.gnome.MediaObject2 interface exposes some basic properties of
 the server's root directory.  This interface is described
-MediaServer2Spec specification (3). However, media-service-upnp's
-implementation introduces new values for the Type property and adds
-a new property and a new method.
+MediaServer2Spec specification (3).  Media-service-upnp enhances this
+interface by adding new properties and methods and by defining
+additional values for the Type property.
+
+Additional Values for the Type Property:
+----------------------------------------
+
 The Type property tells what kind of object we are dealing with and
 which can take the below values in addition to those described
 in MediaServer2Spec specification (3).
@@ -284,7 +284,7 @@ and in case of Containers:
  'person', 'person.musicartist'
  'genre', 'genre.music', 'genre.movie'
 
-Additional property:
+Additional Properties:
 ----------------------
 
 |---------------------------------------------------------------------------|
@@ -296,9 +296,13 @@ Additional property:
 |                 |       |      |  keys: Upload, CreateContainer, Delete,  |
 |                 |       |      |  UploadDelete, ChangeMeta                |
 |---------------------------------------------------------------------------|
+| Restricted      |  b    |  m   |  Indicates whether the object is         |
+|                 |       |      |  modifiable.                             |
+|---------------------------------------------------------------------------|
 
-New Method:
------------
+
+Additional Methods:
+------------------
 
 Delete() -> void
 
@@ -366,7 +370,7 @@ extra result.
 This extra parameter allows clients to specify a sort
 order for the returned items.  It is a string that specifies a comma
 separated list of PropertyNames, identifying the order in which
-returned items should be sorted.  Each property name can be preceeded
+returned items should be sorted.  Each property name can be preceded
 with a '-' or a '+' to indicate descending or ascending order
 respectively.  An example, is "+Date,-DisplayName", which will sort
 the return items first by date in ascending order and then by name in
@@ -509,16 +513,6 @@ documented elsewhere, there are some peculiarities of its
 implementation in media-service-upnp that merit further explanation.
 These are described in the sections below.
 
-Additional properties unsupported by org.gnome.UPnP.MediaObject2
---------------------------------------------------------------
-
-|---------------------------------------------------------------------------|
-|     Name        | Type | m/o* |              Description                  |
-|---------------------------------------------------------------------------|
-| Restricted      |  b   |  m   |  Indicates whether the object is          |
-|                 |      |      |  modifiable.                              |
-|---------------------------------------------------------------------------|
-
 
 Transcoding and org.gnome.UPnP.MediaItem2
 -----------------------------------------
@@ -604,16 +598,12 @@ be included in the returned dictionary.  The format and the behaviour
 of this array is identical to the filter argument passed to the Search
 and List functions.
 
-AlbumArtURL
---------------
+Additional Properties
+---------------------
 
-Media-service-upnp does not implement the
-org.gnome.UPnP.MediaItem2.AlbumArt property for the same reasons that
-it does not implement the org.gnome.UPnP.MediaContainer2.Icon.
-However, it does provide an alternative method of retrieving the album
-art associated with media content.  This it does this via a new property
-called AlbumArtURL that exposes the URL of the album art directly.
-The AlbumArtURL is described in more detail in the table below:
+Media-service-upnp defines some additional properties for
+org.gnome.UPnP.MediaItem2. These properties are described in the table
+below:
 
 |---------------------------------------------------------------------------|
 |     Name        | Type | m/o* |              Description                  |
@@ -621,18 +611,22 @@ The AlbumArtURL is described in more detail in the table below:
 | AlbumArtURL     |  s   |  o   | Contains the URL of the album art         |
 |                 |      |      |  associated with an item                  |
 |---------------------------------------------------------------------------|
+| RefPath         |  o   |  o   | The presence of this property indicates   | 
+|                 |      |      | that the item is a reference item that    |
+|                 |      |      | references another item located elsewhere |
+|                 |      |      | in the DMS's directory structure. The     |
+|                 |      |      | value of this property is the path of the |
+|                 |      |      | referenced item.                          |
+|---------------------------------------------------------------------------|
 
 
-Additional properties unsupported by org.gnome.UPnP.MediaItem2
---------------------------------------------------------------
-
-|---------------------------------------------------------------------------|
-|     Name        | Type | m/o* |              Description                  |
-|---------------------------------------------------------------------------|
-| RefPath         |  s   |  o   |  The presence of this property indicate   |
-|                 |      |      |  that the item is actually referencing    |
-|                 |      |      |  another existing item.                   |
-|---------------------------------------------------------------------------|
+Media-service-upnp does not implement the
+org.gnome.UPnP.MediaItem2.AlbumArt property for the same reasons that
+it does not implement the org.gnome.UPnP.MediaContainer2.Icon
+property. However, it does provide an alternative method of retrieving
+the album art associated with media content. It does this through a
+new property called AlbumArtURL described in the table above that
+exposes the URL of the album art directly.
 
 
 Unimplemented Properties
