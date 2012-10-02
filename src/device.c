@@ -776,15 +776,95 @@ static void prv_get_all(GUPnPDIDLLiteParser *parser,
 	}
 }
 
+static void prv_system_update_id_cb(GUPnPServiceProxy *proxy,
+				    GUPnPServiceProxyAction *action,
+				    gpointer user_data)
+{
+	GError *upnp_error = NULL;
+	guint id;
+	msu_async_cb_data_t *cb_data = user_data;
+	msu_async_get_all_t *cb_task_data;
+
+	MSU_LOG_DEBUG("Enter");
+
+	if (!gupnp_service_proxy_end_action(proxy, action, &upnp_error,
+					    "Id", G_TYPE_UINT,
+					    &id,
+					    NULL)) {
+		MSU_LOG_ERROR("Unable to retrieve ServiceUpdateID: %s %s",
+			       g_quark_to_string(upnp_error->domain),
+			       upnp_error->message);
+
+		cb_data->error = g_error_new(MSU_ERROR,
+				MSU_ERROR_OPERATION_FAILED,
+				"Unable to retrieve ServiceUpdateID: %s",
+				upnp_error->message);
+
+		goto on_complete;
+	}
+
+	if (cb_data->type == MSU_TASK_GET_ALL_PROPS) {
+		cb_task_data = &cb_data->ut.get_all;
+		g_variant_builder_add(cb_task_data->vb, "{sv}",
+				      MSU_SYSTEM_UPDATE_VAR,
+				      g_variant_new_uint32(id));
+
+		cb_data->result = g_variant_ref_sink(g_variant_builder_end(
+							cb_task_data->vb));
+	} else {
+		cb_data->result = g_variant_ref_sink(g_variant_new_uint32(id));
+	}
+
+on_complete:
+
+	(void) g_idle_add(msu_async_complete_task, cb_data);
+	if (cb_data->cancellable)
+		g_cancellable_disconnect(cb_data->cancellable,
+					 cb_data->cancel_id);
+
+	if (upnp_error)
+		g_error_free(upnp_error);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static void prv_get_system_update_id(GUPnPServiceProxy *proxy,
+				     GCancellable *cancellable,
+				     msu_async_cb_data_t *cb_data)
+{
+	MSU_LOG_DEBUG("Enter");
+
+	gupnp_service_proxy_begin_action(proxy, "GetSystemUpdateID",
+					 prv_system_update_id_cb,
+					 cb_data,
+					 NULL);
+
+	cb_data->proxy = proxy;
+
+	cb_data->cancel_id =
+	g_cancellable_connect(cancellable,
+				      G_CALLBACK(msu_async_task_cancelled),
+				      cb_data, NULL);
+	cb_data->cancellable = cancellable;
+
+	MSU_LOG_DEBUG("Exit");
+}
+
 static gboolean prv_get_all_child_count_cb(msu_async_cb_data_t *cb_data,
 				       gint count)
 {
 	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
 
 	msu_props_add_child_count(cb_task_data->vb, count);
-	cb_data->result = g_variant_ref_sink(g_variant_builder_end(
+	if (cb_task_data->device_object)
+		prv_get_system_update_id(cb_data->proxy,
+					 cb_data->cancellable,
+					 cb_data);
+	else
+		cb_data->result = g_variant_ref_sink(g_variant_builder_end(
 						     cb_task_data->vb));
-	return TRUE;
+
+	return !cb_task_data->device_object;
 }
 
 static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
@@ -850,6 +930,11 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 
 		prv_get_child_count(cb_data, prv_get_all_child_count_cb,
 			cb_data->id);
+
+		goto no_complete;
+	} else if (cb_data->task->type == MSU_TASK_GET_ALL_PROPS &&
+						cb_task_data->device_object) {
+		prv_get_system_update_id(proxy, cb_data->cancellable, cb_data);
 
 		goto no_complete;
 	} else {
@@ -949,6 +1034,7 @@ void msu_device_get_all_props(msu_device_t *device,  msu_client_t *client,
 	cb_task_data = &cb_data->ut.get_all;
 
 	cb_task_data->vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
+	cb_task_data->device_object = root_object;
 
 	if (!strcmp(task_data->interface_name, MSU_INTERFACE_MEDIA_DEVICE)) {
 		if (root_object) {
@@ -956,20 +1042,21 @@ void msu_device_get_all_props(msu_device_t *device,  msu_client_t *client,
 				(GUPnPDeviceInfo *) context->device_proxy,
 				cb_task_data->vb);
 
-			cb_data->result =
-				g_variant_ref_sink(g_variant_builder_end(
-							   cb_task_data->vb));
+			prv_get_system_update_id(context->service_proxy,
+						 cancellable,
+						 cb_data);
 		} else {
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_UNKNOWN_INTERFACE,
 					    "Interface is only valid on "
 					    "root objects.");
+
+			(void) g_idle_add(msu_async_complete_task, cb_data);
 		}
 
-		(void) g_idle_add(msu_async_complete_task, cb_data);
-
 	} else if (strcmp(task_data->interface_name, "")) {
+		cb_task_data->device_object = FALSE;
 		prv_get_all_ms2spec_props(context, cancellable, cb_data);
 	} else {
 		if (root_object)
@@ -1336,6 +1423,7 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 {
 	msu_task_get_prop_t *task_data = &task->ut.get_prop;
 	msu_device_context_t *context;
+	gboolean complete = FALSE;
 
 	MSU_LOG_DEBUG("Enter");
 
@@ -1343,38 +1431,59 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 
 	if (!strcmp(task_data->interface_name, MSU_INTERFACE_MEDIA_DEVICE)) {
 		if (root_object) {
-			cb_data->result =
-				msu_props_get_device_prop(
-					(GUPnPDeviceInfo *)
-					context->device_proxy,
-					task_data->prop_name);
-			if (!cb_data->result)
-				cb_data->error = g_error_new(
-					MSU_ERROR,
-					MSU_ERROR_UNKNOWN_PROPERTY,
-					"Unknown property");
+			if (!strcmp(task_data->prop_name,
+					MSU_INTERFACE_PROP_SYSTEM_UPDATE_ID)) {
+				prv_get_system_update_id(context->service_proxy,
+						 cancellable,
+						 cb_data);
+			} else {
+				cb_data->result =
+					msu_props_get_device_prop(
+						(GUPnPDeviceInfo *)
+						context->device_proxy,
+						task_data->prop_name);
+
+				if (!cb_data->result)
+					cb_data->error = g_error_new(
+						MSU_ERROR,
+						MSU_ERROR_UNKNOWN_PROPERTY,
+						"Unknown property");
+
+				(void) g_idle_add(msu_async_complete_task,
+						  cb_data);
+			}
+
 		} else {
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_UNKNOWN_INTERFACE,
 					    "Interface is unknown.");
-		}
 
-		(void) g_idle_add(msu_async_complete_task, cb_data);
+			(void) g_idle_add(msu_async_complete_task, cb_data);
+		}
 
 	} else if (strcmp(task_data->interface_name, "")) {
 		prv_get_ms2spec_prop(context, prop_map, &task->ut.get_prop,
 				     cancellable, cb_data);
 	} else {
-		if (root_object)
-			cb_data->result = msu_props_get_device_prop(
-				(GUPnPDeviceInfo *)
-				context->device_proxy,
-				task_data->prop_name);
+		if (root_object) {
+			if (!strcmp(task_data->prop_name,
+					MSU_INTERFACE_PROP_SYSTEM_UPDATE_ID)) {
+				prv_get_system_update_id(context->service_proxy,
+						 cancellable,
+						 cb_data);
+				complete = TRUE;
+			} else {
+				cb_data->result = msu_props_get_device_prop(
+					(GUPnPDeviceInfo *)
+					context->device_proxy,
+					task_data->prop_name);
+			}
+		}
 
 		if (cb_data->result)
 			(void) g_idle_add(msu_async_complete_task, cb_data);
-		else
+		else if (!complete)
 			prv_get_ms2spec_prop(context, prop_map,
 					     &task->ut.get_prop, cancellable,
 					     cb_data);
@@ -1600,6 +1709,7 @@ void msu_device_get_resource(msu_device_t *device, msu_client_t *client,
 
 	cb_task_data->vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 	cb_task_data->prop_func = G_CALLBACK(prv_get_resource);
+	cb_task_data->device_object = FALSE;
 
 	cb_data->action = gupnp_service_proxy_begin_action(
 		context->service_proxy, "Browse",

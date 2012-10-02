@@ -60,6 +60,7 @@ struct msu_async_get_all_t_ {
 	guint32 filter_mask;
 	const gchar *protocol_info;
 	gboolean need_child_count;
+	gboolean device_object;
 };
 
 typedef struct msu_async_upload_t_ msu_async_upload_t;
