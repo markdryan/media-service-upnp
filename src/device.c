@@ -229,6 +229,8 @@ static void prv_system_update_cb(GUPnPServiceProxy *proxy,
 				 GValue *value,
 				 gpointer user_data)
 {
+	GVariantBuilder *array;
+	GVariant *val;
 	msu_device_t *device = user_data;
 	guint suid = g_value_get_uint(value);
 
@@ -236,13 +238,24 @@ static void prv_system_update_cb(GUPnPServiceProxy *proxy,
 
 	device->system_update_id = suid;
 
+	array = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
+	g_variant_builder_add(array, "{sv}", MSU_INTERFACE_SYSTEM_UPDATE_ID,
+			      g_variant_new_uint32(suid));
+	val = g_variant_new("(s@a{sv}as)", MSU_INTERFACE_MEDIA_DEVICE,
+			    g_variant_builder_end(array),
+			    NULL);
+
+	MSU_LOG_DEBUG("Params: %s", g_variant_print(val, FALSE));
+
 	(void) g_dbus_connection_emit_signal(device->connection,
 					     NULL,
 					     device->path,
-					     MSU_INTERFACE_MEDIA_DEVICE,
-					     MSU_INTERFACE_SYSTEM_UPDATE,
-					     g_variant_new("(u)", suid),
-					     NULL);
+					     MSU_INTERFACE_PROPERTIES,
+				             MSU_INTERFACE_PROPERTIES_CHANGED,
+				             val,
+				             NULL);
+
+	g_variant_builder_unref(array);
 }
 
 static gboolean prv_re_enable_subscription(gpointer user_data)

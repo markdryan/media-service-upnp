@@ -221,13 +221,7 @@ the path of the newly created object.
 Signals:
 ---------
 
-The com.intel.UPnP.MediaDevice interface also exposes two signals.
-
-SystemUpdate(u)
-
-Is generated whenever the contents of the server has changed.
-This signal gives no indication as to what may have changed, but provides
-a global version number.
+The com.intel.UPnP.MediaDevice interface also exposes one signal.
 
 ContainerUpdate(ao)
 
