@@ -47,6 +47,7 @@ struct msu_device_t_ {
 	guint timeout_id;
 	GHashTable *uploads;
 	guint upload_id;
+	guint system_update_id;
 };
 
 void msu_device_append_new_context(msu_device_t *device,

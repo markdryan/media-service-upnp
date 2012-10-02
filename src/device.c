@@ -230,16 +230,19 @@ static void prv_system_update_cb(GUPnPServiceProxy *proxy,
 				 gpointer user_data)
 {
 	msu_device_t *device = user_data;
+	guint suid = g_value_get_uint(value);
 
-	MSU_LOG_DEBUG("System Update %u", g_value_get_uint(value));
+	MSU_LOG_DEBUG("System Update %u", suid);
+
+	device->system_update_id = suid;
 
 	(void) g_dbus_connection_emit_signal(device->connection,
-			NULL,
-			device->path,
-			MSU_INTERFACE_MEDIA_DEVICE,
-			MSU_INTERFACE_SYSTEM_UPDATE,
-			g_variant_new("(u)", g_value_get_uint(value)),
-			NULL);
+					     NULL,
+					     device->path,
+					     MSU_INTERFACE_MEDIA_DEVICE,
+					     MSU_INTERFACE_SYSTEM_UPDATE,
+					     g_variant_new("(u)", suid),
+					     NULL);
 }
 
 static gboolean prv_re_enable_subscription(gpointer user_data)
@@ -776,6 +779,23 @@ static void prv_get_all(GUPnPDIDLLiteParser *parser,
 	}
 }
 
+static gboolean prv_device_subscribed(msu_device_t *device)
+{
+	msu_device_context_t *context;
+	unsigned int i;
+	gboolean subscribed = FALSE;
+
+	for (i = 0; i < device->contexts->len; ++i) {
+		context = g_ptr_array_index(device->contexts, i);
+		if (context->subscribed) {
+			subscribed = TRUE;
+			break;
+		}
+	}
+
+	return subscribed;
+}
+
 static void prv_system_update_id_cb(GUPnPServiceProxy *proxy,
 				    GUPnPServiceProxyAction *action,
 				    gpointer user_data)
@@ -829,10 +849,36 @@ on_complete:
 }
 
 static void prv_get_system_update_id(GUPnPServiceProxy *proxy,
+				     msu_device_t *device,
 				     GCancellable *cancellable,
 				     msu_async_cb_data_t *cb_data)
 {
+	msu_async_get_all_t *cb_task_data;
+	guint suid;
+
 	MSU_LOG_DEBUG("Enter");
+
+	if (prv_device_subscribed(device)) {
+		suid = device->system_update_id;
+
+		if (cb_data->type == MSU_TASK_GET_ALL_PROPS) {
+			cb_task_data = &cb_data->ut.get_all;
+
+			g_variant_builder_add(cb_task_data->vb, "{sv}",
+					      MSU_SYSTEM_UPDATE_VAR,
+					      g_variant_new_uint32(suid));
+
+			cb_data->result = g_variant_ref_sink(
+				g_variant_builder_end(cb_task_data->vb));
+		} else {
+			cb_data->result = g_variant_ref_sink(
+						g_variant_new_uint32(suid));
+		}
+
+		(void) g_idle_add(msu_async_complete_task, cb_data);
+
+		goto on_complete;
+	}
 
 	gupnp_service_proxy_begin_action(proxy, "GetSystemUpdateID",
 					 prv_system_update_id_cb,
@@ -847,6 +893,8 @@ static void prv_get_system_update_id(GUPnPServiceProxy *proxy,
 				      cb_data, NULL);
 	cb_data->cancellable = cancellable;
 
+on_complete:
+
 	MSU_LOG_DEBUG("Exit");
 }
 
@@ -858,6 +906,7 @@ static gboolean prv_get_all_child_count_cb(msu_async_cb_data_t *cb_data,
 	msu_props_add_child_count(cb_task_data->vb, count);
 	if (cb_task_data->device_object)
 		prv_get_system_update_id(cb_data->proxy,
+					 cb_task_data->device,
 					 cb_data->cancellable,
 					 cb_data);
 	else
@@ -934,7 +983,8 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 		goto no_complete;
 	} else if (cb_data->task->type == MSU_TASK_GET_ALL_PROPS &&
 						cb_task_data->device_object) {
-		prv_get_system_update_id(proxy, cb_data->cancellable, cb_data);
+		prv_get_system_update_id(proxy, cb_task_data->device,
+					 cb_data->cancellable, cb_data);
 
 		goto no_complete;
 	} else {
@@ -1035,6 +1085,7 @@ void msu_device_get_all_props(msu_device_t *device,  msu_client_t *client,
 
 	cb_task_data->vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 	cb_task_data->device_object = root_object;
+	cb_task_data->device = device;
 
 	if (!strcmp(task_data->interface_name, MSU_INTERFACE_MEDIA_DEVICE)) {
 		if (root_object) {
@@ -1043,6 +1094,7 @@ void msu_device_get_all_props(msu_device_t *device,  msu_client_t *client,
 				cb_task_data->vb);
 
 			prv_get_system_update_id(context->service_proxy,
+						 device,
 						 cancellable,
 						 cb_data);
 		} else {
@@ -1434,8 +1486,9 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 			if (!strcmp(task_data->prop_name,
 					MSU_INTERFACE_PROP_SYSTEM_UPDATE_ID)) {
 				prv_get_system_update_id(context->service_proxy,
-						 cancellable,
-						 cb_data);
+							 device,
+							 cancellable,
+							 cb_data);
 			} else {
 				cb_data->result =
 					msu_props_get_device_prop(
@@ -1470,20 +1523,24 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 			if (!strcmp(task_data->prop_name,
 					MSU_INTERFACE_PROP_SYSTEM_UPDATE_ID)) {
 				prv_get_system_update_id(context->service_proxy,
-						 cancellable,
-						 cb_data);
+							 device,
+							 cancellable,
+							 cb_data);
 				complete = TRUE;
 			} else {
 				cb_data->result = msu_props_get_device_prop(
 					(GUPnPDeviceInfo *)
 					context->device_proxy,
 					task_data->prop_name);
+				if (cb_data->result)
+					(void) g_idle_add(
+							msu_async_complete_task,
+							cb_data);
+				complete = TRUE;
 			}
 		}
 
-		if (cb_data->result)
-			(void) g_idle_add(msu_async_complete_task, cb_data);
-		else if (!complete)
+		if (!complete)
 			prv_get_ms2spec_prop(context, prop_map,
 					     &task->ut.get_prop, cancellable,
 					     cb_data);

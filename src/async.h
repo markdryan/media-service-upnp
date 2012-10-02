@@ -61,6 +61,7 @@ struct msu_async_get_all_t_ {
 	const gchar *protocol_info;
 	gboolean need_child_count;
 	gboolean device_object;
+	msu_device_t *device;
 };
 
 typedef struct msu_async_upload_t_ msu_async_upload_t;
