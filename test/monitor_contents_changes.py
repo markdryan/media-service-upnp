@@ -21,10 +21,17 @@
 import gobject
 import dbus
 import dbus.mainloop.glib
+import json
 
-def system_update(id, path, interface):
-    iface = interface[interface.rfind(".") + 1:]
-    print "SystemUpdate signal from {%s} [%s] whith id %u" % (iface, path, id)
+def print_properties(props):
+    print json.dumps(props, indent=4, sort_keys=True)
+
+def properties_changed(iface, changed, invalidated, path):
+    print "PropertiesChanged signal from {%s} [%s]" % (iface, path)
+    print "Changed:"
+    print_properties(changed)
+    print "Invalidated:"
+    print_properties(invalidated)
 
 def container_update(id_list, path, interface):
     iface = interface[interface.rfind(".") + 1:]
@@ -37,11 +44,10 @@ if __name__ == '__main__':
 
     bus = dbus.SessionBus()
 
-    bus.add_signal_receiver(system_update,
+    bus.add_signal_receiver(properties_changed,
                             bus_name="com.intel.media-service-upnp",
-                            signal_name = "SystemUpdate",
-                            path_keyword="path",
-                            interface_keyword="interface")
+                            signal_name = "PropertiesChanged",
+                            path_keyword="path")
     bus.add_signal_receiver(container_update,
                             bus_name="com.intel.media-service-upnp",
                             signal_name = "ContainerUpdate",
