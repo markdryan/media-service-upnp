@@ -141,6 +141,11 @@ class Device(Container):
         print "Transfer ID: " + str(tid)
         print "Path: " + path
 
+    def create_container_in_any(self, name, type, child_types):
+        path = self.__deviceIF.CreateContainerInAnyContainer(name, type,
+                                                                    child_types)
+        print "New container path: " + path
+
 class UPNP(object):
 
     def __init__(self):
