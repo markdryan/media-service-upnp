@@ -2385,6 +2385,7 @@ void msu_device_delete_object(msu_device_t *device, msu_client_t *client,
 
 void msu_device_create_container(msu_device_t *device, msu_client_t *client,
 				 msu_task_t *task,
+				 const gchar *parent_id,
 				 msu_async_cb_data_t *cb_data,
 				 GCancellable *cancellable)
 {
@@ -2395,14 +2396,14 @@ void msu_device_create_container(msu_device_t *device, msu_client_t *client,
 
 	context = msu_device_get_context(device, client);
 
-	didl = prv_create_new_container_didl(cb_data->id, task);
+	didl = prv_create_new_container_didl(parent_id, task);
 
 	MSU_LOG_DEBUG("DIDL: %s", didl);
 
 	cb_data->action = gupnp_service_proxy_begin_action(
 				context->service_proxy, "CreateObject",
 				prv_create_container_cb, cb_data,
-				"ContainerID", G_TYPE_STRING, cb_data->id,
+				"ContainerID", G_TYPE_STRING, parent_id,
 				"Elements", G_TYPE_STRING, didl,
 				NULL);
 

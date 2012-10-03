@@ -203,7 +203,7 @@ infinite retention period.
 Methods:
 ---------
 
-The com.intel.UPnP.MediaDevice interface currently exposes a single method:
+The com.intel.UPnP.MediaDevice interface currently exposes two methods:
 
 UploadToAnyContainer(s DisplayName, s FilePath) -> (u UploadId, o ObjectPath)
 
@@ -216,6 +216,18 @@ not necessarily finished.  There are two return values.  The UploadId,
 which can be used to monitor the progress of the upload and to
 cancel it (not currently implemented ) and ObjectPath, which contains
 the path of the newly created object.
+
+CreateContainerInAnyContainer(s DisplayName, s Type, as ChildTypes)
+                                                             -> o ObjectPath
+
+Creates a new container. The DMS chooses the best place to create
+this new container. DisplayName is the name of the new container,
+Type is the type ( I know that currently we only support one type
+of container but this will need to change) and ChildTypes is an array
+of types that can be stored in the new folder, e.g., ['video','container'].
+A special value of ['*'] indicates that no restriction is placed
+on the types of objects that can be stored in the container.
+The path of the newly created object is returned.
 
 
 Signals:

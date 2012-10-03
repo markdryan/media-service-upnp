@@ -304,6 +304,16 @@ static const gchar g_msu_server_introspection[] =
 	"      <arg type='o' name='"MSU_INTERFACE_PATH"'"
 	"           direction='out'/>"
 	"    </method>"
+	"    <method name='"MSU_INTERFACE_CREATE_CONTAINER_IN_ANY"'>"
+	"      <arg type='s' name='"MSU_INTERFACE_PROP_DISPLAY_NAME"'"
+	"           direction='in'/>"
+	"      <arg type='s' name='"MSU_INTERFACE_PROP_TYPE"'"
+	"           direction='in'/>"
+	"      <arg type='as' name='"MSU_INTERFACE_CHILD_TYPES"'"
+	"           direction='in'/>"
+	"      <arg type='o' name='"MSU_INTERFACE_PATH"'"
+	"           direction='out'/>"
+	"    </method>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_LOCATION"'"
 	"       access='read'/>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_UDN"'"
@@ -481,6 +491,12 @@ static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
 		msu_upnp_create_container(context->upnp, client, task,
 					  context->cancellable,
 					  prv_async_task_complete, context);
+		break;
+	case MSU_TASK_CREATE_CONTAINER_IN_ANY:
+		msu_upnp_create_container_in_any(context->upnp, client, task,
+						 context->cancellable,
+						 prv_async_task_complete,
+						 context);
 		break;
 
 	default:
@@ -848,8 +864,9 @@ static void prv_con_method_call(GDBusConnection *conn,
 	else if (!strcmp(method, MSU_INTERFACE_UPLOAD))
 		task = msu_task_upload_new(invocation, object, parameters);
 	else if (!strcmp(method, MSU_INTERFACE_CREATE_CONTAINER))
-		task = msu_task_create_container_new(invocation, object,
-						     parameters);
+		task = msu_task_create_container_new_generic(invocation,
+						MSU_TASK_CREATE_CONTAINER,
+						object, parameters);
 	else
 		goto finished;
 
@@ -899,6 +916,11 @@ static void prv_device_method_call(GDBusConnection *conn,
 	if (!strcmp(method, MSU_INTERFACE_UPLOAD_TO_ANY)) {
 		task = msu_task_upload_to_any_new(invocation, object,
 						  parameters);
+		prv_add_task(context, task);
+	} else if (!strcmp(method, MSU_INTERFACE_CREATE_CONTAINER_IN_ANY)) {
+		task = msu_task_create_container_new_generic(invocation,
+					MSU_TASK_CREATE_CONTAINER_IN_ANY,
+					object, parameters);
 		prv_add_task(context, task);
 	}
 }
