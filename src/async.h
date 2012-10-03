@@ -72,6 +72,11 @@ struct msu_async_upload_t_ {
 	msu_device_t *device;
 };
 
+typedef struct msu_async_create_container_t_ msu_async_create_container_t;
+struct msu_async_create_container_t_ {
+	gchar *root_path;
+};
+
 struct msu_async_cb_data_t_ {
 	msu_task_type_t type;
 	msu_task_t *task;
@@ -89,6 +94,7 @@ struct msu_async_cb_data_t_ {
 		msu_async_get_prop_t get_prop;
 		msu_async_get_all_t get_all;
 		msu_async_upload_t upload;
+		msu_async_create_container_t create_container;
 	} ut;
 };
 

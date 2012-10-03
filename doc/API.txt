@@ -343,7 +343,7 @@ with MediaServer2Spec.
 New Methods:
 ------------
 
-Five new methods have been added.  These methods are:
+Six new methods have been added.  These methods are:
 
 ListChildrenEx(u Offset, u Max, as Filter, s SortBy) -> aa{sv}
 
@@ -354,6 +354,8 @@ ListContainersEx(u Offset, u Max, as Filter, s SortBy) -> aa{sv}
 SearchObjectsEx(s Query, u Offset, u Max, as Filter, s SortBy) -> aa{sv}
 
 Upload(s DisplayName, s FilePath) -> (u UploadId, o ObjectPath)
+
+CreateContainer(s DisplayName, s Type, as ChildTypes) -> o ObjectPath
 
 The first four methods are identical in function and behaviour to
 existing the MediaServer2Spec functions ListChildren, ListItems,
@@ -415,6 +417,15 @@ exception that Upload allows the client to specify the server-side
 container into which the file is to be uploaded whereas
 UploadToAnyContainer leaves it up to the server to determine the most
 suitable location for the file.
+
+The CreateContainer method creates a new child container.
+DisplayName is the name of the new container,
+Type is the type ( I know that currently we only support one type
+of container but this will need to change) and ChildTypes is an array
+of types that can be stored in the new folder, e.g., ['video','container'].
+A special value of ['*'] indicates that no restriction is placed
+on the types of objects that can be stored in the container.
+The path of the newly created object is returned.
 
 
 Recommended Usage:

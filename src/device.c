@@ -1871,6 +1871,45 @@ void msu_device_get_resource(msu_device_t *device, msu_client_t *client,
 	MSU_LOG_DEBUG("Exit");
 }
 
+static gchar *prv_create_new_container_didl(const gchar *parent_id,
+					    msu_task_t *task)
+{
+	GUPnPDIDLLiteWriter *writer;
+	GUPnPDIDLLiteObject *item;
+	GUPnPDIDLLiteContainer *container;
+	gchar *retval;
+	GVariantIter iter;
+	GVariant *child_type;
+
+	writer = gupnp_didl_lite_writer_new(NULL);
+	item = GUPNP_DIDL_LITE_OBJECT(
+				gupnp_didl_lite_writer_add_container(writer));
+	container = GUPNP_DIDL_LITE_CONTAINER(item);
+
+	gupnp_didl_lite_object_set_id(item, "");
+	gupnp_didl_lite_object_set_title(item,
+					task->ut.create_container.display_name);
+	gupnp_didl_lite_object_set_parent_id(item, parent_id);
+	gupnp_didl_lite_object_set_upnp_class(item,
+					task->ut.create_container.type);
+	gupnp_didl_lite_object_set_restricted(item, FALSE);
+	gupnp_didl_lite_object_set_dlna_managed(item, GUPNP_OCM_FLAGS_UPLOAD);
+
+	g_variant_iter_init(&iter, task->ut.create_container.child_types);
+	while ((child_type = g_variant_iter_next_value(&iter))) {
+		gupnp_didl_lite_container_add_create_class(container,
+					g_variant_get_string(child_type, NULL));
+		g_variant_unref(child_type);
+	}
+
+	retval = gupnp_didl_lite_writer_get_string(writer);
+
+	g_object_unref(item);
+	g_object_unref(writer);
+
+	return retval;
+}
+
 static gchar *prv_create_upload_didl(const gchar *parent_id, msu_task_t *task,
 				     const gchar *object_class,
 				     const gchar *mime_type)
@@ -2054,6 +2093,59 @@ on_error:
 	MSU_LOG_WARNING("Exit with Fail");
 
 	return NULL;
+}
+
+static void prv_create_container_cb(GUPnPServiceProxy *proxy,
+		 GUPnPServiceProxyAction *action,
+		 gpointer user_data)
+{
+	msu_async_cb_data_t *cb_data = user_data;
+	msu_async_create_container_t *cb_task_data;
+	GError *upnp_error = NULL;
+	gchar *result = NULL;
+	gchar *object_id = NULL;
+	gchar *object_path;
+
+	MSU_LOG_DEBUG("Enter");
+
+	cb_task_data = &cb_data->ut.create_container;
+
+	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
+					    &upnp_error,
+					    "ObjectID", G_TYPE_STRING,
+					    &object_id,
+					    "Result", G_TYPE_STRING,
+					    &result,
+					    NULL)) {
+		MSU_LOG_ERROR("Create Object operation failed: %s",
+							upnp_error->message);
+
+		cb_data->error = g_error_new(MSU_ERROR,
+					     MSU_ERROR_OPERATION_FAILED,
+					     "Create Object operation "
+					     " failed: %s",
+					     upnp_error->message);
+		goto on_error;
+	}
+
+	object_path = msu_path_from_id(cb_task_data->root_path, object_id);
+	cb_data->result = g_variant_ref_sink(g_variant_new_string(object_path));
+	g_free(object_path);
+
+on_error:
+
+	(void) g_idle_add(msu_async_complete_task, cb_data);
+	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
+
+	if (object_id)
+		g_free(object_id);
+	if (result)
+		g_free(result);
+
+	if (upnp_error)
+		g_error_free(upnp_error);
+
+	MSU_LOG_DEBUG("Exit");
 }
 
 static void prv_create_object_cb(GUPnPServiceProxy *proxy,
@@ -2287,6 +2379,42 @@ void msu_device_delete_object(msu_device_t *device, msu_client_t *client,
 					G_CALLBACK(msu_async_task_cancelled),
 					cb_data, NULL);
 	cb_data->cancellable = cancellable;
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+void msu_device_create_container(msu_device_t *device, msu_client_t *client,
+				 msu_task_t *task,
+				 msu_async_cb_data_t *cb_data,
+				 GCancellable *cancellable)
+{
+	msu_device_context_t *context;
+	gchar *didl;
+
+	MSU_LOG_DEBUG("Enter");
+
+	context = msu_device_get_context(device, client);
+
+	didl = prv_create_new_container_didl(cb_data->id, task);
+
+	MSU_LOG_DEBUG("DIDL: %s", didl);
+
+	cb_data->action = gupnp_service_proxy_begin_action(
+				context->service_proxy, "CreateObject",
+				prv_create_container_cb, cb_data,
+				"ContainerID", G_TYPE_STRING, cb_data->id,
+				"Elements", G_TYPE_STRING, didl,
+				NULL);
+
+	cb_data->proxy = context->service_proxy;
+
+	cb_data->cancel_id =
+		g_cancellable_connect(cancellable,
+				      G_CALLBACK(msu_async_task_cancelled),
+				      cb_data, NULL);
+	cb_data->cancellable = cancellable;
+
+	g_free(didl);
 
 	MSU_LOG_DEBUG("Exit");
 }

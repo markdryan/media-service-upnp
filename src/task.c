@@ -259,6 +259,23 @@ msu_task_t *msu_task_delete_new(GDBusMethodInvocation *invocation,
 	return task;
 }
 
+msu_task_t *msu_task_create_container_new(GDBusMethodInvocation *invocation,
+					  const gchar *path,
+					  GVariant *parameters)
+{
+	msu_task_t *task;
+
+	task = prv_m2spec_task_new(MSU_TASK_CREATE_CONTAINER, invocation,
+				   path, "(o)");
+
+	g_variant_get(parameters, "(ss@as)",
+					&task->ut.create_container.display_name,
+					&task->ut.create_container.type,
+					&task->ut.create_container.child_types);
+
+	return task;
+}
+
 static void prv_msu_task_delete(msu_task_t *task)
 {
 	switch (task->type) {
@@ -293,6 +310,11 @@ static void prv_msu_task_delete(msu_task_t *task)
 	case MSU_TASK_UPLOAD:
 		g_free(task->ut.upload.display_name);
 		g_free(task->ut.upload.file_path);
+		break;
+	case MSU_TASK_CREATE_CONTAINER:
+		g_free(task->ut.create_container.display_name);
+		g_free(task->ut.create_container.type);
+		g_variant_unref(task->ut.create_container.child_types);
 		break;
 	default:
 		break;

@@ -230,6 +230,16 @@ static const gchar g_msu_server_introspection[] =
 	"      <arg type='o' name='"MSU_INTERFACE_PATH"'"
 	"           direction='out'/>"
 	"    </method>"
+	"    <method name='"MSU_INTERFACE_CREATE_CONTAINER"'>"
+	"      <arg type='s' name='"MSU_INTERFACE_PROP_DISPLAY_NAME"'"
+	"           direction='in'/>"
+	"      <arg type='s' name='"MSU_INTERFACE_PROP_TYPE"'"
+	"           direction='in'/>"
+	"      <arg type='as' name='"MSU_INTERFACE_CHILD_TYPES"'"
+	"           direction='in'/>"
+	"      <arg type='o' name='"MSU_INTERFACE_PATH"'"
+	"           direction='out'/>"
+	"    </method>"
 	"    <property type='u' name='"MSU_INTERFACE_PROP_CHILD_COUNT"'"
 	"       access='read'/>"
 	"    <property type='b' name='"MSU_INTERFACE_PROP_SEARCHABLE"'"
@@ -466,6 +476,11 @@ static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
 		msu_upnp_delete_object(context->upnp, client, task,
 				       context->cancellable,
 				       prv_async_task_complete, context);
+		break;
+	case MSU_TASK_CREATE_CONTAINER:
+		msu_upnp_create_container(context->upnp, client, task,
+					  context->cancellable,
+					  prv_async_task_complete, context);
 		break;
 
 	default:
@@ -832,6 +847,9 @@ static void prv_con_method_call(GDBusConnection *conn,
 					      parameters);
 	else if (!strcmp(method, MSU_INTERFACE_UPLOAD))
 		task = msu_task_upload_new(invocation, object, parameters);
+	else if (!strcmp(method, MSU_INTERFACE_CREATE_CONTAINER))
+		task = msu_task_create_container_new(invocation, object,
+						     parameters);
 	else
 		goto finished;
 

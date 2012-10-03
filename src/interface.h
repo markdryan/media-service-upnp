@@ -95,6 +95,7 @@
 #define MSU_INTERFACE_SEARCH_OBJECTS_EX "SearchObjectsEx"
 #define MSU_INTERFACE_UPLOAD "Upload"
 #define MSU_INTERFACE_DELETE "Delete"
+#define MSU_INTERFACE_CREATE_CONTAINER "CreateContainer"
 
 #define MSU_INTERFACE_GET_COMPATIBLE_RESOURCE "GetCompatibleResource"
 
@@ -104,6 +105,7 @@
 #define MSU_INTERFACE_PROPERTY_NAME "PropertyName"
 #define MSU_INTERFACE_PROPERTIES_VALUE "Properties"
 #define MSU_INTERFACE_VALUE "value"
+#define MSU_INTERFACE_CHILD_TYPES "ChildTypes"
 
 #define MSU_INTERFACE_VERSION "Version"
 #define MSU_INTERFACE_SERVERS "Servers"
