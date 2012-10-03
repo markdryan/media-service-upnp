@@ -245,8 +245,6 @@ static void prv_system_update_cb(GUPnPServiceProxy *proxy,
 			    g_variant_builder_end(array),
 			    NULL);
 
-	MSU_LOG_DEBUG("Params: %s", g_variant_print(val, FALSE));
-
 	(void) g_dbus_connection_emit_signal(device->connection,
 					     NULL,
 					     device->path,
@@ -851,9 +849,7 @@ static void prv_system_update_id_cb(GUPnPServiceProxy *proxy,
 on_complete:
 
 	(void) g_idle_add(msu_async_complete_task, cb_data);
-	if (cb_data->cancellable)
-		g_cancellable_disconnect(cb_data->cancellable,
-					 cb_data->cancel_id);
+	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
 
 	if (upnp_error)
 		g_error_free(upnp_error);
@@ -1545,11 +1541,12 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 					(GUPnPDeviceInfo *)
 					context->device_proxy,
 					task_data->prop_name);
-				if (cb_data->result)
+				if (cb_data->result) {
 					(void) g_idle_add(
 							msu_async_complete_task,
 							cb_data);
-				complete = TRUE;
+					complete = TRUE;
+				}
 			}
 		}
 
