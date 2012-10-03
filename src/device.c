@@ -32,6 +32,7 @@
 
 #define MSU_SYSTEM_UPDATE_VAR "SystemUpdateID"
 #define MSU_CONTAINER_UPDATE_VAR "ContainerUpdateIDs"
+#define MEDIA_SERVER_DEVICE_TYPE "urn:schemas-upnp-org:device:MediaServer:"
 
 typedef gboolean (*msu_device_count_cb_t)(msu_async_cb_data_t *cb_data,
 					  gint count);
@@ -74,6 +75,10 @@ static void prv_system_update_cb(GUPnPServiceProxy *proxy,
 				GValue *value,
 				gpointer user_data);
 static void prv_msu_device_upload_delete(gpointer up);
+static void prv_get_sr_token_for_props(GUPnPServiceProxy *proxy,
+			     msu_device_t *device,
+			     GCancellable *cancellable,
+			     msu_async_cb_data_t *cb_data);
 
 static void prv_msu_device_object_builder_delete(void *dob)
 {
@@ -891,7 +896,7 @@ static void prv_system_update_id_for_props_cb(GUPnPServiceProxy *proxy,
 	GError *upnp_error = NULL;
 	guint id;
 	msu_async_cb_data_t *cb_data = user_data;
-	msu_async_get_all_t *cb_task_data;
+	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;;
 
 	MSU_LOG_DEBUG("Enter");
 
@@ -911,7 +916,6 @@ static void prv_system_update_id_for_props_cb(GUPnPServiceProxy *proxy,
 		goto on_complete;
 	}
 
-	cb_task_data = &cb_data->ut.get_all;
 	g_variant_builder_add(cb_task_data->vb, "{sv}",
 			      MSU_SYSTEM_UPDATE_VAR,
 			      g_variant_new_uint32(id));
@@ -921,8 +925,14 @@ static void prv_system_update_id_for_props_cb(GUPnPServiceProxy *proxy,
 
 on_complete:
 
-	(void) g_idle_add(msu_async_complete_task, cb_data);
-	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
+	if (!cb_data->error)
+		prv_get_sr_token_for_props(proxy, cb_task_data->device,
+					   cb_data->cancellable, cb_data);
+	else {
+		(void) g_idle_add(msu_async_complete_task, cb_data);
+		g_cancellable_disconnect(cb_data->cancellable,
+					 cb_data->cancel_id);
+	}
 
 	if (upnp_error)
 		g_error_free(upnp_error);
@@ -949,10 +959,7 @@ static void prv_get_system_update_id_for_props(GUPnPServiceProxy *proxy,
 				      MSU_SYSTEM_UPDATE_VAR,
 				      g_variant_new_uint32(suid));
 
-		cb_data->result = g_variant_ref_sink(
-			g_variant_builder_end(cb_task_data->vb));
-
-		(void) g_idle_add(msu_async_complete_task, cb_data);
+		prv_get_sr_token_for_props(proxy, device, cancellable, cb_data);
 
 		goto on_complete;
 	}
@@ -971,6 +978,194 @@ static void prv_get_system_update_id_for_props(GUPnPServiceProxy *proxy,
 	cb_data->cancellable = cancellable;
 
 on_complete:
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static int prv_get_media_server_version(msu_device_t *device)
+{
+	msu_device_context_t *context;
+	const char *device_type;
+	const char *version;
+
+	context = msu_device_get_context(device, NULL);
+	device_type = gupnp_device_info_get_device_type((GUPnPDeviceInfo *)
+							context->device_proxy);
+
+	if (strncmp(device_type, MEDIA_SERVER_DEVICE_TYPE,
+					sizeof(MEDIA_SERVER_DEVICE_TYPE) - 1))
+		goto on_error;
+
+	version = device_type + sizeof(MEDIA_SERVER_DEVICE_TYPE) - 1;
+
+	return atoi(version);
+
+on_error:
+
+	return -1;
+}
+
+static void prv_service_reset_for_prop_cb(GUPnPServiceProxy *proxy,
+					  GUPnPServiceProxyAction *action,
+					  gpointer user_data)
+{
+	GError *upnp_error = NULL;
+	gchar *token = NULL;
+	msu_async_cb_data_t *cb_data = user_data;
+
+	MSU_LOG_DEBUG("Enter");
+
+	if (!gupnp_service_proxy_end_action(proxy, action, &upnp_error,
+					    "ResetToken", G_TYPE_STRING,
+					    &token,
+					    NULL)) {
+		MSU_LOG_ERROR("Unable to retrieve ServiceResetToken: %s %s",
+				g_quark_to_string(upnp_error->domain),
+				 upnp_error->message);
+
+
+		cb_data->error = g_error_new(MSU_ERROR,
+					     MSU_ERROR_OPERATION_FAILED,
+					     "GetServiceResetToken failed: %s",
+					     upnp_error->message);
+
+		goto on_complete;
+	}
+
+	cb_data->result = g_variant_ref_sink(g_variant_new_string(token));
+
+	g_free(token);
+
+	MSU_LOG_DEBUG("Service Reset %s", token);
+
+on_complete:
+
+	(void) g_idle_add(msu_async_complete_task, cb_data);
+	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
+
+	if (upnp_error)
+		g_error_free(upnp_error);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static void prv_get_sr_token_for_prop(GUPnPServiceProxy *proxy,
+			     msu_device_t *device,
+			     GCancellable *cancellable,
+			     msu_async_cb_data_t *cb_data)
+{
+	MSU_LOG_DEBUG("Enter");
+
+	if (prv_get_media_server_version(device) < 3) {
+		cb_data->error = g_error_new(MSU_ERROR,
+					     MSU_ERROR_UNKNOWN_PROPERTY,
+					     "Unknown property");
+
+		(void) g_idle_add(msu_async_complete_task, cb_data);
+
+		goto on_error;
+	}
+
+	gupnp_service_proxy_begin_action(proxy, "GetServiceResetToken",
+					 prv_service_reset_for_prop_cb,
+					 cb_data,
+					 NULL);
+
+	cb_data->proxy = proxy;
+
+	cb_data->cancel_id = g_cancellable_connect(cancellable,
+					G_CALLBACK(msu_async_task_cancelled),
+					cb_data, NULL);
+	cb_data->cancellable = cancellable;
+
+on_error:
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static void prv_service_reset_for_props_cb(GUPnPServiceProxy *proxy,
+					  GUPnPServiceProxyAction *action,
+					  gpointer user_data)
+{
+	GError *upnp_error = NULL;
+	gchar *token = NULL;
+	msu_async_cb_data_t *cb_data = user_data;
+	msu_async_get_all_t *cb_task_data;
+
+	MSU_LOG_DEBUG("Enter");
+
+	if (!gupnp_service_proxy_end_action(proxy, action, &upnp_error,
+					    "ResetToken", G_TYPE_STRING,
+					    &token,
+					    NULL)) {
+		MSU_LOG_ERROR("Unable to retrieve ServiceResetToken: %s %s",
+			      g_quark_to_string(upnp_error->domain),
+			      upnp_error->message);
+
+		cb_data->error = g_error_new(MSU_ERROR,
+					     MSU_ERROR_OPERATION_FAILED,
+					     "GetServiceResetToken failed: %s",
+					     upnp_error->message);
+
+		goto on_complete;
+	}
+
+	cb_task_data = &cb_data->ut.get_all;
+	g_variant_builder_add(cb_task_data->vb, "{sv}",
+			      MSU_INTERFACE_PROP_SERVICE_RESET_TOKEN,
+			      g_variant_new_string(token));
+
+	cb_data->result = g_variant_ref_sink(g_variant_builder_end(
+						cb_task_data->vb));
+
+	g_free(token);
+
+	MSU_LOG_DEBUG("Service Reset %s", token);
+
+on_complete:
+
+	(void) g_idle_add(msu_async_complete_task, cb_data);
+	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
+
+	if (upnp_error)
+		g_error_free(upnp_error);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static void prv_get_sr_token_for_props(GUPnPServiceProxy *proxy,
+			     msu_device_t *device,
+			     GCancellable *cancellable,
+			     msu_async_cb_data_t *cb_data)
+{
+	msu_async_get_all_t *cb_task_data;
+
+	MSU_LOG_DEBUG("Enter");
+
+	if (prv_get_media_server_version(device) < 3) {
+		cb_task_data = &cb_data->ut.get_all;
+
+		cb_data->result = g_variant_ref_sink(g_variant_builder_end(
+							cb_task_data->vb));
+
+		goto on_complete; /* No error here, just skip the property */
+	}
+
+	gupnp_service_proxy_begin_action(proxy, "GetServiceResetToken",
+					 prv_service_reset_for_props_cb,
+					 cb_data,
+					 NULL);
+
+	cb_data->proxy = proxy;
+
+	cb_data->cancel_id = g_cancellable_connect(cancellable,
+					G_CALLBACK(msu_async_task_cancelled),
+					cb_data, NULL);
+	cb_data->cancellable = cancellable;
+
+on_complete:
+
+	(void) g_idle_add(msu_async_complete_task, cb_data);
 
 	MSU_LOG_DEBUG("Exit");
 }
@@ -1568,6 +1763,13 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 							device,
 							cancellable,
 							cb_data);
+			} else if (!strcmp(task_data->prop_name,
+				   MSU_INTERFACE_PROP_SERVICE_RESET_TOKEN)) {
+				prv_get_sr_token_for_prop(
+							context->service_proxy,
+							device,
+							cancellable,
+							cb_data);
 			} else {
 				cb_data->result =
 					msu_props_get_device_prop(
@@ -1602,6 +1804,14 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 			if (!strcmp(task_data->prop_name,
 					MSU_INTERFACE_PROP_SYSTEM_UPDATE_ID)) {
 				prv_get_system_update_id_for_prop(
+							context->service_proxy,
+							device,
+							cancellable,
+							cb_data);
+				complete = TRUE;
+			} else if (!strcmp(task_data->prop_name,
+				   MSU_INTERFACE_PROP_SERVICE_RESET_TOKEN)) {
+				prv_get_sr_token_for_prop(
 							context->service_proxy,
 							device,
 							cancellable,

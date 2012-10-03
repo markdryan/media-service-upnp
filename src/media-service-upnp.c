@@ -344,6 +344,8 @@ static const gchar g_msu_server_introspection[] =
 	"       access='read'/>"
 	"    <property type='u' name='"MSU_INTERFACE_PROP_SYSTEM_UPDATE_ID"'"
 	"       access='read'/>"
+	"    <property type='s' name='"MSU_INTERFACE_PROP_SERVICE_RESET_TOKEN"'"
+	"       access='read'/>"
 	"    <signal name='"MSU_INTERFACE_CONTAINER_UPDATE"'>"
 	"      <arg type='ao' name='"MSU_INTERFACE_CONTAINER_PATHS"'/>"
 	"    </signal>"
