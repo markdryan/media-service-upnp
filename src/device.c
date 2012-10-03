@@ -1880,6 +1880,7 @@ static gchar *prv_create_new_container_didl(const gchar *parent_id,
 	gchar *retval;
 	GVariantIter iter;
 	GVariant *child_type;
+	const gchar *actual_type;
 
 	writer = gupnp_didl_lite_writer_new(NULL);
 	item = GUPNP_DIDL_LITE_OBJECT(
@@ -1890,15 +1891,19 @@ static gchar *prv_create_new_container_didl(const gchar *parent_id,
 	gupnp_didl_lite_object_set_title(item,
 					task->ut.create_container.display_name);
 	gupnp_didl_lite_object_set_parent_id(item, parent_id);
-	gupnp_didl_lite_object_set_upnp_class(item,
-					task->ut.create_container.type);
+	actual_type = msu_props_media_spec_to_upnp_class(
+						task->ut.create_container.type);
+	gupnp_didl_lite_object_set_upnp_class(item, actual_type);
 	gupnp_didl_lite_object_set_restricted(item, FALSE);
 	gupnp_didl_lite_object_set_dlna_managed(item, GUPNP_OCM_FLAGS_UPLOAD);
 
 	g_variant_iter_init(&iter, task->ut.create_container.child_types);
 	while ((child_type = g_variant_iter_next_value(&iter))) {
-		gupnp_didl_lite_container_add_create_class(container,
+		actual_type = msu_props_media_spec_to_upnp_class(
 					g_variant_get_string(child_type, NULL));
+		if (actual_type != NULL)
+			gupnp_didl_lite_container_add_create_class(container,
+								   actual_type);
 		g_variant_unref(child_type);
 	}
 
@@ -2139,6 +2144,7 @@ on_error:
 
 	if (object_id)
 		g_free(object_id);
+
 	if (result)
 		g_free(result);
 
