@@ -807,7 +807,84 @@ static gboolean prv_device_subscribed(msu_device_t *device)
 	return subscribed;
 }
 
-static void prv_system_update_id_cb(GUPnPServiceProxy *proxy,
+static void prv_system_update_id_for_prop_cb(GUPnPServiceProxy *proxy,
+				    GUPnPServiceProxyAction *action,
+				    gpointer user_data)
+{
+	GError *upnp_error = NULL;
+	guint id;
+	msu_async_cb_data_t *cb_data = user_data;
+
+	MSU_LOG_DEBUG("Enter");
+
+	if (!gupnp_service_proxy_end_action(proxy, action, &upnp_error,
+					    "Id", G_TYPE_UINT,
+					    &id,
+					    NULL)) {
+		MSU_LOG_ERROR("Unable to retrieve ServiceUpdateID: %s %s",
+			       g_quark_to_string(upnp_error->domain),
+			       upnp_error->message);
+
+		cb_data->error = g_error_new(MSU_ERROR,
+				MSU_ERROR_OPERATION_FAILED,
+				"Unable to retrieve ServiceUpdateID: %s",
+				upnp_error->message);
+
+		goto on_complete;
+	}
+
+	cb_data->result = g_variant_ref_sink(g_variant_new_uint32(id));
+
+on_complete:
+
+	(void) g_idle_add(msu_async_complete_task, cb_data);
+	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
+
+	if (upnp_error)
+		g_error_free(upnp_error);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static void prv_get_system_update_id_for_prop(GUPnPServiceProxy *proxy,
+				     msu_device_t *device,
+				     GCancellable *cancellable,
+				     msu_async_cb_data_t *cb_data)
+{
+	guint suid;
+
+	MSU_LOG_DEBUG("Enter");
+
+	if (prv_device_subscribed(device)) {
+		suid = device->system_update_id;
+
+		cb_data->result = g_variant_ref_sink(
+					g_variant_new_uint32(suid));
+
+		(void) g_idle_add(msu_async_complete_task, cb_data);
+
+		goto on_complete;
+	}
+
+	gupnp_service_proxy_begin_action(proxy, "GetSystemUpdateID",
+					 prv_system_update_id_for_prop_cb,
+					 cb_data,
+					 NULL);
+
+	cb_data->proxy = proxy;
+
+	cb_data->cancel_id =
+	g_cancellable_connect(cancellable,
+				      G_CALLBACK(msu_async_task_cancelled),
+				      cb_data, NULL);
+	cb_data->cancellable = cancellable;
+
+on_complete:
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static void prv_system_update_id_for_props_cb(GUPnPServiceProxy *proxy,
 				    GUPnPServiceProxyAction *action,
 				    gpointer user_data)
 {
@@ -834,17 +911,13 @@ static void prv_system_update_id_cb(GUPnPServiceProxy *proxy,
 		goto on_complete;
 	}
 
-	if (cb_data->type == MSU_TASK_GET_ALL_PROPS) {
-		cb_task_data = &cb_data->ut.get_all;
-		g_variant_builder_add(cb_task_data->vb, "{sv}",
-				      MSU_SYSTEM_UPDATE_VAR,
-				      g_variant_new_uint32(id));
+	cb_task_data = &cb_data->ut.get_all;
+	g_variant_builder_add(cb_task_data->vb, "{sv}",
+			      MSU_SYSTEM_UPDATE_VAR,
+			      g_variant_new_uint32(id));
 
-		cb_data->result = g_variant_ref_sink(g_variant_builder_end(
-							cb_task_data->vb));
-	} else {
-		cb_data->result = g_variant_ref_sink(g_variant_new_uint32(id));
-	}
+	cb_data->result = g_variant_ref_sink(g_variant_builder_end(
+						cb_task_data->vb));
 
 on_complete:
 
@@ -857,7 +930,7 @@ on_complete:
 	MSU_LOG_DEBUG("Exit");
 }
 
-static void prv_get_system_update_id(GUPnPServiceProxy *proxy,
+static void prv_get_system_update_id_for_props(GUPnPServiceProxy *proxy,
 				     msu_device_t *device,
 				     GCancellable *cancellable,
 				     msu_async_cb_data_t *cb_data)
@@ -870,19 +943,14 @@ static void prv_get_system_update_id(GUPnPServiceProxy *proxy,
 	if (prv_device_subscribed(device)) {
 		suid = device->system_update_id;
 
-		if (cb_data->type == MSU_TASK_GET_ALL_PROPS) {
-			cb_task_data = &cb_data->ut.get_all;
+		cb_task_data = &cb_data->ut.get_all;
 
-			g_variant_builder_add(cb_task_data->vb, "{sv}",
-					      MSU_SYSTEM_UPDATE_VAR,
-					      g_variant_new_uint32(suid));
+		g_variant_builder_add(cb_task_data->vb, "{sv}",
+				      MSU_SYSTEM_UPDATE_VAR,
+				      g_variant_new_uint32(suid));
 
-			cb_data->result = g_variant_ref_sink(
-				g_variant_builder_end(cb_task_data->vb));
-		} else {
-			cb_data->result = g_variant_ref_sink(
-						g_variant_new_uint32(suid));
-		}
+		cb_data->result = g_variant_ref_sink(
+			g_variant_builder_end(cb_task_data->vb));
 
 		(void) g_idle_add(msu_async_complete_task, cb_data);
 
@@ -890,7 +958,7 @@ static void prv_get_system_update_id(GUPnPServiceProxy *proxy,
 	}
 
 	gupnp_service_proxy_begin_action(proxy, "GetSystemUpdateID",
-					 prv_system_update_id_cb,
+					 prv_system_update_id_for_props_cb,
 					 cb_data,
 					 NULL);
 
@@ -914,10 +982,10 @@ static gboolean prv_get_all_child_count_cb(msu_async_cb_data_t *cb_data,
 
 	msu_props_add_child_count(cb_task_data->vb, count);
 	if (cb_task_data->device_object)
-		prv_get_system_update_id(cb_data->proxy,
-					 cb_task_data->device,
-					 cb_data->cancellable,
-					 cb_data);
+		prv_get_system_update_id_for_props(cb_data->proxy,
+						   cb_task_data->device,
+						   cb_data->cancellable,
+						   cb_data);
 	else
 		cb_data->result = g_variant_ref_sink(g_variant_builder_end(
 						     cb_task_data->vb));
@@ -992,8 +1060,8 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 		goto no_complete;
 	} else if (cb_data->task->type == MSU_TASK_GET_ALL_PROPS &&
 						cb_task_data->device_object) {
-		prv_get_system_update_id(proxy, cb_task_data->device,
-					 cb_data->cancellable, cb_data);
+		prv_get_system_update_id_for_props(proxy, cb_task_data->device,
+						cb_data->cancellable, cb_data);
 
 		goto no_complete;
 	} else {
@@ -1102,10 +1170,11 @@ void msu_device_get_all_props(msu_device_t *device,  msu_client_t *client,
 				(GUPnPDeviceInfo *) context->device_proxy,
 				cb_task_data->vb);
 
-			prv_get_system_update_id(context->service_proxy,
-						 device,
-						 cancellable,
-						 cb_data);
+			prv_get_system_update_id_for_props(
+							context->service_proxy,
+							device,
+							cancellable,
+							cb_data);
 		} else {
 			cb_data->error =
 				g_error_new(MSU_ERROR,
@@ -1494,10 +1563,11 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 		if (root_object) {
 			if (!strcmp(task_data->prop_name,
 					MSU_INTERFACE_PROP_SYSTEM_UPDATE_ID)) {
-				prv_get_system_update_id(context->service_proxy,
-							 device,
-							 cancellable,
-							 cb_data);
+				prv_get_system_update_id_for_prop(
+							context->service_proxy,
+							device,
+							cancellable,
+							cb_data);
 			} else {
 				cb_data->result =
 					msu_props_get_device_prop(
@@ -1531,10 +1601,11 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 		if (root_object) {
 			if (!strcmp(task_data->prop_name,
 					MSU_INTERFACE_PROP_SYSTEM_UPDATE_ID)) {
-				prv_get_system_update_id(context->service_proxy,
-							 device,
-							 cancellable,
-							 cb_data);
+				prv_get_system_update_id_for_prop(
+							context->service_proxy,
+							device,
+							cancellable,
+							cb_data);
 				complete = TRUE;
 			} else {
 				cb_data->result = msu_props_get_device_prop(
