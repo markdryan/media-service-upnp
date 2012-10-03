@@ -123,6 +123,10 @@ class Container(MediaObject):
         print "Transfer ID: " + str(tid)
         print "Path: " + path
 
+    def create_container(self, name, type, child_types):
+        path = self.__containerIF.CreateContainer(name, type, child_types)
+        print "New container path: " + path
+
 class Device(Container):
 
     def __init__(self, path):
