@@ -431,9 +431,8 @@ suitable location for the file.
 
 The CreateContainer method creates a new child container.
 DisplayName is the name of the new container,
-Type is the type ( I know that currently we only support one type
-of container but this will need to change) and ChildTypes is an array
-of types that can be stored in the new folder, e.g., ['video','container'].
+Type is the type and ChildTypes is an array of types that can be stored
+in the new folder, e.g., ['video','container'].
 A special value of ['*'] indicates that no restriction is placed
 on the types of objects that can be stored in the container.
 The path of the newly created object is returned.
