@@ -267,7 +267,7 @@ msu_task_t *msu_task_create_container_new_generic(
 {
 	msu_task_t *task;
 
-	task = prv_m2spec_task_new(type, invocation, path, "(o)");
+	task = prv_m2spec_task_new(type, invocation, path, "(@o)");
 
 	g_variant_get(parameters, "(ss@as)",
 					&task->ut.create_container.display_name,

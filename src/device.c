@@ -2134,7 +2134,8 @@ static void prv_create_container_cb(GUPnPServiceProxy *proxy,
 	}
 
 	object_path = msu_path_from_id(cb_task_data->root_path, object_id);
-	cb_data->result = g_variant_ref_sink(g_variant_new_string(object_path));
+	cb_data->result = g_variant_ref_sink(g_variant_new_object_path(
+								object_path));
 	g_free(object_path);
 
 on_error:
