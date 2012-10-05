@@ -188,6 +188,7 @@ void msu_device_delete(void *device)
 		g_free(dev->path);
 		g_free(dev);
 		g_variant_unref(dev->search_caps);
+		g_variant_unref(dev->sort_caps);
 	}
 }
 
@@ -376,6 +377,51 @@ static void prv_get_capabilities_analyze(GHashTable *property_map,
 #endif
 }
 
+static void prv_get_sort_capabilities_cb(GUPnPServiceProxy *proxy,
+					   GUPnPServiceProxyAction *action,
+					   gpointer user_data)
+{
+	gchar *result = NULL;
+	GError *error = NULL;
+	prv_new_device_ct_t *priv_t = (prv_new_device_ct_t *) user_data;
+
+	if (!gupnp_service_proxy_end_action(proxy, action, &error, "SortCaps",
+					    G_TYPE_STRING, &result, NULL)) {
+		MSU_LOG_WARNING("GetSortCapabilities operation failed: %s",
+				error->message);
+		goto on_error;
+	}
+
+	MSU_LOG_DEBUG("GetSortCapabilities result: %s", result);
+
+	prv_get_capabilities_analyze(priv_t->property_map, result,
+				     &priv_t->dev->sort_caps);
+
+on_error:
+
+	if (error)
+		g_error_free(error);
+
+	g_free(result);
+}
+
+static GUPnPServiceProxyAction *prv_get_sort_capabilities(
+					msu_chain_task_t *chain,
+					gboolean *failed)
+{
+	msu_device_t *device;
+	msu_device_context_t *context;
+
+	device = msu_chain_task_get_device(chain);
+	context = msu_device_get_context(device, NULL);
+	*failed = FALSE;
+
+	return gupnp_service_proxy_begin_action(context->service_proxy,
+						"GetSortCapabilities",
+						msu_chain_task_begin_action_cb,
+						chain, NULL);
+}
+
 static void prv_get_search_capabilities_cb(GUPnPServiceProxy *proxy,
 					   GUPnPServiceProxyAction *action,
 					   gpointer user_data)
@@ -504,6 +550,9 @@ msu_device_t *msu_device_new(GDBusConnection *connection,
 
 	msu_chain_task_add(chain, prv_get_search_capabilities, dev,
 			   prv_get_search_capabilities_cb, NULL, priv_t);
+
+	msu_chain_task_add(chain, prv_get_sort_capabilities, dev,
+			   prv_get_sort_capabilities_cb, NULL, priv_t);
 
 	msu_chain_task_add(chain, prv_subscribe, dev, NULL, NULL, NULL);
 	msu_chain_task_add(chain, prv_declare, dev, NULL, g_free, priv_t);

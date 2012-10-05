@@ -199,6 +199,11 @@ below:
 |                   |       |      | in search queries.                        |
 |                   |       |      | Empty if not supported by the device.     |
 |------------------------------------------------------------------------------|
+| SortCaps          |  as   |  m   | List of property names that can be used   |
+|                   |       |      | to sort Search() or Browse() action       |
+|                   |       |      | results.                                  |
+|                   |       |      | Empty if not supported by the device.     |
+|------------------------------------------------------------------------------|
 | ServiceResetToken |   s   |  o   |  A string containing the current service  |
 |                   |       |      |  reset token of the server.               |
 |------------------------------------------------------------------------------|
