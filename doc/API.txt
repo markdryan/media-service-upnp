@@ -204,6 +204,10 @@ below:
 |                   |       |      | results.                                  |
 |                   |       |      | Empty if not supported by the device.     |
 |------------------------------------------------------------------------------|
+| SortExtCaps       |  as   |  o   | List of sort modifiers that can be used   |
+|                   |       |      | to sort Search() or Browse() results.     |
+|                   |       |      | Empty if not supported by the device.     |
+|------------------------------------------------------------------------------|
 | ServiceResetToken |   s   |  o   |  A string containing the current service  |
 |                   |       |      |  reset token of the server.               |
 |------------------------------------------------------------------------------|

@@ -51,6 +51,7 @@ struct msu_device_t_ {
 	guint system_update_id;
 	GVariant *search_caps;
 	GVariant *sort_caps;
+	GVariant *sort_ext_caps;
 };
 
 void msu_device_append_new_context(msu_device_t *device,
