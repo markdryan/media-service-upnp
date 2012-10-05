@@ -896,7 +896,7 @@ static void prv_system_update_id_for_props_cb(GUPnPServiceProxy *proxy,
 	GError *upnp_error = NULL;
 	guint id;
 	msu_async_cb_data_t *cb_data = user_data;
-	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;;
+	msu_async_get_all_t *cb_task_data = &cb_data->ut.get_all;
 
 	MSU_LOG_DEBUG("Enter");
 
