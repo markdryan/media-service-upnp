@@ -2,6 +2,7 @@ INCLUDES = -DG_LOG_DOMAIN=\"MSU\"
 
 AM_CFLAGS =	$(GLIB_CFLAGS)				\
 		$(GIO_CFLAGS)				\
+		$(GSSDP_CFLAGS)				\
 		$(GUPNP_CFLAGS)				\
 		$(GUPNPAV_CFLAGS)			\
 		-DSYS_CONFIG_DIR="\"$(sysconfdir)\""	\
@@ -46,6 +47,7 @@ media_service_upnp_SOURCES =	$(media_service_upnp_headers)	\
 
 media_service_upnp_LDADD =	$(GLIB_LIBS)	\
 				$(GIO_LIBS)	\
+				$(GSSDP_LIBS)	\
 				$(GUPNP_LIBS)	\
 				$(GUPNPAV_LIBS)
 
