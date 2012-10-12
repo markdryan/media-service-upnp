@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include <libgssdp/gssdp-resource-browser.h>
 #include <libgupnp/gupnp-control-point.h>
 #include <libgupnp/gupnp-error.h>
 
