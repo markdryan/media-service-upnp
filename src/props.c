@@ -552,20 +552,21 @@ void msu_props_add_device(GUPnPDeviceInfo *proxy,
 
 	list = gupnp_device_info_list_dlna_capabilities(proxy);
 	dlna_caps = prv_add_list_dlna_prop(list);
-	g_variant_builder_add(vb, "{sv}", MSU_INTERFACE_PROP_DLNA_CAPABILITIES,
+	g_variant_builder_add(vb, "{sv}",
+			      MSU_INTERFACE_PROP_SV_DLNA_CAPABILITIES,
 			      dlna_caps);
 	g_list_free_full(list, g_free);
 
 	g_variant_builder_add(vb, "{sv}",
-			      MSU_INTERFACE_PROP_SEARCH_CAPABILITIES,
+			      MSU_INTERFACE_PROP_SV_SEARCH_CAPABILITIES,
 			      device->search_caps);
 
 	g_variant_builder_add(vb, "{sv}",
-			      MSU_INTERFACE_PROP_SORT_CAPABILITIES,
+			      MSU_INTERFACE_PROP_SV_SORT_CAPABILITIES,
 			      device->sort_caps);
 
 	g_variant_builder_add(vb, "{sv}",
-			      MSU_INTERFACE_PROP_SORT_EXT_CAPABILITIES,
+			      MSU_INTERFACE_PROP_SV_SORT_EXT_CAPABILITIES,
 			      device->sort_ext_caps);
 }
 
@@ -617,7 +618,7 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
 						      -1, -1, -1, FALSE,
 						      NULL, NULL, NULL, NULL);
 		str = copy;
-	} else if (!strcmp(MSU_INTERFACE_PROP_DLNA_CAPABILITIES, prop)) {
+	} else if (!strcmp(MSU_INTERFACE_PROP_SV_DLNA_CAPABILITIES, prop)) {
 		list = gupnp_device_info_list_dlna_capabilities(proxy);
 		dlna_caps = prv_add_list_dlna_prop(list);
 		g_list_free_full(list, g_free);
@@ -628,21 +629,21 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
 		copy = g_variant_print(dlna_caps, FALSE);
 		MSU_LOG_DEBUG("Prop %s = %s", prop, copy);
 #endif
-	} else if (!strcmp(MSU_INTERFACE_PROP_SEARCH_CAPABILITIES, prop)) {
+	} else if (!strcmp(MSU_INTERFACE_PROP_SV_SEARCH_CAPABILITIES, prop)) {
 		retval = g_variant_ref(device->search_caps);
 
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
 		copy = g_variant_print(device->search_caps, FALSE);
 		MSU_LOG_DEBUG("Prop %s = %s", prop, copy);
 #endif
-	} else if (!strcmp(MSU_INTERFACE_PROP_SORT_CAPABILITIES, prop)) {
+	} else if (!strcmp(MSU_INTERFACE_PROP_SV_SORT_CAPABILITIES, prop)) {
 		retval = g_variant_ref(device->sort_caps);
 
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
 		copy = g_variant_print(device->sort_caps, FALSE);
 		MSU_LOG_DEBUG("Prop %s = %s", prop, copy);
 #endif
-	} else if (!strcmp(MSU_INTERFACE_PROP_SORT_EXT_CAPABILITIES, prop)) {
+	} else if (!strcmp(MSU_INTERFACE_PROP_SV_SORT_EXT_CAPABILITIES, prop)) {
 		retval = g_variant_ref(device->sort_ext_caps);
 
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG

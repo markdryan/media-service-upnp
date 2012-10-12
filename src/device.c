@@ -370,7 +370,7 @@ static void prv_get_sort_ext_capabilities_analyze(msu_device_t *device,
 
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
 	props = g_variant_print(device->sort_ext_caps, FALSE);
-	MSU_LOG_DEBUG("%s = %s", MSU_INTERFACE_PROP_SORT_EXT_CAPABILITIES,
+	MSU_LOG_DEBUG("%s = %s", MSU_INTERFACE_PROP_SV_SORT_EXT_CAPABILITIES,
 				 props);
 	g_free(props);
 #endif
@@ -451,7 +451,7 @@ static void prv_get_capabilities_analyze(GHashTable *property_map,
 
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
 	prop_name = g_variant_print(*variant, FALSE);
-	MSU_LOG_DEBUG("%s = %s", MSU_INTERFACE_PROP_SEARCH_CAPABILITIES,
+	MSU_LOG_DEBUG("%s = %s", MSU_INTERFACE_PROP_SV_SEARCH_CAPABILITIES,
 				 prop_name);
 	g_free(prop_name);
 #endif
@@ -1374,7 +1374,7 @@ static void prv_service_reset_for_props_cb(GUPnPServiceProxy *proxy,
 
 	cb_task_data = &cb_data->ut.get_all;
 	g_variant_builder_add(cb_task_data->vb, "{sv}",
-			      MSU_INTERFACE_PROP_SERVICE_RESET_TOKEN,
+			      MSU_INTERFACE_PROP_ESV_SERVICE_RESET_TOKEN,
 			      g_variant_new_string(token));
 
 	cb_data->result = g_variant_ref_sink(g_variant_builder_end(
@@ -2021,14 +2021,14 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 	if (!strcmp(task_data->interface_name, MSU_INTERFACE_MEDIA_DEVICE)) {
 		if (root_object) {
 			if (!strcmp(task_data->prop_name,
-					MSU_INTERFACE_PROP_SYSTEM_UPDATE_ID)) {
+				MSU_INTERFACE_PROP_ESV_SYSTEM_UPDATE_ID)) {
 				prv_get_system_update_id_for_prop(
 							context->service_proxy,
 							device,
 							cancellable,
 							cb_data);
 			} else if (!strcmp(task_data->prop_name,
-				   MSU_INTERFACE_PROP_SERVICE_RESET_TOKEN)) {
+				  MSU_INTERFACE_PROP_ESV_SERVICE_RESET_TOKEN)) {
 				prv_get_sr_token_for_prop(
 							context->service_proxy,
 							device,
@@ -2067,7 +2067,7 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 	} else {
 		if (root_object) {
 			if (!strcmp(task_data->prop_name,
-					MSU_INTERFACE_PROP_SYSTEM_UPDATE_ID)) {
+				MSU_INTERFACE_PROP_ESV_SYSTEM_UPDATE_ID)) {
 				prv_get_system_update_id_for_prop(
 							context->service_proxy,
 							device,
@@ -2075,7 +2075,7 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 							cb_data);
 				complete = TRUE;
 			} else if (!strcmp(task_data->prop_name,
-				   MSU_INTERFACE_PROP_SERVICE_RESET_TOKEN)) {
+				  MSU_INTERFACE_PROP_ESV_SERVICE_RESET_TOKEN)) {
 				prv_get_sr_token_for_prop(
 							context->service_proxy,
 							device,
