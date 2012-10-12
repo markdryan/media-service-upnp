@@ -153,6 +153,13 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	g_hash_table_insert(p_map, "@searchable",
 			    MSU_INTERFACE_PROP_SEARCHABLE);
 
+	/* dc:creator */
+	prop_t = prv_msu_prop_map_new("dc:creator",
+					MSU_UPNP_MASK_PROP_CREATOR,
+					TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_CREATOR, prop_t);
+	g_hash_table_insert(p_map, "dc:creator", MSU_INTERFACE_PROP_CREATOR);
+
 	/* dc:date */
 	prop_t = prv_msu_prop_map_new("dc:date",
 					MSU_UPNP_MASK_PROP_DATE,
@@ -944,6 +951,7 @@ gboolean msu_props_add_object(GVariantBuilder *item_vb,
 	gchar *path = NULL;
 	const char *id;
 	const char *title;
+	const char *creator;
 	const char *upnp_class;
 	const char *media_spec_type;
 	gboolean retval = FALSE;
@@ -961,12 +969,17 @@ gboolean msu_props_add_object(GVariantBuilder *item_vb,
 		goto on_error;
 
 	title = gupnp_didl_lite_object_get_title(object);
+	creator = gupnp_didl_lite_object_get_creator(object);
 	rest = gupnp_didl_lite_object_get_restricted(object);
 	path = msu_path_from_id(root_path, id);
 
 	if (filter_mask & MSU_UPNP_MASK_PROP_DISPLAY_NAME)
 		prv_add_string_prop(item_vb, MSU_INTERFACE_PROP_DISPLAY_NAME,
 				    title);
+
+	if (filter_mask & MSU_UPNP_MASK_PROP_CREATOR)
+		prv_add_string_prop(item_vb, MSU_INTERFACE_PROP_CREATOR,
+				    creator);
 
 	if (filter_mask & MSU_UPNP_MASK_PROP_PATH)
 		prv_add_path_prop(item_vb, MSU_INTERFACE_PROP_PATH, path);
@@ -1299,6 +1312,14 @@ GVariant *msu_props_get_object_prop(const gchar *prop, const gchar *root_path,
 						    media_spec_type));
 	} else if (!strcmp(prop, MSU_INTERFACE_PROP_DISPLAY_NAME)) {
 		title = gupnp_didl_lite_object_get_title(object);
+		if (!title)
+			goto on_error;
+
+		MSU_LOG_DEBUG("Prop %s = %s", prop, title);
+
+		retval = g_variant_ref_sink(g_variant_new_string(title));
+	} else if (!strcmp(prop, MSU_INTERFACE_PROP_CREATOR)) {
+		title = gupnp_didl_lite_object_get_creator(object);
 		if (!title)
 			goto on_error;
 

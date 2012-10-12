@@ -320,6 +320,10 @@ Additional Properties:
 | Restricted      |  b    |  m   |  Indicates whether the object is         |
 |                 |       |      |  modifiable.                             |
 |---------------------------------------------------------------------------|
+| Creator         |  s    |  o   |  Indicates an entity that owns the       |
+|                 |       |      |  content or is primarily responsible for |
+|                 |       |      |  creating the content.                   |
+|---------------------------------------------------------------------------|
 
 
 Additional Methods:

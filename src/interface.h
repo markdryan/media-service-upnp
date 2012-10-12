@@ -34,6 +34,7 @@
 #define MSU_INTERFACE_PROP_RESTRICTED "Restricted"
 #define MSU_INTERFACE_PROP_DISPLAY_NAME "DisplayName"
 #define MSU_INTERFACE_PROP_TYPE "Type"
+#define MSU_INTERFACE_PROP_CREATOR "Creator"
 #define MSU_INTERFACE_PROP_DLNA_MANAGED "DLNAManaged"
 
 /* Item Properties */
