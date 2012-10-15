@@ -40,6 +40,7 @@
 /* Item Properties */
 #define MSU_INTERFACE_PROP_REFPATH "RefPath"
 #define MSU_INTERFACE_PROP_ARTIST "Artist"
+#define MSU_INTERFACE_PROP_ARTISTS "Artists"
 #define MSU_INTERFACE_PROP_ALBUM "Album"
 #define MSU_INTERFACE_PROP_DATE "Date"
 #define MSU_INTERFACE_PROP_GENRE "Genre"

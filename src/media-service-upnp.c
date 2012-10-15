@@ -262,6 +262,8 @@ static const gchar g_msu_server_introspection[] =
 	"       access='read'/>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_ARTIST"'"
 	"       access='read'/>"
+	"    <property type='as' name='"MSU_INTERFACE_PROP_ARTISTS"'"
+	"       access='read'/>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_ALBUM"'"
 	"       access='read'/>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_DATE"'"

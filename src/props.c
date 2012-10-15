@@ -21,6 +21,7 @@
  */
 
 #include <string.h>
+#include <libgupnp-av/gupnp-didl-lite-contributor.h>
 
 #include "device.h"
 #include "interface.h"
@@ -289,11 +290,18 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 			    MSU_INTERFACE_PROP_ALBUM_ART_URL);
 
 	/* upnp:artist */
+	/* upnp:artist - ARTIST*/
 	prop_t = prv_msu_prop_map_new("upnp:artist",
 					MSU_UPNP_MASK_PROP_ARTIST,
 					TRUE, TRUE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_ARTIST, prop_t);
 	g_hash_table_insert(p_map, "upnp:artist", MSU_INTERFACE_PROP_ARTIST);
+
+	/* upnp:artist - ARTISTS*/
+	prop_t = prv_msu_prop_map_new("upnp:artist",
+					MSU_UPNP_MASK_PROP_ARTISTS,
+					TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_ARTISTS, prop_t);
 
 	/* upnp:class */
 	prop_t = prv_msu_prop_map_new("upnp:class",
@@ -495,6 +503,26 @@ static GVariant *prv_add_list_dlna_prop(GList* list)
 	g_variant_builder_init(&vb, G_VARIANT_TYPE("a{sv}"));
 
 	g_list_foreach(list, prv_add_list_dlna_str, &vb);
+
+	return g_variant_builder_end(&vb);
+}
+
+static void prv_add_list_artists_str(gpointer data, gpointer user_data)
+{
+	GVariantBuilder *vb = (GVariantBuilder *) user_data;
+	GUPnPDIDLLiteContributor *contributor = data;
+	const char *str;
+
+	str = gupnp_didl_lite_contributor_get_name(contributor);
+	g_variant_builder_add(vb, "s", str);
+}
+
+static GVariant *prv_get_artists_prop(GList *list)
+{
+	GVariantBuilder vb;
+
+	g_variant_builder_init(&vb, G_VARIANT_TYPE("as"));
+	g_list_foreach(list, prv_add_list_artists_str, &vb);
 
 	return g_variant_builder_end(&vb);
 }
@@ -1103,10 +1131,18 @@ void msu_props_add_item(GVariantBuilder *item_vb,
 	GUPnPDIDLLiteResource *res;
 	const char *str_val;
 	char *path;
+	GList *list;
 
 	if (filter_mask & MSU_UPNP_MASK_PROP_ARTIST)
 		prv_add_string_prop(item_vb, MSU_INTERFACE_PROP_ARTIST,
 				    gupnp_didl_lite_object_get_artist(object));
+
+	if (filter_mask & MSU_UPNP_MASK_PROP_ARTISTS) {
+		list = gupnp_didl_lite_object_get_artists(object);
+		prv_add_variant_prop(item_vb, MSU_INTERFACE_PROP_ARTISTS,
+				     prv_get_artists_prop(list));
+		g_list_free_full(list, g_object_unref);
+	}
 
 	if (filter_mask & MSU_UPNP_MASK_PROP_ALBUM)
 		prv_add_string_prop(item_vb, MSU_INTERFACE_PROP_ALBUM,
@@ -1355,6 +1391,7 @@ GVariant *msu_props_get_item_prop(const gchar *prop, const gchar *root_path,
 	gint track_number;
 	GUPnPDIDLLiteResource *res;
 	GVariant *retval = NULL;
+	GList *list;
 
 	if (GUPNP_IS_DIDL_LITE_CONTAINER(object))
 		goto on_error;
@@ -1367,6 +1404,19 @@ GVariant *msu_props_get_item_prop(const gchar *prop, const gchar *root_path,
 		MSU_LOG_DEBUG("Prop %s = %s", prop, str);
 
 		retval = g_variant_ref_sink(g_variant_new_string(str));
+	} else if (!strcmp(prop, MSU_INTERFACE_PROP_ARTISTS)) {
+		list = gupnp_didl_lite_object_get_artists(object);
+		if (!list)
+			goto on_error;
+
+		retval = g_variant_ref_sink(prv_get_artists_prop(list));
+		g_list_free_full(list, g_object_unref);
+
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+		path = g_variant_print(retval, FALSE);
+		MSU_LOG_DEBUG("Prop %s = %s", prop, path);
+		g_free(path);
+#endif
 	} else if (!strcmp(prop, MSU_INTERFACE_PROP_ALBUM)) {
 		str = gupnp_didl_lite_object_get_album(object);
 		if (!str)
