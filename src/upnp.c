@@ -1321,3 +1321,163 @@ on_error:
 
 	MSU_LOG_DEBUG("Exit");
 }
+
+static gboolean prv_update_ex_build_filter(GHashTable *filter_map,
+					   msu_task_update_ex_t *task_data,
+					   gchar **upnp_filter,
+					   GError **error)
+{
+	GVariantIter viter;
+	const gchar *prop;
+	GVariant *value;
+	msu_prop_map_t *prop_map;
+	GHashTable *upnp_props;
+	GHashTableIter hiter;
+	gpointer key;
+	GString *str;
+	gboolean retval = FALSE;
+
+	upnp_props = g_hash_table_new_full(g_str_hash, g_str_equal,
+					   NULL, NULL);
+
+	(void) g_variant_iter_init(&viter, task_data->to_add_update);
+
+	while (g_variant_iter_next(&viter, "{&sv}", &prop, &value)) {
+		MSU_LOG_DEBUG("to_add_update = %s", prop);
+
+		prop_map = g_hash_table_lookup(filter_map, prop);
+
+		if ((!prop_map) || (!prop_map->updateable)) {
+			MSU_LOG_WARNING("Invalid Parameter");
+
+			*error = g_error_new(MSU_ERROR,
+					     MSU_ERROR_OPERATION_FAILED,
+					     "Invalid Parameter");
+
+			goto on_error;
+		}
+
+		task_data->mask |= prop_map->type;
+
+		if (!prop_map->filter)
+			continue;
+
+		g_hash_table_insert(upnp_props,
+				    (gpointer) prop_map->upnp_prop_name, NULL);
+	}
+
+	(void) g_variant_iter_init(&viter, task_data->to_delete);
+
+	while (g_variant_iter_next(&viter, "&s", &prop)) {
+		MSU_LOG_DEBUG("to_delete = %s", prop);
+
+		prop_map = g_hash_table_lookup(filter_map, prop);
+
+		if ((!prop_map) || (!prop_map->updateable) ||
+		    (task_data->mask & prop_map->type) != 0) {
+			MSU_LOG_WARNING("Invalid Parameter");
+
+			*error = g_error_new(MSU_ERROR,
+					     MSU_ERROR_OPERATION_FAILED,
+					     "Invalid Parameter");
+
+			goto on_error;
+		}
+
+		task_data->mask |= prop_map->type;
+
+		if (!prop_map->filter)
+			continue;
+
+		g_hash_table_insert(upnp_props,
+				    (gpointer) prop_map->upnp_prop_name, NULL);
+	}
+
+	str = g_string_new("");
+	g_hash_table_iter_init(&hiter, upnp_props);
+	if (g_hash_table_iter_next(&hiter, &key, NULL)) {
+		g_string_append(str, (const gchar *) key);
+		while (g_hash_table_iter_next(&hiter, &key, NULL)) {
+			g_string_append(str, ",");
+			g_string_append(str, (const gchar *) key);
+		}
+	}
+	*upnp_filter = g_string_free(str, FALSE);
+
+	task_data->map = filter_map;
+
+	retval = TRUE;
+
+on_error:
+
+	g_hash_table_unref(upnp_props);
+
+	return retval;
+}
+
+void msu_upnp_update_ex_object(msu_upnp_t *upnp, msu_client_t *client,
+			       msu_task_t *task,
+			       GCancellable *cancellable,
+			       msu_upnp_task_complete_t cb)
+{
+	msu_async_cb_data_t *cb_data;
+	msu_device_t *device;
+	gchar *root_path = NULL;
+	gchar *upnp_filter = NULL;
+	msu_task_update_ex_t *task_data;
+
+	MSU_LOG_DEBUG("Enter");
+
+	cb_data = msu_async_cb_data_new(task, cb);
+	task_data = &task->ut.update_ex;
+
+	if (!msu_path_get_path_and_id(task->path, &root_path,
+				      &cb_data->id, &cb_data->error)) {
+		MSU_LOG_WARNING("Bad path %s", task->path);
+
+		goto on_error;
+	}
+
+	MSU_LOG_DEBUG("Root Path = %s, Id = %s", root_path, cb_data->id);
+
+	device = msu_device_from_path(root_path, upnp->server_udn_map);
+	if (!device) {
+		MSU_LOG_WARNING("Cannot locate device for %s", root_path);
+
+		cb_data->error =
+			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
+				    "Cannot locate device corresponding to"
+				    " the specified path");
+		goto on_error;
+	}
+
+	if (!prv_update_ex_build_filter(upnp->filter_map,
+					task_data,
+					&upnp_filter,
+					&cb_data->error))
+		goto on_error;
+
+	MSU_LOG_DEBUG("Filter = %s", upnp_filter);
+	MSU_LOG_DEBUG("Mask = 0x%x", task_data->mask);
+
+	if (task_data->mask == 0) {
+		MSU_LOG_WARNING("Empty Parameters");
+
+		goto on_error;
+	}
+
+	msu_device_update_ex_object(device, client, task,
+				    cb_data, upnp_filter, cancellable);
+
+on_error:
+
+	if (root_path)
+		g_free(root_path);
+
+	g_free(upnp_filter);
+
+	if (!cb_data->action)
+		(void) g_idle_add(msu_async_complete_task, cb_data);
+
+	MSU_LOG_DEBUG("Exit");
+}

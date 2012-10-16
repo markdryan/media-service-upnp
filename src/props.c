@@ -90,13 +90,15 @@ static const gchar gMediaSpec2Image[] = "image";
 static msu_prop_map_t *prv_msu_prop_map_new(const gchar *prop_name,
 					    msu_upnp_prop_mask type,
 					    gboolean filter,
-					    gboolean searchable)
+					    gboolean searchable,
+					    gboolean updateable)
 {
 	msu_prop_map_t *retval = g_new(msu_prop_map_t, 1);
 	retval->upnp_prop_name = prop_name;
 	retval->type = type;
 	retval->filter = filter;
 	retval->searchable = searchable;
+	retval->updateable = updateable;
 	return retval;
 }
 
@@ -112,7 +114,7 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	/* @childCount */
 	prop_t = prv_msu_prop_map_new("@childCount",
 					MSU_UPNP_MASK_PROP_CHILD_COUNT,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_CHILD_COUNT, prop_t);
 	g_hash_table_insert(p_map, "@childCount",
 			    MSU_INTERFACE_PROP_CHILD_COUNT);
@@ -120,28 +122,28 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	/* @id */
 	prop_t = prv_msu_prop_map_new("@id",
 					MSU_UPNP_MASK_PROP_PATH,
-					FALSE, TRUE);
+					FALSE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_PATH, prop_t);
 	g_hash_table_insert(p_map, "@id", MSU_INTERFACE_PROP_PATH);
 
 	/* @parentID */
 	prop_t = prv_msu_prop_map_new("@parentID",
 					MSU_UPNP_MASK_PROP_PARENT,
-					FALSE, TRUE);
+					FALSE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_PARENT, prop_t);
 	g_hash_table_insert(p_map, "@parentID", MSU_INTERFACE_PROP_PARENT);
 
 	/* @refID */
 	prop_t = prv_msu_prop_map_new("@refID",
 					MSU_UPNP_MASK_PROP_REFPATH,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_REFPATH, prop_t);
 	g_hash_table_insert(p_map, "@refID", MSU_INTERFACE_PROP_REFPATH);
 
 	/* @restricted */
 	prop_t = prv_msu_prop_map_new("@restricted",
 					MSU_UPNP_MASK_PROP_RESTRICTED,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_RESTRICTED, prop_t);
 	g_hash_table_insert(p_map, "@restricted",
 			    MSU_INTERFACE_PROP_RESTRICTED);
@@ -149,7 +151,7 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	/* @searchable */
 	prop_t = prv_msu_prop_map_new("@searchable",
 					MSU_UPNP_MASK_PROP_SEARCHABLE,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_SEARCHABLE, prop_t);
 	g_hash_table_insert(p_map, "@searchable",
 			    MSU_INTERFACE_PROP_SEARCHABLE);
@@ -157,28 +159,28 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	/* dc:creator */
 	prop_t = prv_msu_prop_map_new("dc:creator",
 					MSU_UPNP_MASK_PROP_CREATOR,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_CREATOR, prop_t);
 	g_hash_table_insert(p_map, "dc:creator", MSU_INTERFACE_PROP_CREATOR);
 
 	/* dc:date */
 	prop_t = prv_msu_prop_map_new("dc:date",
 					MSU_UPNP_MASK_PROP_DATE,
-					TRUE, TRUE);
+					TRUE, TRUE, TRUE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_DATE, prop_t);
 	g_hash_table_insert(p_map, "dc:date", MSU_INTERFACE_PROP_DATE);
 
 	/* dc:title */
 	prop_t = prv_msu_prop_map_new("dc:title",
 					MSU_UPNP_MASK_PROP_DISPLAY_NAME,
-					FALSE, TRUE);
+					FALSE, TRUE, TRUE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_DISPLAY_NAME, prop_t);
 	g_hash_table_insert(p_map, "dc:title", MSU_INTERFACE_PROP_DISPLAY_NAME);
 
 	/* dlna:dlnaManaged */
 	prop_t = prv_msu_prop_map_new("dlna:dlnaManaged",
 					MSU_UPNP_MASK_PROP_DLNA_MANAGED,
-					TRUE, FALSE);
+					TRUE, FALSE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_DLNA_MANAGED, prop_t);
 	g_hash_table_insert(p_map, "dlna:dlnaManaged",
 			    MSU_INTERFACE_PROP_DLNA_MANAGED);
@@ -187,32 +189,32 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	/* res - RES */
 	prop_t = prv_msu_prop_map_new("res",
 					MSU_UPNP_MASK_PROP_RESOURCES,
-					TRUE, FALSE);
+					TRUE, FALSE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_RESOURCES, prop_t);
 
 	/* res - URL */
 	prop_t = prv_msu_prop_map_new("res",
 					MSU_UPNP_MASK_PROP_URL,
-					TRUE, FALSE);
+					TRUE, FALSE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_URL, prop_t);
 
 	/* res - URLS */
 	prop_t = prv_msu_prop_map_new("res",
 					MSU_UPNP_MASK_PROP_URLS,
-					TRUE, FALSE);
+					TRUE, FALSE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_URLS, prop_t);
 
 	/* res@bitrate */
 	prop_t = prv_msu_prop_map_new("res@bitrate",
 					MSU_UPNP_MASK_PROP_BITRATE,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_BITRATE, prop_t);
 	g_hash_table_insert(p_map, "res@bitrate", MSU_INTERFACE_PROP_BITRATE);
 
 	/* res@bitsPerSample */
 	prop_t = prv_msu_prop_map_new("res@bitsPerSample",
 					MSU_UPNP_MASK_PROP_BITS_PER_SAMPLE,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_BITS_PER_SAMPLE, prop_t);
 	g_hash_table_insert(p_map, "res@bitsPerSample",
 			    MSU_INTERFACE_PROP_BITS_PER_SAMPLE);
@@ -220,7 +222,7 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	/* res@colorDepth */
 	prop_t = prv_msu_prop_map_new("res@colorDepth",
 					MSU_UPNP_MASK_PROP_COLOR_DEPTH,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_COLOR_DEPTH, prop_t);
 	g_hash_table_insert(p_map, "res@colorDepth",
 			    MSU_INTERFACE_PROP_COLOR_DEPTH);
@@ -228,7 +230,7 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	/* res@duration */
 	prop_t = prv_msu_prop_map_new("res@duration",
 					MSU_UPNP_MASK_PROP_DURATION,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_DURATION, prop_t);
 	g_hash_table_insert(p_map, "res@duration",
 			    MSU_INTERFACE_PROP_DURATION);
@@ -237,32 +239,32 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	/* res@protocolInfo - DLNA PROFILE*/
 	prop_t = prv_msu_prop_map_new("res@protocolInfo",
 				       MSU_UPNP_MASK_PROP_DLNA_PROFILE,
-				       TRUE, FALSE);
+				       TRUE, FALSE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_DLNA_PROFILE, prop_t);
 
 	/* res@protocolInfo - MIME TYPES*/
 	prop_t = prv_msu_prop_map_new("res@protocolInfo",
 					MSU_UPNP_MASK_PROP_MIME_TYPE,
-					TRUE, FALSE);
+					TRUE, FALSE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_MIME_TYPE, prop_t);
 
 	/* res@resolution */
 	/* res@resolution - HEIGH */
 	prop_t = prv_msu_prop_map_new("res@resolution",
 					MSU_UPNP_MASK_PROP_HEIGHT,
-					TRUE, FALSE);
+					TRUE, FALSE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_HEIGHT, prop_t);
 
 	/* res@resolution - WIDTH */
 	prop_t = prv_msu_prop_map_new("res@resolution",
 					MSU_UPNP_MASK_PROP_WIDTH,
-					TRUE, FALSE);
+					TRUE, FALSE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_WIDTH, prop_t);
 
 	/* res@sampleFrequency */
 	prop_t = prv_msu_prop_map_new("res@sampleFrequency",
 					MSU_UPNP_MASK_PROP_SAMPLE_RATE,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_SAMPLE_RATE, prop_t);
 	g_hash_table_insert(p_map, "res@sampleFrequency",
 			    MSU_INTERFACE_PROP_SAMPLE_RATE);
@@ -270,21 +272,21 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	/* res@size */
 	prop_t = prv_msu_prop_map_new("res@size",
 					MSU_UPNP_MASK_PROP_SIZE,
-				       TRUE, TRUE);
+				       TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_SIZE, prop_t);
 	g_hash_table_insert(p_map, "res@size", MSU_INTERFACE_PROP_SIZE);
 
 	/* upnp:album */
 	prop_t = prv_msu_prop_map_new("upnp:album",
 					MSU_UPNP_MASK_PROP_ALBUM,
-				       TRUE, TRUE);
+				       TRUE, TRUE, TRUE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_ALBUM, prop_t);
 	g_hash_table_insert(p_map, "upnp:album", MSU_INTERFACE_PROP_ALBUM);
 
 	/* upnp:albumArtURI */
 	prop_t = prv_msu_prop_map_new("upnp:albumArtURI",
 					MSU_UPNP_MASK_PROP_ALBUM_ART_URL,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_ALBUM_ART_URL, prop_t);
 	g_hash_table_insert(p_map, "upnp:albumArtURI",
 			    MSU_INTERFACE_PROP_ALBUM_ART_URL);
@@ -293,40 +295,40 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	/* upnp:artist - ARTIST*/
 	prop_t = prv_msu_prop_map_new("upnp:artist",
 					MSU_UPNP_MASK_PROP_ARTIST,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_ARTIST, prop_t);
 	g_hash_table_insert(p_map, "upnp:artist", MSU_INTERFACE_PROP_ARTIST);
 
 	/* upnp:artist - ARTISTS*/
 	prop_t = prv_msu_prop_map_new("upnp:artist",
 					MSU_UPNP_MASK_PROP_ARTISTS,
-					TRUE, FALSE);
+					TRUE, FALSE, TRUE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_ARTISTS, prop_t);
 
 	/* upnp:class */
 	prop_t = prv_msu_prop_map_new("upnp:class",
 					MSU_UPNP_MASK_PROP_TYPE,
-					FALSE, TRUE);
+					FALSE, TRUE, TRUE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_TYPE, prop_t);
 	g_hash_table_insert(p_map, "upnp:class", MSU_INTERFACE_PROP_TYPE);
 
 	/* upnp:createClass */
 	prop_t = prv_msu_prop_map_new("upnp:createClass",
 					MSU_UPNP_MASK_PROP_CREATE_CLASSES,
-					TRUE, FALSE);
+					TRUE, FALSE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_CREATE_CLASSES, prop_t);
 
 	/* upnp:genre */
 	prop_t = prv_msu_prop_map_new("upnp:genre",
 					MSU_UPNP_MASK_PROP_GENRE,
-					TRUE, TRUE);
+					TRUE, TRUE, FALSE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_GENRE, prop_t);
 	g_hash_table_insert(p_map, "upnp:genre", MSU_INTERFACE_PROP_GENRE);
 
 	/* upnp:originalTrackNumber */
 	prop_t = prv_msu_prop_map_new("upnp:originalTrackNumber",
 					MSU_UPNP_MASK_PROP_TRACK_NUMBER,
-					TRUE, TRUE);
+					TRUE, TRUE, TRUE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_TRACK_NUMBER, prop_t);
 	g_hash_table_insert(p_map, "upnp:originalTrackNumber",
 			    MSU_INTERFACE_PROP_TRACK_NUMBER);

@@ -61,6 +61,9 @@ class MediaObject(object):
     def delete(self):
         return self.__objIF.Delete()
 
+    def update(self, to_add_update, to_delete):
+        return self.__objIF.UpdateEx(to_add_update, to_delete)
+
 class Item(MediaObject):
     def __init__(self, path):
         MediaObject.__init__(self, path)

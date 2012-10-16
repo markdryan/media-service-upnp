@@ -3265,3 +3265,303 @@ void msu_device_create_container(msu_device_t *device, msu_client_t *client,
 
 	MSU_LOG_DEBUG("Exit");
 }
+
+static void prv_update_ex_object_update_cb(GUPnPServiceProxy *proxy,
+				  GUPnPServiceProxyAction *action,
+				  gpointer user_data)
+{
+	GError *upnp_error = NULL;
+	msu_async_cb_data_t *cb_data = user_data;
+
+	MSU_LOG_DEBUG("Enter");
+
+	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
+					    &upnp_error,
+					    NULL)) {
+		MSU_LOG_WARNING("Update Object operation failed: %s",
+				upnp_error->message);
+
+		cb_data->error = g_error_new(MSU_ERROR,
+					     MSU_ERROR_OPERATION_FAILED,
+					     "Update Object operation "
+					     " failed: %s",
+					     upnp_error->message);
+	}
+
+	(void) g_idle_add(msu_async_complete_task, cb_data);
+	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
+
+	if (upnp_error)
+		g_error_free(upnp_error);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static gchar *prv_get_current_xml_fragment(GUPnPDIDLLiteObject *object,
+					   guint32 mask)
+{
+	if (mask & MSU_UPNP_MASK_PROP_DISPLAY_NAME)
+		return gupnp_didl_lite_object_get_title_xml_string(object);
+	else if (mask & MSU_UPNP_MASK_PROP_ALBUM)
+		return gupnp_didl_lite_object_get_album_xml_string(object);
+	else if (mask & MSU_UPNP_MASK_PROP_DATE)
+		return gupnp_didl_lite_object_get_date_xml_string(object);
+	else if (mask & MSU_UPNP_MASK_PROP_TYPE)
+		return gupnp_didl_lite_object_get_upnp_class_xml_string(object);
+	else if (mask & MSU_UPNP_MASK_PROP_TRACK_NUMBER)
+		return gupnp_didl_lite_object_get_track_number_xml_string(
+								object);
+	else if (mask & MSU_UPNP_MASK_PROP_ARTISTS)
+		return gupnp_didl_lite_object_get_artists_xml_string(object);
+
+	return NULL;
+}
+
+static gchar *prv_get_new_xml_fragment(GUPnPDIDLLiteObject *object,
+				       guint32 mask,
+				       GVariant *value)
+{
+	GUPnPDIDLLiteContributor *artist;
+	const gchar *artist_name;
+	const gchar *upnp_class;
+	GVariantIter viter;
+
+	if (mask & MSU_UPNP_MASK_PROP_DISPLAY_NAME) {
+		gupnp_didl_lite_object_set_title(object,
+			g_variant_get_string(value, NULL));
+
+		return gupnp_didl_lite_object_get_title_xml_string(object);
+	} else if (mask & MSU_UPNP_MASK_PROP_ALBUM) {
+		gupnp_didl_lite_object_set_album(object,
+			g_variant_get_string(value, NULL));
+
+		return gupnp_didl_lite_object_get_album_xml_string(object);
+	} else if (mask & MSU_UPNP_MASK_PROP_DATE) {
+		gupnp_didl_lite_object_set_date(object,
+			g_variant_get_string(value, NULL));
+
+		return gupnp_didl_lite_object_get_date_xml_string(object);
+	} else if (mask & MSU_UPNP_MASK_PROP_TYPE) {
+		upnp_class = msu_props_media_spec_to_upnp_class(
+					g_variant_get_string(value, NULL));
+
+		gupnp_didl_lite_object_set_upnp_class(object, upnp_class);
+
+		return gupnp_didl_lite_object_get_upnp_class_xml_string(object);
+	} else if (mask & MSU_UPNP_MASK_PROP_TRACK_NUMBER) {
+		gupnp_didl_lite_object_set_track_number(object,
+					g_variant_get_int32(value));
+
+		return gupnp_didl_lite_object_get_track_number_xml_string(
+								object);
+	} else if (mask & MSU_UPNP_MASK_PROP_ARTISTS) {
+		gupnp_didl_lite_object_unset_artists(object);
+
+		(void) g_variant_iter_init(&viter, value);
+
+		while (g_variant_iter_next(&viter, "&s", &artist_name)) {
+			artist = gupnp_didl_lite_object_add_artist(object);
+
+			gupnp_didl_lite_contributor_set_name(artist,
+							     artist_name);
+		}
+
+		return gupnp_didl_lite_object_get_artists_xml_string(object);
+	}
+
+	return NULL;
+}
+
+static void prv_get_xml_fragments(GUPnPDIDLLiteParser *parser,
+				  GUPnPDIDLLiteObject *object,
+				  gpointer user_data)
+{
+	msu_async_cb_data_t *cb_data = user_data;
+	msu_task_t *task = cb_data->task;
+	msu_task_update_ex_t *task_data = &task->ut.update_ex;
+	GString *current_str;
+	GString *new_str;
+	gchar *frag;
+	GVariantIter viter;
+	const gchar *prop;
+	GVariant *value;
+	msu_prop_map_t *prop_map;
+
+	MSU_LOG_DEBUG("Enter");
+
+	current_str = g_string_new("");
+	new_str = g_string_new("");
+
+	(void) g_variant_iter_init(&viter, task_data->to_add_update);
+
+	while (g_variant_iter_next(&viter, "{&sv}", &prop, &value)) {
+		MSU_LOG_DEBUG("to_add_update = %s", prop);
+
+		prop_map = g_hash_table_lookup(task_data->map, prop);
+
+		frag = prv_get_current_xml_fragment(object, prop_map->type);
+		if (frag) {
+			g_string_append(current_str, (const gchar *) frag);
+			g_free(frag);
+		}
+
+		frag = prv_get_new_xml_fragment(object,
+						prop_map->type, value);
+		if (frag) {
+			g_string_append(new_str, (const gchar *) frag);
+			g_free(frag);
+		}
+
+		task_data->mask &= ~(prop_map->type);
+		if (task_data->mask) {
+			g_string_append(current_str, ",");
+			g_string_append(new_str, ",");
+		}
+	}
+
+	(void) g_variant_iter_init(&viter, task_data->to_delete);
+
+	while (g_variant_iter_next(&viter, "&s", &prop)) {
+		MSU_LOG_DEBUG("to_delete = %s", prop);
+
+		prop_map = g_hash_table_lookup(task_data->map, prop);
+
+		frag = prv_get_current_xml_fragment(object, prop_map->type);
+		if (frag) {
+			g_string_append(current_str, (const gchar *) frag);
+			g_free(frag);
+		}
+
+		task_data->mask &= ~(prop_map->type);
+		if (task_data->mask)
+			g_string_append(new_str, ",");
+	}
+
+	task_data->current_tag_value = g_string_free(current_str, FALSE);
+	MSU_LOG_DEBUG("current_tag_value = %s", task_data->current_tag_value);
+
+	task_data->new_tag_value = g_string_free(new_str, FALSE);
+	MSU_LOG_DEBUG("new_tag_value = %s", task_data->new_tag_value);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+static void prv_update_ex_object_browse_cb(GUPnPServiceProxy *proxy,
+					   GUPnPServiceProxyAction *action,
+					   gpointer user_data)
+{
+	GError *upnp_error = NULL;
+	msu_async_cb_data_t *cb_data = user_data;
+	msu_task_t *task = cb_data->task;
+	msu_task_update_ex_t *task_data = &task->ut.update_ex;
+	GUPnPDIDLLiteParser *parser = NULL;
+	gchar *result = NULL;
+
+	MSU_LOG_DEBUG("Enter");
+
+	if (!gupnp_service_proxy_end_action(cb_data->proxy, cb_data->action,
+					    &upnp_error,
+					    "Result", G_TYPE_STRING,
+					    &result, NULL)) {
+		MSU_LOG_WARNING("Browse Object operation failed: %s",
+				upnp_error->message);
+
+		cb_data->error = g_error_new(MSU_ERROR,
+					     MSU_ERROR_OPERATION_FAILED,
+					     "Browse operation failed: %s",
+					     upnp_error->message);
+		goto on_error;
+	}
+
+	MSU_LOG_DEBUG("GetMS2SpecProps result: %s", result);
+
+	parser = gupnp_didl_lite_parser_new();
+
+	g_signal_connect(parser, "object-available",
+			 G_CALLBACK(prv_get_xml_fragments),
+			 cb_data);
+
+	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)) {
+		if (upnp_error->code == GUPNP_XML_ERROR_EMPTY_NODE) {
+			MSU_LOG_WARNING("Property not defined for object");
+
+			cb_data->error =
+				g_error_new(MSU_ERROR,
+					    MSU_ERROR_UNKNOWN_PROPERTY,
+					    "Property not defined for object");
+		} else {
+			MSU_LOG_WARNING("Unable to parse results of browse: %s",
+				      upnp_error->message);
+
+			cb_data->error =
+				g_error_new(MSU_ERROR,
+					    MSU_ERROR_OPERATION_FAILED,
+					    "Unable to parse results of "
+					    "browse: %s",
+					    upnp_error->message);
+		}
+
+		goto on_error;
+	}
+
+	cb_data->action = gupnp_service_proxy_begin_action(
+		cb_data->proxy, "UpdateObject",
+		prv_update_ex_object_update_cb, cb_data,
+		"ObjectID", G_TYPE_STRING, cb_data->id,
+		"CurrentTagValue", G_TYPE_STRING, task_data->current_tag_value,
+		"NewTagValue", G_TYPE_STRING, task_data->new_tag_value,
+		NULL);
+
+	goto no_complete;
+
+on_error:
+
+	(void) g_idle_add(msu_async_complete_task, cb_data);
+	g_cancellable_disconnect(cb_data->cancellable, cb_data->cancel_id);
+
+no_complete:
+
+	if (parser)
+		g_object_unref(parser);
+
+	g_free(result);
+
+	if (upnp_error)
+		g_error_free(upnp_error);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
+void msu_device_update_ex_object(msu_device_t *device, msu_client_t *client,
+				 msu_task_t *task,
+				 msu_async_cb_data_t *cb_data,
+				 const gchar *upnp_filter,
+				 GCancellable *cancellable)
+{
+	msu_device_context_t *context;
+
+	MSU_LOG_DEBUG("Enter");
+
+	context = msu_device_get_context(device, client);
+
+	cb_data->action = gupnp_service_proxy_begin_action(
+				context->service_proxy, "Browse",
+				prv_update_ex_object_browse_cb, cb_data,
+				"ObjectID", G_TYPE_STRING, cb_data->id,
+				"BrowseFlag", G_TYPE_STRING, "BrowseMetadata",
+				"Filter", G_TYPE_STRING, upnp_filter,
+				"StartingIndex", G_TYPE_INT, 0,
+				"RequestedCount", G_TYPE_INT, 0,
+				"SortCriteria", G_TYPE_STRING,
+				"", NULL);
+
+	cb_data->proxy = context->service_proxy;
+
+	cb_data->cancel_id = g_cancellable_connect(cancellable,
+					G_CALLBACK(msu_async_task_cancelled),
+					cb_data, NULL);
+
+	cb_data->cancellable = cancellable;
+
+	MSU_LOG_DEBUG("Exit");
+}

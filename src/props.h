@@ -67,6 +67,7 @@ struct msu_prop_map_t_ {
 	msu_upnp_prop_mask type;
 	gboolean filter;
 	gboolean searchable;
+	gboolean updateable;
 };
 
 void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map);

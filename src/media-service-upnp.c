@@ -128,6 +128,12 @@ static const gchar g_msu_server_introspection[] =
 	"       access='read'/>"
 	"    <method name='"MSU_INTERFACE_DELETE"'>"
 	"    </method>"
+	"    <method name='"MSU_INTERFACE_UPDATE_EX"'>"
+	"      <arg type='a{sv}' name='"MSU_INTERFACE_TO_ADD_UPDATE"'"
+	"           direction='in'/>"
+	"      <arg type='as' name='"MSU_INTERFACE_TO_DELETE"'"
+	"           direction='in'/>"
+	"    </method>"
 	"  </interface>"
 	"  <interface name='"MSU_INTERFACE_MEDIA_CONTAINER"'>"
 	"    <method name='"MSU_INTERFACE_LIST_CHILDREN"'>"
@@ -552,7 +558,11 @@ static void prv_process_async_task(msu_task_t *task)
 						 g_context.cancellable,
 						 prv_async_task_complete);
 		break;
-
+	case MSU_TASK_UPDATE_EX_OBJECT:
+		msu_upnp_update_ex_object(g_context.upnp, client, task,
+					  g_context.cancellable,
+					  prv_async_task_complete);
+		break;
 	default:
 		break;
 	}
@@ -855,8 +865,16 @@ static void prv_object_method_call(GDBusConnection *conn,
 
 	if (!strcmp(method, MSU_INTERFACE_DELETE)) {
 		task = msu_task_delete_new(invocation, object);
-		prv_add_task(task);
-	}
+	} else if (!strcmp(method, MSU_INTERFACE_UPDATE_EX))
+		task = msu_task_update_ex_new(invocation, object, parameters);
+	else
+		goto finished;
+
+	prv_add_task(task);
+
+finished:
+
+	return;
 }
 
 static void prv_item_method_call(GDBusConnection *conn,
@@ -1160,3 +1178,4 @@ on_error:
 
 	return retval;
 }
+

@@ -108,6 +108,7 @@
 #define MSU_INTERFACE_LIST_CONTAINERS_EX "ListContainersEx"
 #define MSU_INTERFACE_SEARCH_OBJECTS "SearchObjects"
 #define MSU_INTERFACE_SEARCH_OBJECTS_EX "SearchObjectsEx"
+#define MSU_INTERFACE_UPDATE_EX "UpdateEx"
 
 #define MSU_INTERFACE_GET_COMPATIBLE_RESOURCE "GetCompatibleResource"
 
@@ -160,5 +161,7 @@
 #define MSU_INTERFACE_UPLOAD_IDS "UploadIDs"
 #define MSU_INTERFACE_UPLOAD_STATUS "UploadStatus"
 #define MSU_INTERFACE_UPLOAD_UPDATE "UploadUpdate"
-
+#define MSU_INTERFACE_TO_ADD_UPDATE "ToAddUpdate"
+#define MSU_INTERFACE_TO_DELETE "ToDelete"
 #endif
+
