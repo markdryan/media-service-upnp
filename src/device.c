@@ -24,6 +24,7 @@
 #include <libgupnp/gupnp-error.h>
 #include <libsoup/soup.h>
 
+#include "chain-task.h"
 #include "device.h"
 #include "error.h"
 #include "interface.h"
@@ -61,6 +62,17 @@ typedef struct msu_device_upload_job_t_ msu_device_upload_job_t;
 struct msu_device_upload_job_t_ {
 	gint upload_id;
 	msu_device_t *device;
+};
+
+/* Private structure used in chain task */
+typedef struct prv_new_device_ct_t_ prv_new_device_ct_t;
+struct prv_new_device_ct_t_ {
+	msu_device_t *dev;
+	GDBusConnection *connection;
+	const GDBusSubtreeVTable *vtable;
+	void *user_data;
+	GHashTable *property_map;
+	guint counter;
 };
 
 static void prv_get_child_count(msu_async_cb_data_t *cb_data,
@@ -175,6 +187,7 @@ void msu_device_delete(void *device)
 		g_ptr_array_unref(dev->contexts);
 		g_free(dev->path);
 		g_free(dev);
+		g_variant_unref(dev->search_caps);
 	}
 }
 
@@ -254,9 +267,9 @@ static void prv_system_update_cb(GUPnPServiceProxy *proxy,
 					     NULL,
 					     device->path,
 					     MSU_INTERFACE_PROPERTIES,
-				             MSU_INTERFACE_PROPERTIES_CHANGED,
-				             val,
-				             NULL);
+					     MSU_INTERFACE_PROPERTIES_CHANGED,
+					     val,
+					     NULL);
 
 	g_variant_builder_unref(array);
 }
@@ -312,6 +325,7 @@ void msu_device_subscribe_to_contents_change(msu_device_t *device)
 				G_TYPE_UINT,
 				prv_system_update_cb,
 				device);
+
 	gupnp_service_proxy_add_notify(context->service_proxy,
 				MSU_CONTAINER_UPDATE_VAR,
 				G_TYPE_STRING,
@@ -327,60 +341,176 @@ void msu_device_subscribe_to_contents_change(msu_device_t *device)
 				context);
 }
 
-gboolean msu_device_new(GDBusConnection *connection,
-			GUPnPDeviceProxy *proxy,
-			const gchar *ip_address,
-			const GDBusSubtreeVTable *vtable,
-			void *user_data,
-			guint counter,
-			msu_device_t **device)
+static void prv_get_capabilities_analyze(GHashTable *property_map,
+					 gchar *result,
+					 GVariant **variant)
 {
-	msu_device_t *dev = g_new0(msu_device_t, 1);
+	gchar **caps;
+	gchar **saved;
+	gchar *prop_name;
+	GVariantBuilder caps_vb;
+
+	g_variant_builder_init(&caps_vb, G_VARIANT_TYPE("as"));
+
+	caps = g_strsplit(result, ",", 0);
+	saved = caps;
+
+	while (caps && *caps) {
+		prop_name = g_hash_table_lookup(property_map, *caps);
+
+		if (prop_name)
+			g_variant_builder_add(&caps_vb, "s", prop_name);
+
+		caps++;
+	}
+
+	g_strfreev(saved);
+
+	*variant = g_variant_ref_sink(g_variant_builder_end(&caps_vb));
+
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+	prop_name = g_variant_print(*variant, FALSE);
+	MSU_LOG_DEBUG("%s = %s", MSU_INTERFACE_PROP_SEARCH_CAPABILITIES,
+				 prop_name);
+	g_free(prop_name);
+#endif
+}
+
+static void prv_get_search_capabilities_cb(GUPnPServiceProxy *proxy,
+					   GUPnPServiceProxyAction *action,
+					   gpointer user_data)
+{
+	gchar *result = NULL;
+	GError *error = NULL;
+	prv_new_device_ct_t *priv_t = (prv_new_device_ct_t *) user_data;
+
+	if (!gupnp_service_proxy_end_action(proxy, action, &error, "SearchCaps",
+					    G_TYPE_STRING, &result, NULL)) {
+		MSU_LOG_WARNING("GetSearchCapabilities operation failed: %s",
+				error->message);
+		goto on_error;
+	}
+
+	MSU_LOG_DEBUG("GetSearchCapabilities result: %s", result);
+
+	prv_get_capabilities_analyze(priv_t->property_map, result,
+				     &priv_t->dev->search_caps);
+
+on_error:
+
+	if (error)
+		g_error_free(error);
+
+	g_free(result);
+}
+
+static GUPnPServiceProxyAction *prv_get_search_capabilities(
+					msu_chain_task_t *chain,
+					gboolean *failed)
+{
+	msu_device_t *device;
+	msu_device_context_t *context;
+
+	device = msu_chain_task_get_device(chain);
+	context = msu_device_get_context(device, NULL);
+	*failed = FALSE;
+
+	return gupnp_service_proxy_begin_action(context->service_proxy,
+						"GetSearchCapabilities",
+						msu_chain_task_begin_action_cb,
+						chain, NULL);
+}
+
+static GUPnPServiceProxyAction *prv_subscribe(msu_chain_task_t *chain,
+					      gboolean *failed)
+{
+	msu_device_t *device;
+
+	device = msu_chain_task_get_device(chain);
+	msu_device_subscribe_to_contents_change(device);
+
+	*failed = FALSE;
+
+	return NULL;
+}
+
+static GUPnPServiceProxyAction *prv_declare(msu_chain_task_t *chain,
+					    gboolean *failed)
+{
 	guint flags;
 	guint id;
-	GString *new_path = NULL;
+	gchar *new_path = NULL;
+	msu_device_t *device;
+	prv_new_device_ct_t *priv_t;
 
-	MSU_LOG_DEBUG("Enter");
+	device = msu_chain_task_get_device(chain);
+
+	priv_t = (prv_new_device_ct_t *) msu_chain_task_get_user_data(chain);
+
+	new_path = g_strdup_printf("%s/%u", MSU_SERVER_PATH, priv_t->counter);
+
+	MSU_LOG_DEBUG("Server Path %s", new_path);
+
+	flags = G_DBUS_SUBTREE_FLAGS_DISPATCH_TO_UNENUMERATED_NODES;
+	id =  g_dbus_connection_register_subtree(priv_t->connection,
+						 new_path,
+						 priv_t->vtable,
+						 flags,
+						 priv_t->user_data,
+						 NULL, NULL);
+	if (id) {
+		device->path = new_path;
+		device->id = id;
+
+		device->uploads = g_hash_table_new_full(g_int_hash, g_int_equal,
+						g_free,
+						prv_msu_device_upload_delete);
+	} else
+		MSU_LOG_ERROR("g_dbus_connection_register_subtree FAILED");
+
+	*failed = (!id);
+
+	return NULL;
+}
+
+msu_device_t *msu_device_new(GDBusConnection *connection,
+			     GUPnPDeviceProxy *proxy,
+			     const gchar *ip_address,
+			     const GDBusSubtreeVTable *vtable,
+			     void *user_data,
+			     GHashTable *property_map,
+			     guint counter,
+			     msu_chain_task_t *chain)
+{
+	msu_device_t *dev;
+	prv_new_device_ct_t *priv_t;
+
+	MSU_LOG_DEBUG("New Device on %s", ip_address);
+
+	dev = g_new0(msu_device_t, 1);
+	priv_t = g_new0(prv_new_device_ct_t, 1);
 
 	dev->connection = connection;
 	dev->contexts = g_ptr_array_new_with_free_func(prv_msu_context_delete);
+
+	priv_t->dev = dev;
+	priv_t->connection = connection;
+	priv_t->vtable = vtable;
+	priv_t->user_data = user_data;
+	priv_t->property_map = property_map;
+	priv_t->counter = counter;
+
 	msu_device_append_new_context(dev, ip_address, proxy);
 
-	msu_device_subscribe_to_contents_change(dev);
+	msu_chain_task_add(chain, prv_get_search_capabilities, dev,
+			   prv_get_search_capabilities_cb, NULL, priv_t);
 
-	new_path = g_string_new("");
-	g_string_printf(new_path, "%s/%u", MSU_SERVER_PATH, counter);
+	msu_chain_task_add(chain, prv_subscribe, dev, NULL, NULL, NULL);
+	msu_chain_task_add(chain, prv_declare, dev, NULL, g_free, priv_t);
 
-	MSU_LOG_DEBUG("Server Path %s", new_path->str);
+	msu_chain_task_start(chain);
 
-	flags = G_DBUS_SUBTREE_FLAGS_DISPATCH_TO_UNENUMERATED_NODES;
-	id =  g_dbus_connection_register_subtree(connection, new_path->str,
-						 vtable, flags, user_data, NULL,
-						 NULL);
-	if (!id)
-		goto on_error;
-
-	dev->path = g_string_free(new_path, FALSE);
-	dev->id = id;
-
-	dev->uploads = g_hash_table_new_full(g_int_hash, g_int_equal, g_free,
-					     prv_msu_device_upload_delete);
-
-	*device = dev;
-
-	MSU_LOG_DEBUG("Exit with SUCCESS");
-
-	return TRUE;
-
-on_error:
-	if (new_path)
-		g_string_free(new_path, TRUE);
-
-	msu_device_delete(dev);
-
-	MSU_LOG_DEBUG("Exit with FAIL");
-
-	return FALSE;
+	return dev;
 }
 
 void msu_device_append_new_context(msu_device_t *device,
@@ -1363,6 +1493,7 @@ void msu_device_get_all_props(msu_device_t *device,  msu_client_t *client,
 		if (root_object) {
 			msu_props_add_device(
 				(GUPnPDeviceInfo *) context->device_proxy,
+				device,
 				cb_task_data->vb);
 
 			prv_get_system_update_id_for_props(
@@ -1387,6 +1518,7 @@ void msu_device_get_all_props(msu_device_t *device,  msu_client_t *client,
 		if (root_object)
 			msu_props_add_device(
 				(GUPnPDeviceInfo *) context->device_proxy,
+				device,
 				cb_task_data->vb);
 
 		prv_get_all_ms2spec_props(context, cancellable, cb_data);
@@ -1775,6 +1907,7 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 					msu_props_get_device_prop(
 						(GUPnPDeviceInfo *)
 						context->device_proxy,
+						device,
 						task_data->prop_name);
 
 				if (!cb_data->result)
@@ -1821,6 +1954,7 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 				cb_data->result = msu_props_get_device_prop(
 					(GUPnPDeviceInfo *)
 					context->device_proxy,
+					device,
 					task_data->prop_name);
 				if (cb_data->result) {
 					(void) g_idle_add(

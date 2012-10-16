@@ -342,6 +342,8 @@ static const gchar g_msu_server_introspection[] =
 	"       access='read'/>"
 	"    <property type='a{sv}' name='"MSU_INTERFACE_PROP_DLNA_CAPABILITIES"'"
 	"       access='read'/>"
+	"    <property type='as' name='"MSU_INTERFACE_PROP_SEARCH_CAPABILITIES"'"
+	"       access='read'/>"
 	"    <property type='u' name='"MSU_INTERFACE_PROP_SYSTEM_UPDATE_ID"'"
 	"       access='read'/>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_SERVICE_RESET_TOKEN"'"

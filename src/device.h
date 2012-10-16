@@ -25,8 +25,9 @@
 
 #include <libgupnp/gupnp-control-point.h>
 
-#include "client.h"
 #include "async.h"
+#include "chain-task.h"
+#include "client.h"
 #include "props.h"
 
 typedef struct msu_device_context_t_ msu_device_context_t;
@@ -48,19 +49,22 @@ struct msu_device_t_ {
 	GHashTable *uploads;
 	guint upload_id;
 	guint system_update_id;
+	GVariant *search_caps;
 };
 
 void msu_device_append_new_context(msu_device_t *device,
 				   const gchar *ip_address,
 				   GUPnPDeviceProxy *proxy);
 void msu_device_delete(void *device);
-gboolean msu_device_new(GDBusConnection *connection,
-			GUPnPDeviceProxy *proxy,
-			const gchar *ip_address,
-			const GDBusSubtreeVTable *vtable,
-			void *user_data,
-			guint counter,
-			msu_device_t **device);
+msu_device_t *msu_device_new(GDBusConnection *connection,
+			     GUPnPDeviceProxy *proxy,
+			     const gchar *ip_address,
+			     const GDBusSubtreeVTable *vtable,
+			     void *user_data,
+			     GHashTable *filter_map,
+			     guint counter,
+			     msu_chain_task_t *chain);
+
 msu_device_t *msu_device_from_path(const gchar *path, GHashTable *device_list);
 msu_device_context_t *msu_device_get_context(msu_device_t *device,
 					     msu_client_t *client);

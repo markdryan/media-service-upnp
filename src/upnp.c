@@ -27,6 +27,7 @@
 #include <libgupnp/gupnp-error.h>
 
 #include "async.h"
+#include "chain-task.h"
 #include "device.h"
 #include "error.h"
 #include "interface.h"
@@ -40,12 +41,23 @@ struct msu_upnp_t_ {
 	GDBusConnection *connection;
 	msu_interface_info_t *interface_info;
 	GHashTable *filter_map;
+	GHashTable *property_map;
 	msu_upnp_callback_t found_server;
 	msu_upnp_callback_t lost_server;
 	GUPnPContextManager *context_manager;
 	void *user_data;
 	GHashTable *server_udn_map;
+	GHashTable *server_uc_map;
 	guint counter;
+};
+
+/* Private structure used in chain task */
+typedef struct prv_device_new_ct_t_ prv_device_new_ct_t;
+struct prv_device_new_ct_t_ {
+	msu_upnp_t *upnp;
+	const char *udn;
+	msu_device_t *device;
+	msu_chain_task_t *chain;
 };
 
 static gchar **prv_subtree_enumerate(GDBusConnection *connection,
@@ -175,6 +187,34 @@ static const GDBusInterfaceVTable *prv_subtree_dispatch(
 	return retval;
 }
 
+static void prv_device_chain_end(msu_chain_task_t *chain, gpointer data)
+{
+	msu_device_t *device;
+	gboolean canceled;
+	prv_device_new_ct_t *priv_t = (prv_device_new_ct_t *) data;
+
+	device = msu_chain_task_get_device(chain);
+	canceled = msu_chain_task_is_canceled(chain);
+	if (canceled)
+		goto on_clear;
+
+	MSU_LOG_DEBUG("Notify new server available: %s", device->path);
+	g_hash_table_insert(priv_t->upnp->server_udn_map, g_strdup(priv_t->udn),
+			    device);
+	priv_t->upnp->found_server(device->path, priv_t->upnp->user_data);
+
+on_clear:
+
+	g_hash_table_remove(priv_t->upnp->server_uc_map, priv_t->udn);
+	msu_chain_task_delete(chain);
+	g_free(priv_t);
+
+	if (canceled)
+		msu_device_delete(device);
+
+	MSU_LOG_DEBUG_NL();
+}
+
 static void prv_server_available_cb(GUPnPControlPoint *cp,
 				    GUPnPDeviceProxy *proxy,
 				    gpointer user_data)
@@ -184,9 +224,9 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 	msu_device_t *device;
 	const gchar *ip_address;
 	msu_device_context_t *context;
+	msu_chain_task_t *chain;
 	unsigned int i;
-
-	MSU_LOG_DEBUG("Enter");
+	prv_device_new_ct_t *priv_t;
 
 	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *) proxy);
 	if (!udn)
@@ -201,16 +241,31 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 	device = g_hash_table_lookup(upnp->server_udn_map, udn);
 
 	if (!device) {
-		MSU_LOG_DEBUG("Device not found. Adding");
+		priv_t = g_hash_table_lookup(upnp->server_uc_map, udn);
 
-		if (msu_device_new(upnp->connection, proxy,
-				   ip_address, &gSubtreeVtable, upnp,
-				   upnp->counter, &device)) {
-			upnp->counter++;
-			g_hash_table_insert(upnp->server_udn_map, g_strdup(udn),
-					    device);
-			upnp->found_server(device->path, upnp->user_data);
-		}
+		if (priv_t)
+			device = priv_t->device;
+	}
+
+	if (!device) {
+		MSU_LOG_DEBUG("Device not found. Adding");
+		MSU_LOG_DEBUG_NL();
+
+		priv_t = g_new0(prv_device_new_ct_t, 1);
+		chain = msu_chain_task_new(prv_device_chain_end, priv_t);
+		device = msu_device_new(upnp->connection, proxy, ip_address,
+					&gSubtreeVtable, upnp,
+					upnp->property_map, upnp->counter,
+					chain);
+
+		upnp->counter++;
+
+		priv_t->upnp = upnp;
+		priv_t->udn = udn;
+		priv_t->chain = chain;
+		priv_t->device = device;
+
+		g_hash_table_insert(upnp->server_uc_map, g_strdup(udn), priv_t);
 	} else {
 		MSU_LOG_DEBUG("Device Found");
 
@@ -225,12 +280,11 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 			msu_device_append_new_context(device, ip_address,
 						      proxy);
 		}
+
+		MSU_LOG_DEBUG_NL();
 	}
 
 on_error:
-
-	MSU_LOG_DEBUG("Exit");
-	MSU_LOG_DEBUG_NL();
 
 	return;
 }
@@ -256,6 +310,8 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 	unsigned int i;
 	msu_device_context_t *context;
 	gboolean subscribed;
+	gboolean under_construction = FALSE;
+	prv_device_new_ct_t *priv_t;
 
 	MSU_LOG_DEBUG("Enter");
 
@@ -270,6 +326,16 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 	MSU_LOG_DEBUG("IP Address %s", ip_address);
 
 	device = g_hash_table_lookup(upnp->server_udn_map, udn);
+
+	if (!device) {
+		priv_t = g_hash_table_lookup(upnp->server_uc_map, udn);
+
+		if (priv_t) {
+			device = priv_t->device;
+			under_construction = TRUE;
+		}
+	}
+
 	if (!device) {
 		MSU_LOG_WARNING("Device not found. Ignoring");
 		goto on_error;
@@ -286,9 +352,20 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 
 		(void) g_ptr_array_remove_index(device->contexts, i);
 		if (device->contexts->len == 0) {
-			MSU_LOG_DEBUG("Last Context lost. Delete device");
-			upnp->lost_server(device->path, upnp->user_data);
-			g_hash_table_remove(upnp->server_udn_map, udn);
+			if (!under_construction) {
+				MSU_LOG_DEBUG("Last Context lost. " \
+					       "Delete device");
+
+				upnp->lost_server(device->path,
+						  upnp->user_data);
+				g_hash_table_remove(upnp->server_udn_map, udn);
+			} else {
+				MSU_LOG_WARNING("Device under construction. "\
+						 "Cancelling");
+
+				msu_chain_task_cancel(priv_t->chain);
+				prv_device_chain_end(priv_t->chain, priv_t);
+			}
 		} else if (subscribed && !device->timeout_id) {
 
 			MSU_LOG_DEBUG("Subscribe on new context");
@@ -346,7 +423,12 @@ msu_upnp_t *msu_upnp_new(GDBusConnection *connection,
 	upnp->server_udn_map = g_hash_table_new_full(g_str_hash, g_str_equal,
 						     g_free,
 						     msu_device_delete);
-	upnp->filter_map = msu_prop_maps_new();
+
+	upnp->server_uc_map = g_hash_table_new_full(g_str_hash, g_str_equal,
+						     g_free, NULL);
+
+	msu_prop_maps_new(&upnp->property_map, &upnp->filter_map);
+
 	upnp->context_manager = gupnp_context_manager_create(0);
 
 	g_signal_connect(upnp->context_manager, "context-available",
@@ -360,8 +442,10 @@ void msu_upnp_delete(msu_upnp_t *upnp)
 {
 	if (upnp) {
 		g_object_unref(upnp->context_manager);
+		g_hash_table_unref(upnp->property_map);
 		g_hash_table_unref(upnp->filter_map);
 		g_hash_table_unref(upnp->server_udn_map);
+		g_hash_table_unref(upnp->server_uc_map);
 		g_free(upnp->interface_info);
 		g_free(upnp);
 	}

@@ -24,6 +24,7 @@
 #define MSU_PROPS_H__
 
 #include <libgupnp-av/gupnp-av.h>
+#include "async.h"
 
 enum msu_upnp_prop_mask_ {
 	MSU_UPNP_MASK_PROP_PARENT = 1,
@@ -65,17 +66,25 @@ struct msu_prop_map_t_ {
 	gboolean searchable;
 };
 
-GHashTable *msu_prop_maps_new(void);
+void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map);
+
 guint32 msu_props_parse_filter(GHashTable *filter_map, GVariant *filter,
 			       gchar **upnp_filter);
-void msu_props_add_device(GUPnPDeviceInfo *proxy, GVariantBuilder *vb);
-GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy, const gchar *prop);
+
+void msu_props_add_device(GUPnPDeviceInfo *proxy,
+			  msu_device_t *device,
+			  GVariantBuilder *vb);
+
+GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
+				    msu_device_t *device,
+				    const gchar *prop);
 
 gboolean msu_props_add_object(GVariantBuilder *item_vb,
 			      GUPnPDIDLLiteObject *object,
 			      const char *root_path,
 			      const gchar *parent_path,
 			      guint32 filter_mask);
+
 GVariant *msu_props_get_object_prop(const gchar *prop, const gchar *root_path,
 				    GUPnPDIDLLiteObject *object);
 
@@ -85,6 +94,7 @@ void msu_props_add_container(GVariantBuilder *item_vb,
 			     gboolean *have_child_count);
 
 void msu_props_add_child_count(GVariantBuilder *item_vb, gint value);
+
 GVariant *msu_props_get_container_prop(const gchar *prop,
 				       GUPnPDIDLLiteObject *object);
 
@@ -92,17 +102,19 @@ void msu_props_add_resource(GVariantBuilder *item_vb,
 			    GUPnPDIDLLiteObject *object,
 			    guint32 filter_mask,
 			    const gchar *protocol_info);
+
 void msu_props_add_item(GVariantBuilder *item_vb,
 			GUPnPDIDLLiteObject *object,
 			const gchar *root_path,
 			guint32 filter_mask,
 			const gchar *protocol_info);
+
 GVariant *msu_props_get_item_prop(const gchar *prop, const gchar *root_path,
 				  GUPnPDIDLLiteObject *object,
 				  const gchar *protocol_info);
 
 const gchar *msu_props_media_spec_to_upnp_class(const gchar *m2spec_class);
-const gchar *msu_props_upnp_class_to_media_spec(const gchar *upnp_class);
 
+const gchar *msu_props_upnp_class_to_media_spec(const gchar *upnp_class);
 
 #endif

@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include "device.h"
 #include "interface.h"
 #include "log.h"
 #include "path.h"
@@ -98,177 +99,219 @@ static msu_prop_map_t *prv_msu_prop_map_new(const gchar *prop_name,
 	return retval;
 }
 
-GHashTable *msu_prop_maps_new()
+void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 {
-	msu_prop_map_t *prop_map;
-	GHashTable *filter_map =
-		g_hash_table_new_full(g_str_hash, g_str_equal, NULL, g_free);
+	msu_prop_map_t *prop_t;
+	GHashTable *p_map;
+	GHashTable *f_map;
 
-	prop_map = prv_msu_prop_map_new("@parentID", MSU_UPNP_MASK_PROP_PARENT,
-					FALSE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_PARENT, prop_map);
+	p_map = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
+	f_map = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, g_free);
 
-	prop_map = prv_msu_prop_map_new("upnp:class", MSU_UPNP_MASK_PROP_TYPE,
-					FALSE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_TYPE, prop_map);
-
-	prop_map = prv_msu_prop_map_new("@id", MSU_UPNP_MASK_PROP_PATH,
-					FALSE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_PATH, prop_map);
-
-	prop_map = prv_msu_prop_map_new("dc:title",
-					MSU_UPNP_MASK_PROP_DISPLAY_NAME,
-					FALSE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_DISPLAY_NAME,
-			    prop_map);
-
-	prop_map = prv_msu_prop_map_new("dlna:dlnaManaged",
-					MSU_UPNP_MASK_PROP_DLNA_MANAGED,
-					TRUE, FALSE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_DLNA_MANAGED,
-			    prop_map);
-
-	prop_map = prv_msu_prop_map_new("@childCount",
+	/* @childCount */
+	prop_t = prv_msu_prop_map_new("@childCount",
 					MSU_UPNP_MASK_PROP_CHILD_COUNT,
 					TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_CHILD_COUNT,
-			    prop_map);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_CHILD_COUNT, prop_t);
+	g_hash_table_insert(p_map, "@childCount",
+			    MSU_INTERFACE_PROP_CHILD_COUNT);
 
-	prop_map = prv_msu_prop_map_new("@searchable",
-					MSU_UPNP_MASK_PROP_SEARCHABLE,
+	/* @id */
+	prop_t = prv_msu_prop_map_new("@id",
+					MSU_UPNP_MASK_PROP_PATH,
+					FALSE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_PATH, prop_t);
+	g_hash_table_insert(p_map, "@id", MSU_INTERFACE_PROP_PATH);
+
+	/* @parentID */
+	prop_t = prv_msu_prop_map_new("@parentID",
+					MSU_UPNP_MASK_PROP_PARENT,
+					FALSE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_PARENT, prop_t);
+	g_hash_table_insert(p_map, "@parentID", MSU_INTERFACE_PROP_PARENT);
+
+	/* @refID */
+	prop_t = prv_msu_prop_map_new("@refID",
+					MSU_UPNP_MASK_PROP_REFPATH,
 					TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_SEARCHABLE, prop_map);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_REFPATH, prop_t);
+	g_hash_table_insert(p_map, "@refID", MSU_INTERFACE_PROP_REFPATH);
 
-	prop_map = prv_msu_prop_map_new("res", MSU_UPNP_MASK_PROP_URLS,
-					TRUE, FALSE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_URLS, prop_map);
-
-	prop_map = prv_msu_prop_map_new("res@protocolInfo",
-					MSU_UPNP_MASK_PROP_MIME_TYPE,
-					TRUE, FALSE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_MIME_TYPE, prop_map);
-
-	prop_map = prv_msu_prop_map_new("upnp:artist",
-					MSU_UPNP_MASK_PROP_ARTIST, TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_ARTIST, prop_map);
-
-	prop_map = prv_msu_prop_map_new("upnp:album", MSU_UPNP_MASK_PROP_ALBUM,
-				       TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_ALBUM, prop_map);
-
-	prop_map = prv_msu_prop_map_new("dc:date", MSU_UPNP_MASK_PROP_DATE,
-				       TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_DATE, prop_map);
-
-	prop_map = prv_msu_prop_map_new("upnp:genre", MSU_UPNP_MASK_PROP_GENRE,
-				       TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_GENRE, prop_map);
-
-	prop_map = prv_msu_prop_map_new("res@protocolInfo",
-				       MSU_UPNP_MASK_PROP_DLNA_PROFILE,
-				       TRUE, FALSE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_DLNA_PROFILE,
-			    prop_map);
-
-	prop_map = prv_msu_prop_map_new("upnp:originalTrackNumber",
-					MSU_UPNP_MASK_PROP_TRACK_NUMBER,
-					TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_TRACK_NUMBER,
-			    prop_map);
-
-	prop_map = prv_msu_prop_map_new("res@size", MSU_UPNP_MASK_PROP_SIZE,
-				       TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_SIZE, prop_map);
-
-	prop_map = prv_msu_prop_map_new("res@duration",
-					MSU_UPNP_MASK_PROP_DURATION,
-					TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_DURATION, prop_map);
-
-	prop_map = prv_msu_prop_map_new("res@bitrate",
-					MSU_UPNP_MASK_PROP_BITRATE,
-					TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_BITRATE, prop_map);
-
-	prop_map = prv_msu_prop_map_new("res@sampleFrequency",
-					MSU_UPNP_MASK_PROP_SAMPLE_RATE,
-					TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_SAMPLE_RATE,
-			    prop_map);
-
-	prop_map = prv_msu_prop_map_new("res@bitsPerSample",
-					MSU_UPNP_MASK_PROP_BITS_PER_SAMPLE,
-					TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_BITS_PER_SAMPLE,
-			    prop_map);
-
-	prop_map = prv_msu_prop_map_new("res@resolution",
-					MSU_UPNP_MASK_PROP_WIDTH, TRUE, FALSE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_WIDTH, prop_map);
-
-	prop_map = prv_msu_prop_map_new("res@resolution",
-					MSU_UPNP_MASK_PROP_HEIGHT, TRUE, FALSE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_HEIGHT, prop_map);
-
-	prop_map = prv_msu_prop_map_new("res@colorDepth",
-					MSU_UPNP_MASK_PROP_COLOR_DEPTH,
-					TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_COLOR_DEPTH,
-			    prop_map);
-
-	prop_map = prv_msu_prop_map_new("upnp:albumArtURI",
-					MSU_UPNP_MASK_PROP_ALBUM_ART_URL,
-					TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_ALBUM_ART_URL,
-			    prop_map);
-
-	prop_map = prv_msu_prop_map_new("res", MSU_UPNP_MASK_PROP_RESOURCES,
-					TRUE, FALSE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_RESOURCES,
-			    prop_map);
-
-	prop_map = prv_msu_prop_map_new("res", MSU_UPNP_MASK_PROP_URL,
-					TRUE, FALSE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_URL, prop_map);
-
-	prop_map = prv_msu_prop_map_new("@refID", MSU_UPNP_MASK_PROP_REFPATH,
-					TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_REFPATH, prop_map);
-
-	prop_map = prv_msu_prop_map_new("@restricted",
+	/* @restricted */
+	prop_t = prv_msu_prop_map_new("@restricted",
 					MSU_UPNP_MASK_PROP_RESTRICTED,
 					TRUE, TRUE);
-	g_hash_table_insert(filter_map,
-			    (gpointer) MSU_INTERFACE_PROP_RESTRICTED, prop_map);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_RESTRICTED, prop_t);
+	g_hash_table_insert(p_map, "@restricted",
+			    MSU_INTERFACE_PROP_RESTRICTED);
 
-	return filter_map;
+	/* @searchable */
+	prop_t = prv_msu_prop_map_new("@searchable",
+					MSU_UPNP_MASK_PROP_SEARCHABLE,
+					TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_SEARCHABLE, prop_t);
+	g_hash_table_insert(p_map, "@searchable",
+			    MSU_INTERFACE_PROP_SEARCHABLE);
+
+	/* dc:date */
+	prop_t = prv_msu_prop_map_new("dc:date",
+					MSU_UPNP_MASK_PROP_DATE,
+					TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_DATE, prop_t);
+	g_hash_table_insert(p_map, "dc:date", MSU_INTERFACE_PROP_DATE);
+
+	/* dc:title */
+	prop_t = prv_msu_prop_map_new("dc:title",
+					MSU_UPNP_MASK_PROP_DISPLAY_NAME,
+					FALSE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_DISPLAY_NAME, prop_t);
+	g_hash_table_insert(p_map, "dc:title", MSU_INTERFACE_PROP_DISPLAY_NAME);
+
+	/* dlna:dlnaManaged */
+	prop_t = prv_msu_prop_map_new("dlna:dlnaManaged",
+					MSU_UPNP_MASK_PROP_DLNA_MANAGED,
+					TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_DLNA_MANAGED, prop_t);
+	g_hash_table_insert(p_map, "dlna:dlnaManaged",
+			    MSU_INTERFACE_PROP_DLNA_MANAGED);
+
+	/* res */
+	/* res - RES */
+	prop_t = prv_msu_prop_map_new("res",
+					MSU_UPNP_MASK_PROP_RESOURCES,
+					TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_RESOURCES, prop_t);
+
+	/* res - URL */
+	prop_t = prv_msu_prop_map_new("res",
+					MSU_UPNP_MASK_PROP_URL,
+					TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_URL, prop_t);
+
+	/* res - URLS */
+	prop_t = prv_msu_prop_map_new("res",
+					MSU_UPNP_MASK_PROP_URLS,
+					TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_URLS, prop_t);
+
+	/* res@bitrate */
+	prop_t = prv_msu_prop_map_new("res@bitrate",
+					MSU_UPNP_MASK_PROP_BITRATE,
+					TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_BITRATE, prop_t);
+	g_hash_table_insert(p_map, "res@bitrate", MSU_INTERFACE_PROP_BITRATE);
+
+	/* res@bitsPerSample */
+	prop_t = prv_msu_prop_map_new("res@bitsPerSample",
+					MSU_UPNP_MASK_PROP_BITS_PER_SAMPLE,
+					TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_BITS_PER_SAMPLE, prop_t);
+	g_hash_table_insert(p_map, "res@bitsPerSample",
+			    MSU_INTERFACE_PROP_BITS_PER_SAMPLE);
+
+	/* res@colorDepth */
+	prop_t = prv_msu_prop_map_new("res@colorDepth",
+					MSU_UPNP_MASK_PROP_COLOR_DEPTH,
+					TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_COLOR_DEPTH, prop_t);
+	g_hash_table_insert(p_map, "res@colorDepth",
+			    MSU_INTERFACE_PROP_COLOR_DEPTH);
+
+	/* res@duration */
+	prop_t = prv_msu_prop_map_new("res@duration",
+					MSU_UPNP_MASK_PROP_DURATION,
+					TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_DURATION, prop_t);
+	g_hash_table_insert(p_map, "res@duration",
+			    MSU_INTERFACE_PROP_DURATION);
+
+	/* res@protocolInfo */
+	/* res@protocolInfo - DLNA PROFILE*/
+	prop_t = prv_msu_prop_map_new("res@protocolInfo",
+				       MSU_UPNP_MASK_PROP_DLNA_PROFILE,
+				       TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_DLNA_PROFILE, prop_t);
+
+	/* res@protocolInfo - MIME TYPES*/
+	prop_t = prv_msu_prop_map_new("res@protocolInfo",
+					MSU_UPNP_MASK_PROP_MIME_TYPE,
+					TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_MIME_TYPE, prop_t);
+
+	/* res@resolution */
+	/* res@resolution - HEIGH */
+	prop_t = prv_msu_prop_map_new("res@resolution",
+					MSU_UPNP_MASK_PROP_HEIGHT,
+					TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_HEIGHT, prop_t);
+
+	/* res@resolution - WIDTH */
+	prop_t = prv_msu_prop_map_new("res@resolution",
+					MSU_UPNP_MASK_PROP_WIDTH,
+					TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_WIDTH, prop_t);
+
+	/* res@sampleFrequency */
+	prop_t = prv_msu_prop_map_new("res@sampleFrequency",
+					MSU_UPNP_MASK_PROP_SAMPLE_RATE,
+					TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_SAMPLE_RATE, prop_t);
+	g_hash_table_insert(p_map, "res@sampleFrequency",
+			    MSU_INTERFACE_PROP_SAMPLE_RATE);
+
+	/* res@size */
+	prop_t = prv_msu_prop_map_new("res@size",
+					MSU_UPNP_MASK_PROP_SIZE,
+				       TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_SIZE, prop_t);
+	g_hash_table_insert(p_map, "res@size", MSU_INTERFACE_PROP_SIZE);
+
+	/* upnp:album */
+	prop_t = prv_msu_prop_map_new("upnp:album",
+					MSU_UPNP_MASK_PROP_ALBUM,
+				       TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_ALBUM, prop_t);
+	g_hash_table_insert(p_map, "upnp:album", MSU_INTERFACE_PROP_ALBUM);
+
+	/* upnp:albumArtURI */
+	prop_t = prv_msu_prop_map_new("upnp:albumArtURI",
+					MSU_UPNP_MASK_PROP_ALBUM_ART_URL,
+					TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_ALBUM_ART_URL, prop_t);
+	g_hash_table_insert(p_map, "upnp:albumArtURI",
+			    MSU_INTERFACE_PROP_ALBUM_ART_URL);
+
+	/* upnp:artist */
+	prop_t = prv_msu_prop_map_new("upnp:artist",
+					MSU_UPNP_MASK_PROP_ARTIST,
+					TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_ARTIST, prop_t);
+	g_hash_table_insert(p_map, "upnp:artist", MSU_INTERFACE_PROP_ARTIST);
+
+	/* upnp:class */
+	prop_t = prv_msu_prop_map_new("upnp:class",
+					MSU_UPNP_MASK_PROP_TYPE,
+					FALSE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_TYPE, prop_t);
+	g_hash_table_insert(p_map, "upnp:class", MSU_INTERFACE_PROP_TYPE);
+
+	/* upnp:genre */
+	prop_t = prv_msu_prop_map_new("upnp:genre",
+					MSU_UPNP_MASK_PROP_GENRE,
+				       TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_GENRE, prop_t);
+	g_hash_table_insert(p_map, "upnp:genre", MSU_INTERFACE_PROP_GENRE);
+
+	/* upnp:originalTrackNumber */
+	prop_t = prv_msu_prop_map_new("upnp:originalTrackNumber",
+					MSU_UPNP_MASK_PROP_TRACK_NUMBER,
+					TRUE, TRUE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_TRACK_NUMBER, prop_t);
+	g_hash_table_insert(p_map, "upnp:originalTrackNumber",
+			    MSU_INTERFACE_PROP_TRACK_NUMBER);
+
+	*filter_map = f_map;
+	*property_map = p_map;
 }
 
 static guint32 prv_parse_filter_list(GHashTable *filter_map, GVariant *filter,
@@ -449,7 +492,9 @@ static GVariant *prv_add_list_dlna_prop(GList* list)
 	return g_variant_builder_end(&vb);
 }
 
-void msu_props_add_device(GUPnPDeviceInfo *proxy, GVariantBuilder *vb)
+void msu_props_add_device(GUPnPDeviceInfo *proxy,
+			  msu_device_t *device,
+			  GVariantBuilder *vb)
 {
 	gchar *str;
 	GList *list;
@@ -510,9 +555,15 @@ void msu_props_add_device(GUPnPDeviceInfo *proxy, GVariantBuilder *vb)
 	g_variant_builder_add(vb, "{sv}", MSU_INTERFACE_PROP_DLNA_CAPABILITIES,
 			      dlna_caps);
 	g_list_free_full(list, g_free);
+
+	g_variant_builder_add(vb, "{sv}",
+			      MSU_INTERFACE_PROP_SEARCH_CAPABILITIES,
+			      device->search_caps);
 }
 
-GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy, const gchar *prop)
+GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
+				    msu_device_t *device,
+				    const gchar *prop)
 {
 	GVariant *dlna_caps = NULL;
 	GVariant *retval = NULL;
@@ -567,6 +618,13 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy, const gchar *prop)
 
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
 		copy = g_variant_print(dlna_caps, FALSE);
+		MSU_LOG_DEBUG("Prop %s = %s", prop, copy);
+#endif
+	} else if (!strcmp(MSU_INTERFACE_PROP_SEARCH_CAPABILITIES, prop)) {
+		retval = g_variant_ref(device->search_caps);
+
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+		copy = g_variant_print(device->search_caps, FALSE);
 		MSU_LOG_DEBUG("Prop %s = %s", prop, copy);
 #endif
 	}
