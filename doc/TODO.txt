@@ -1,11 +1,6 @@
 TODO:
 -----
 
-* Logging mechanism (Mark Ryan) 26/04/2012
-
-  media-service-upnp is badly in need of a logging mechanism that
-  can be switched on and off.
-
 
 * Remove request bottleneck  (Mark Ryan) 26/04/2012
 
@@ -28,35 +23,6 @@ TODO:
  multiple simultaneous requests from the same control point.  Perhaps
  both configurations might be possible.  The former may prove to be
  useful in debugging.
-
-* Generate signals when server contents change (Mark Ryan) 26/04/2012
-
- Media-service-upnp needs to be modified to generate signals when
- the contents managed by DMSs on the local area network change.  Two
- signals need to be added to the com.intel.UPnP.MediaDevice interface.
- 
- - A generic signal indicating that the contents of the server has
-   changed.  This signal gives no indication as to what may have
-   changed.
- - A more specific signal that indiciates that the contents of one
-   or more folders maintained by the server have changed.  This
-   signal should contain an array of ids of the servers that have
-   changed.
-
- These signals correspond directly to the UPnP evented variables,
- SystemUpdateID and ContainerUpdateIDs.
- 
- The UPnP variable ContainerUpdateIDs is optional.  Therefore,
- media-service-upnp will not be able to provide folder specific
- update information for servers that do not support this variable.
- An extra property needs to be added to the com.intel.UPnP.MediaDevice
- interface to indicate whether or not the server supports
- folder specific updates.
-
- We will not support the MediaServer2Spec
- org.gnome.UPnP.MediaContainer2.Updated notification.
-
-* Add some basic syslog entries (Mark Ryan) 05/06/2012
 
 * Implement local searching (Mark Ryan) 26/04/2012
 
@@ -83,26 +49,4 @@ TODO:
 * System Bus (Mark Ryan) 26/04/2012
 
  Is the session bus the right bus for us?
-
-
-* Interface selection (Mark Ryan) 26/04/2012
-
- DMS tend to make their services available on multiple interfaces.  If
- a DMP and a DMS are running on the same device the DMP will have the
- option of communicating with the DMS over the loopback or the LAN.  
- Currently, media-service-upnp always returns URLs containing the loopback
- address to clients if they are trying to access servers running on the
- same physical device.  This is the correct behavior for DMPs but it
- is incorrect for DMCs.  If the DMC were to run on the same device as the
- DMS, the DMC would only receive loopback address based URLs from
- media-service-upnp.  It cannot pass those URLs to a renderer running
- on a different device.  Consequently, the DMC needs a way to tell
- media-service-upnp that it does not wish to receive loopback URLs.
-
-
-* Support Uploading of contents to DMS (Mark Ryan) 26/04/2012
-
- A new interface is needed to allow clients to upload contents to DMSs.
- 
-
 
