@@ -370,6 +370,18 @@ Please note that none of these unsupported properties are mandatory,
 so their absence does not affect media-service-upnp's compatibility
 with MediaServer2Spec.
 
+Additional property unsupported by org.gnome.MediaContainer2
+------------------------------------------------------------
+
+|---------------------------------------------------------------------------|
+|     Name        | Type | m/o* |              Description                  |
+|---------------------------------------------------------------------------|
+| CreateClasses   |a(sb) |  o   |  Array of UPnP createClasses property.    |
+|                 |      |      |  A createClasses property is a tuple (sb) |
+|                 |      |      |  representing the class and whether       |
+|                 |      |      |  derived values are allowed for this      |
+|                 |      |      |  class.                                   |
+|---------------------------------------------------------------------------|
 
 New Methods:
 ------------

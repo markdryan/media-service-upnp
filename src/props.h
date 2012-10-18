@@ -56,7 +56,8 @@ enum msu_upnp_prop_mask_ {
 	MSU_UPNP_MASK_PROP_RESTRICTED = 1 << 26,
 	MSU_UPNP_MASK_PROP_DLNA_MANAGED = 1 << 27,
 	MSU_UPNP_MASK_PROP_CREATOR = 1 << 28,
-	MSU_UPNP_MASK_PROP_ARTISTS = 1 << 29
+	MSU_UPNP_MASK_PROP_ARTISTS = 1 << 29,
+	MSU_UPNP_MASK_PROP_CREATE_CLASSES = 1 << 30
 };
 typedef enum msu_upnp_prop_mask_ msu_upnp_prop_mask;
 

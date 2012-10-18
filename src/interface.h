@@ -51,6 +51,7 @@
 /* Container Properties */
 #define MSU_INTERFACE_PROP_SEARCHABLE "Searchable"
 #define MSU_INTERFACE_PROP_CHILD_COUNT "ChildCount"
+#define MSU_INTERFACE_PROP_CREATE_CLASSES "CreateClasses"
 
 /* Device Properties */
 #define MSU_INTERFACE_PROP_LOCATION "Location"

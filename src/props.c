@@ -310,10 +310,16 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_TYPE, prop_t);
 	g_hash_table_insert(p_map, "upnp:class", MSU_INTERFACE_PROP_TYPE);
 
+	/* upnp:createClass */
+	prop_t = prv_msu_prop_map_new("upnp:createClass",
+					MSU_UPNP_MASK_PROP_CREATE_CLASSES,
+					TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_CREATE_CLASSES, prop_t);
+
 	/* upnp:genre */
 	prop_t = prv_msu_prop_map_new("upnp:genre",
 					MSU_UPNP_MASK_PROP_GENRE,
-				       TRUE, TRUE);
+					TRUE, TRUE);
 	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_GENRE, prop_t);
 	g_hash_table_insert(p_map, "upnp:genre", MSU_INTERFACE_PROP_GENRE);
 
@@ -851,6 +857,36 @@ static void prv_parse_resources(GVariantBuilder *item_vb,
 	}
 }
 
+static GVariant *prv_compute_create_classes(GUPnPDIDLLiteContainer *container)
+{
+	GVariantBuilder create_classes_vb;
+	GList *create_classes;
+	GList *ptr;
+	GUPnPDIDLLiteCreateClass *create_class;
+	const char *content;
+	gboolean inc_derived;
+
+	g_variant_builder_init(&create_classes_vb, G_VARIANT_TYPE("a(sb)"));
+
+	create_classes = gupnp_didl_lite_container_get_create_classes_full(
+								 container);
+	ptr = create_classes;
+	while (ptr) {
+		create_class = ptr->data;
+		content = gupnp_didl_lite_create_class_get_content(
+								 create_class);
+		inc_derived = gupnp_didl_lite_create_class_get_include_derived(
+								 create_class);
+		g_variant_builder_add(&create_classes_vb,
+				      "(sb)", content, inc_derived);
+		g_object_unref(ptr->data);
+		ptr = g_list_next(ptr);
+	}
+	g_list_free(create_classes);
+
+	return g_variant_builder_end(&create_classes_vb);
+}
+
 const gchar *msu_props_media_spec_to_upnp_class(const gchar *m2spec_class)
 {
 	const gchar *retval = NULL;
@@ -1077,6 +1113,11 @@ void msu_props_add_container(GVariantBuilder *item_vb,
 		prv_add_bool_prop(item_vb, MSU_INTERFACE_PROP_SEARCHABLE,
 				  searchable);
 	}
+
+	if (filter_mask & MSU_UPNP_MASK_PROP_CREATE_CLASSES)
+		prv_add_variant_prop(item_vb,
+				     MSU_INTERFACE_PROP_CREATE_CLASSES,
+				     prv_compute_create_classes(object));
 }
 
 static GVariant *prv_compute_resources(GUPnPDIDLLiteObject *object,
@@ -1508,7 +1549,9 @@ GVariant *msu_props_get_container_prop(const gchar *prop,
 	gboolean searchable;
 	GUPnPDIDLLiteContainer *container;
 	GVariant *retval = NULL;
-
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+	gchar *create_classes;
+#endif
 	if (!GUPNP_IS_DIDL_LITE_CONTAINER(object))
 		goto on_error;
 
@@ -1531,6 +1574,14 @@ GVariant *msu_props_get_container_prop(const gchar *prop,
 
 		retval = g_variant_ref_sink(
 			g_variant_new_boolean(searchable));
+	} else if (!strcmp(prop, MSU_INTERFACE_PROP_CREATE_CLASSES)) {
+		retval = g_variant_ref_sink(
+			prv_compute_create_classes(container));
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+		create_classes = g_variant_print(retval, FALSE);
+		MSU_LOG_DEBUG("Prop %s = %s", prop, create_classes);
+		g_free(create_classes);
+#endif
 	}
 
 on_error:

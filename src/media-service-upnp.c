@@ -246,6 +246,8 @@ static const gchar g_msu_server_introspection[] =
 	"       access='read'/>"
 	"    <property type='b' name='"MSU_INTERFACE_PROP_SEARCHABLE"'"
 	"       access='read'/>"
+	"    <property type='a(sb)' name='"MSU_INTERFACE_PROP_CREATE_CLASSES"'"
+	"       access='read'/>"
 	"  </interface>"
 	"  <interface name='"MSU_INTERFACE_MEDIA_ITEM"'>"
 	"    <method name='"MSU_INTERFACE_GET_COMPATIBLE_RESOURCE"'>"
