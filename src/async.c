@@ -25,15 +25,13 @@
 #include "log.h"
 
 msu_async_cb_data_t *msu_async_cb_data_new(msu_task_t *task,
-					   msu_upnp_task_complete_t cb,
-					   void *user_data)
+					   msu_upnp_task_complete_t cb)
 {
 	msu_async_cb_data_t *cb_data = g_new0(msu_async_cb_data_t, 1);
 
 	cb_data->type = task->type;
 	cb_data->task = task;
 	cb_data->cb = cb;
-	cb_data->user_data = user_data;
 
 	return cb_data;
 }
@@ -81,8 +79,7 @@ gboolean msu_async_complete_task(gpointer user_data)
 	MSU_LOG_DEBUG("Enter. Error %p", (void *) cb_data->error);
 	MSU_LOG_DEBUG_NL();
 
-	cb_data->cb(cb_data->task, cb_data->result, cb_data->error,
-		    cb_data->user_data);
+	cb_data->cb(cb_data->task, cb_data->result, cb_data->error);
 	msu_async_cb_data_delete(cb_data);
 
 	return FALSE;

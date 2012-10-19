@@ -45,7 +45,7 @@ struct msu_interface_info_t_ {
 
 typedef void (*msu_upnp_callback_t)(const gchar *path, void *user_data);
 typedef void (*msu_upnp_task_complete_t)(msu_task_t *task, GVariant *result,
-					 GError *error, void *user_data);
+					 GError *error);
 
 msu_upnp_t *msu_upnp_new(GDBusConnection *connection,
 			 msu_interface_info_t *interface_info,
@@ -57,51 +57,41 @@ GVariant *msu_upnp_get_server_ids(msu_upnp_t *upnp);
 void msu_upnp_get_children(msu_upnp_t *upnp, msu_client_t *client,
 			   msu_task_t *task,
 			   GCancellable *cancellable,
-			   msu_upnp_task_complete_t cb,
-			   void *user_data);
+			   msu_upnp_task_complete_t cb);
 void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_client_t *client,
 			    msu_task_t *task,
 			    GCancellable *cancellable,
-			    msu_upnp_task_complete_t cb,
-			    void *user_data);
+			    msu_upnp_task_complete_t cb);
 void msu_upnp_get_prop(msu_upnp_t *upnp, msu_client_t *client,
 		       msu_task_t *task,
 		       GCancellable *cancellable,
-		       msu_upnp_task_complete_t cb,
-		       void *user_data);
+		       msu_upnp_task_complete_t cb);
 void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
 		     msu_task_t *task,
 		     GCancellable *cancellable,
-		     msu_upnp_task_complete_t cb,
-		     void *user_data);
+		     msu_upnp_task_complete_t cb);
 void msu_upnp_get_resource(msu_upnp_t *upnp, msu_client_t *client,
 			   msu_task_t *task,
 			   GCancellable *cancellable,
-			   msu_upnp_task_complete_t cb,
-			   void *user_data);
+			   msu_upnp_task_complete_t cb);
 void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_client_t *client,
 			    msu_task_t *task,
 			    GCancellable *cancellable,
-			    msu_upnp_task_complete_t cb,
-			    void *user_data);
+			    msu_upnp_task_complete_t cb);
 void msu_upnp_upload(msu_upnp_t *upnp, msu_client_t *client,
 		     msu_task_t *task,
 		     GCancellable *cancellable,
-		     msu_upnp_task_complete_t cb,
-		     void *user_data);
+		     msu_upnp_task_complete_t cb);
 void msu_upnp_delete_object(msu_upnp_t *upnp, msu_client_t *client,
 			    msu_task_t *task,
 			    GCancellable *cancellable,
-			    msu_upnp_task_complete_t cb,
-			    void *user_data);
+			    msu_upnp_task_complete_t cb);
 void msu_upnp_create_container(msu_upnp_t *upnp, msu_client_t *client,
 			       msu_task_t *task,
 			       GCancellable *cancellable,
-			       msu_upnp_task_complete_t cb,
-			       void *user_data);
+			       msu_upnp_task_complete_t cb);
 void msu_upnp_create_container_in_any(msu_upnp_t *upnp, msu_client_t *client,
 				      msu_task_t *task,
 				      GCancellable *cancellable,
-				      msu_upnp_task_complete_t cb,
-				      void *user_data);
+				      msu_upnp_task_complete_t cb);
 #endif

@@ -81,7 +81,6 @@ struct msu_async_cb_data_t_ {
 	msu_task_type_t type;
 	msu_task_t *task;
 	msu_upnp_task_complete_t cb;
-	void *user_data;
 	GVariant *result;
 	GError *error;
 	GUPnPServiceProxyAction *action;
@@ -99,8 +98,7 @@ struct msu_async_cb_data_t_ {
 };
 
 msu_async_cb_data_t *msu_async_cb_data_new(msu_task_t *task,
-					  msu_upnp_task_complete_t cb,
-					  void *user_data);
+					  msu_upnp_task_complete_t cb);
 void msu_async_cb_data_delete(msu_async_cb_data_t *cb_data);
 gboolean msu_async_complete_task(gpointer user_data);
 void msu_async_task_cancelled(GCancellable *cancellable, gpointer user_data);

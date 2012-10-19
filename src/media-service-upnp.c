@@ -56,6 +56,8 @@ struct msu_context_t_ {
 	msu_settings_context_t *settings;
 };
 
+static msu_context_t g_context;
+
 static const gchar g_msu_root_introspection[] =
 	"<node>"
 	"  <interface name='"MSU_INTERFACE_MANAGER"'>"
@@ -371,25 +373,25 @@ static void prv_free_msu_task_cb(gpointer data, gpointer user_data)
 	msu_task_delete(data);
 }
 
-static void prv_process_sync_task(msu_context_t *context, msu_task_t *task)
+static void prv_process_sync_task(msu_task_t *task)
 {
 	const gchar *client_name;
 	msu_client_t *client;
 
-	context->current_task = task;
+	g_context.current_task = task;
 
 	switch (task->type) {
 	case MSU_TASK_GET_VERSION:
 		msu_task_complete_and_delete(task);
 		break;
 	case MSU_TASK_GET_SERVERS:
-		task->result = msu_upnp_get_server_ids(context->upnp);
+		task->result = msu_upnp_get_server_ids(g_context.upnp);
 		msu_task_complete_and_delete(task);
 		break;
 	case MSU_TASK_SET_PROTOCOL_INFO:
 		client_name =
 			g_dbus_method_invocation_get_sender(task->invocation);
-		client = g_hash_table_lookup(context->watchers, client_name);
+		client = g_hash_table_lookup(g_context.watchers, client_name);
 		if (client) {
 			g_free(client->protocol_info);
 			if (task->ut.protocol_info.protocol_info[0]) {
@@ -405,7 +407,7 @@ static void prv_process_sync_task(msu_context_t *context, msu_task_t *task)
 	case MSU_TASK_SET_PREFER_LOCAL_ADDRESSES:
 		client_name =
 			g_dbus_method_invocation_get_sender(task->invocation);
-		client = g_hash_table_lookup(context->watchers, client_name);
+		client = g_hash_table_lookup(g_context.watchers, client_name);
 		if (client) {
 			client->prefer_local_addresses =
 					task->ut.prefer_local_addresses.prefer;
@@ -417,19 +419,17 @@ static void prv_process_sync_task(msu_context_t *context, msu_task_t *task)
 		break;
 	}
 
-	context->current_task = NULL;
+	g_context.current_task = NULL;
 }
 
 static void prv_async_task_complete(msu_task_t *task, GVariant *result,
-				    GError *error, void *user_data)
+				    GError *error)
 {
-	msu_context_t *context = user_data;
-
 	MSU_LOG_DEBUG("Enter");
 
-	g_object_unref(context->cancellable);
-	context->cancellable = NULL;
-	context->current_task = NULL;
+	g_object_unref(g_context.cancellable);
+	g_context.cancellable = NULL;
+	g_context.current_task = NULL;
 
 	if (error) {
 		msu_task_fail_and_delete(task, error);
@@ -439,78 +439,77 @@ static void prv_async_task_complete(msu_task_t *task, GVariant *result,
 		msu_task_complete_and_delete(task);
 	}
 
-	if (context->quitting)
-		g_main_loop_quit(context->main_loop);
-	else if (context->tasks->len > 0)
-		context->idle_id = g_idle_add(prv_process_task, context);
+	if (g_context.quitting)
+		g_main_loop_quit(g_context.main_loop);
+	else if (g_context.tasks->len > 0)
+		g_context.idle_id = g_idle_add(prv_process_task, NULL);
 
 	MSU_LOG_DEBUG("Exit");
 }
 
-static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
+static void prv_process_async_task(msu_task_t *task)
 {
 	const gchar *client_name;
 	msu_client_t *client;
 
 	MSU_LOG_DEBUG("Enter");
 
-	context->cancellable = g_cancellable_new();
-	context->current_task = task;
+	g_context.cancellable = g_cancellable_new();
+	g_context.current_task = task;
 	client_name =
 		g_dbus_method_invocation_get_sender(task->invocation);
-	client = g_hash_table_lookup(context->watchers, client_name);
+	client = g_hash_table_lookup(g_context.watchers, client_name);
 
 	switch (task->type) {
 	case MSU_TASK_GET_CHILDREN:
-		msu_upnp_get_children(context->upnp, client, task,
-				      context->cancellable,
-				      prv_async_task_complete, context);
+		msu_upnp_get_children(g_context.upnp, client, task,
+				      g_context.cancellable,
+				      prv_async_task_complete);
 		break;
 	case MSU_TASK_GET_PROP:
-		msu_upnp_get_prop(context->upnp, client, task,
-				  context->cancellable,
-				  prv_async_task_complete, context);
+		msu_upnp_get_prop(g_context.upnp, client, task,
+				  g_context.cancellable,
+				  prv_async_task_complete);
 		break;
 	case MSU_TASK_GET_ALL_PROPS:
-		msu_upnp_get_all_props(context->upnp, client, task,
-				       context->cancellable,
-				       prv_async_task_complete, context);
+		msu_upnp_get_all_props(g_context.upnp, client, task,
+				       g_context.cancellable,
+				       prv_async_task_complete);
 		break;
 	case MSU_TASK_SEARCH:
-		msu_upnp_search(context->upnp, client, task,
-				context->cancellable,
-				prv_async_task_complete, context);
+		msu_upnp_search(g_context.upnp, client, task,
+				g_context.cancellable,
+				prv_async_task_complete);
 		break;
 	case MSU_TASK_GET_RESOURCE:
-		msu_upnp_get_resource(context->upnp, client, task,
-				      context->cancellable,
-				      prv_async_task_complete, context);
+		msu_upnp_get_resource(g_context.upnp, client, task,
+				      g_context.cancellable,
+				      prv_async_task_complete);
 		break;
 	case MSU_TASK_UPLOAD_TO_ANY:
-		msu_upnp_upload_to_any(context->upnp, client, task,
-				       context->cancellable,
-				       prv_async_task_complete, context);
+		msu_upnp_upload_to_any(g_context.upnp, client, task,
+				       g_context.cancellable,
+				       prv_async_task_complete);
 		break;
 	case MSU_TASK_UPLOAD:
-		msu_upnp_upload(context->upnp, client, task,
-				context->cancellable,
-				prv_async_task_complete, context);
+		msu_upnp_upload(g_context.upnp, client, task,
+				g_context.cancellable,
+				prv_async_task_complete);
 		break;
 	case MSU_TASK_DELETE_OBJECT:
-		msu_upnp_delete_object(context->upnp, client, task,
-				       context->cancellable,
-				       prv_async_task_complete, context);
+		msu_upnp_delete_object(g_context.upnp, client, task,
+				       g_context.cancellable,
+				       prv_async_task_complete);
 		break;
 	case MSU_TASK_CREATE_CONTAINER:
-		msu_upnp_create_container(context->upnp, client, task,
-					  context->cancellable,
-					  prv_async_task_complete, context);
+		msu_upnp_create_container(g_context.upnp, client, task,
+					  g_context.cancellable,
+					  prv_async_task_complete);
 		break;
 	case MSU_TASK_CREATE_CONTAINER_IN_ANY:
-		msu_upnp_create_container_in_any(context->upnp, client, task,
-						 context->cancellable,
-						 prv_async_task_complete,
-						 context);
+		msu_upnp_create_container_in_any(g_context.upnp, client, task,
+						 g_context.cancellable,
+						 prv_async_task_complete);
 		break;
 
 	default:
@@ -522,22 +521,21 @@ static void prv_process_async_task(msu_context_t *context, msu_task_t *task)
 
 static gboolean prv_process_task(gpointer user_data)
 {
-	msu_context_t *context = user_data;
 	msu_task_t *task;
 	gboolean retval = FALSE;
 
-	if (context->tasks->len > 0) {
-		task = g_ptr_array_index(context->tasks, 0);
+	if (g_context.tasks->len > 0) {
+		task = g_ptr_array_index(g_context.tasks, 0);
 		if (task->synchronous) {
-			prv_process_sync_task(context, task);
+			prv_process_sync_task(task);
 			retval = TRUE;
 		} else {
-			prv_process_async_task(context, task);
-			context->idle_id = 0;
+			prv_process_async_task(task);
+			g_context.idle_id = 0;
 		}
-		g_ptr_array_remove_index(context->tasks, 0);
+		g_ptr_array_remove_index(g_context.tasks, 0);
 	} else {
-		context->idle_id = 0;
+		g_context.idle_id = 0;
 	}
 
 	return retval;
@@ -641,85 +639,86 @@ static const GDBusInterfaceVTable *g_server_vtables[MSU_INTERFACE_INFO_MAX] = {
 	&g_device_vtable
 };
 
-static void prv_msu_context_init(msu_context_t *context)
+static void prv_msu_context_init(void)
 {
-	memset(context, 0, sizeof(*context));
+	memset(&g_context, 0, sizeof(g_context));
 }
 
-static void prv_msu_context_free(msu_context_t *context)
+static void prv_msu_context_free(void)
 {
-	msu_upnp_delete(context->upnp);
+	msu_upnp_delete(g_context.upnp);
 
-	if (context->watchers)
-		g_hash_table_unref(context->watchers);
+	if (g_context.watchers)
+		g_hash_table_unref(g_context.watchers);
 
-	if (context->tasks) {
-		g_ptr_array_foreach(context->tasks, prv_free_msu_task_cb, NULL);
-		g_ptr_array_unref(context->tasks);
+	if (g_context.tasks) {
+		g_ptr_array_foreach(g_context.tasks, prv_free_msu_task_cb,
+				    NULL);
+		g_ptr_array_unref(g_context.tasks);
 	}
 
-	if (context->idle_id)
-		(void) g_source_remove(context->idle_id);
+	if (g_context.idle_id)
+		(void) g_source_remove(g_context.idle_id);
 
-	if (context->sig_id)
-		(void) g_source_remove(context->sig_id);
+	if (g_context.sig_id)
+		(void) g_source_remove(g_context.sig_id);
 
-	if (context->connection) {
-		if (context->msu_id)
+	if (g_context.connection) {
+		if (g_context.msu_id)
 			g_dbus_connection_unregister_object(
-				context->connection,
-				context->msu_id);
+							g_context.connection,
+							g_context.msu_id);
 	}
 
-	if (context->owner_id)
-		g_bus_unown_name(context->owner_id);
+	if (g_context.owner_id)
+		g_bus_unown_name(g_context.owner_id);
 
-	if (context->connection)
-		g_object_unref(context->connection);
+	if (g_context.connection)
+		g_object_unref(g_context.connection);
 
-	if (context->main_loop)
-		g_main_loop_unref(context->main_loop);
+	if (g_context.main_loop)
+		g_main_loop_unref(g_context.main_loop);
 
-	if (context->server_node_info)
-		g_dbus_node_info_unref(context->server_node_info);
+	if (g_context.server_node_info)
+		g_dbus_node_info_unref(g_context.server_node_info);
 
-	if (context->root_node_info)
-		g_dbus_node_info_unref(context->root_node_info);
+	if (g_context.root_node_info)
+		g_dbus_node_info_unref(g_context.root_node_info);
 
-	if (context->settings)
-		msu_settings_delete(context->settings);
+	if (g_context.settings)
+		msu_settings_delete(g_context.settings);
 }
 
-static void prv_quit(msu_context_t *context)
+static void prv_quit(void)
 {
-	if (context->cancellable) {
-		g_cancellable_cancel(context->cancellable);
-		context->quitting = TRUE;
+	if (g_context.cancellable) {
+		g_cancellable_cancel(g_context.cancellable);
+		g_context.quitting = TRUE;
 	} else {
-		g_main_loop_quit(context->main_loop);
+		g_main_loop_quit(g_context.main_loop);
 	}
 }
 
-static void prv_remove_client(msu_context_t *context, const gchar *name)
+static void prv_remove_client(const gchar *name)
 {
 	const gchar *client_name;
 	msu_task_t *task;
 	guint pos;
 
-	if (context->cancellable) {
+	if (g_context.cancellable) {
 		client_name = g_dbus_method_invocation_get_sender(
-					context->current_task->invocation);
+					g_context.current_task->invocation);
 		if (!strcmp(client_name, name)) {
 			MSU_LOG_DEBUG("Cancelling current task, type is %d",
-						context->current_task->type);
+				      g_context.current_task->type);
 
-			g_cancellable_cancel(context->cancellable);
+			g_cancellable_cancel(g_context.cancellable);
 		}
 	}
 
 	pos = 0;
-	while (pos < context->tasks->len) {
-		task = (msu_task_t *) g_ptr_array_index(context->tasks, pos);
+	while (pos < g_context.tasks->len) {
+		task = (msu_task_t *) g_ptr_array_index(g_context.tasks, pos);
 
 		client_name = g_dbus_method_invocation_get_sender(
 							task->invocation);
@@ -731,15 +730,15 @@ static void prv_remove_client(msu_context_t *context, const gchar *name)
 
 		MSU_LOG_DEBUG("Removing task type %d from array", task->type);
 
-		(void) g_ptr_array_remove_index(context->tasks, pos);
+		(void) g_ptr_array_remove_index(g_context.tasks, pos);
 		msu_task_cancel_and_delete(task);
 	}
 
-	(void) g_hash_table_remove(context->watchers, name);
+	(void) g_hash_table_remove(g_context.watchers, name);
 
-	if (g_hash_table_size(context->watchers) == 0)
-		if (!msu_settings_is_never_quit(context->settings))
-			prv_quit(context);
+	if (g_hash_table_size(g_context.watchers) == 0)
+		if (!msu_settings_is_never_quit(g_context.settings))
+			prv_quit();
 }
 
 static void prv_lost_client(GDBusConnection *connection, const gchar *name,
@@ -747,31 +746,31 @@ static void prv_lost_client(GDBusConnection *connection, const gchar *name,
 {
 	MSU_LOG_DEBUG("Lost Client %s", name);
 
-	prv_remove_client(user_data, name);
+	prv_remove_client(name);
 }
 
-static void prv_add_task(msu_context_t *context, msu_task_t *task)
+static void prv_add_task(msu_task_t *task)
 {
 	const gchar *client_name;
 	msu_client_t *client;
 
 	client_name = g_dbus_method_invocation_get_sender(task->invocation);
 
-	if (!g_hash_table_lookup(context->watchers, client_name)) {
+	if (!g_hash_table_lookup(g_context.watchers, client_name)) {
 		client = g_new0(msu_client_t, 1);
 		client->prefer_local_addresses = TRUE;
 		client->id = g_bus_watch_name(G_BUS_TYPE_SESSION, client_name,
 					      G_BUS_NAME_WATCHER_FLAGS_NONE,
-					      NULL, prv_lost_client, context,
+					      NULL, prv_lost_client, NULL,
 					      NULL);
-		g_hash_table_insert(context->watchers, g_strdup(client_name),
+		g_hash_table_insert(g_context.watchers, g_strdup(client_name),
 				    client);
 	}
 
-	if (!context->cancellable && !context->idle_id)
-		context->idle_id = g_idle_add(prv_process_task, context);
+	if (!g_context.cancellable && !g_context.idle_id)
+		g_context.idle_id = g_idle_add(prv_process_task, NULL);
 
-	g_ptr_array_add(context->tasks, task);
+	g_ptr_array_add(g_context.tasks, task);
 }
 
 static void prv_msu_method_call(GDBusConnection *conn,
@@ -781,27 +780,26 @@ static void prv_msu_method_call(GDBusConnection *conn,
 				GDBusMethodInvocation *invocation,
 				gpointer user_data)
 {
-	msu_context_t *context = user_data;
 	const gchar *client_name;
 	msu_task_t *task;
 
 	if (!strcmp(method, MSU_INTERFACE_RELEASE)) {
 		client_name = g_dbus_method_invocation_get_sender(invocation);
-		prv_remove_client(context, client_name);
+		prv_remove_client(client_name);
 		g_dbus_method_invocation_return_value(invocation, NULL);
 	} else if (!strcmp(method, MSU_INTERFACE_GET_VERSION)) {
 		task = msu_task_get_version_new(invocation);
-		prv_add_task(context, task);
+		prv_add_task(task);
 	} else if (!strcmp(method, MSU_INTERFACE_GET_SERVERS)) {
 		task = msu_task_get_servers_new(invocation);
-		prv_add_task(context, task);
+		prv_add_task(task);
 	} else if (!strcmp(method, MSU_INTERFACE_SET_PROTOCOL_INFO)) {
 		task = msu_task_set_protocol_info_new(invocation, parameters);
-		prv_add_task(context, task);
+		prv_add_task(task);
 	} else if (!strcmp(method, MSU_INTERFACE_PREFER_LOCAL_ADDRESSES)) {
 		task = msu_task_prefer_local_addresses_new(invocation,
 							   parameters);
-		prv_add_task(context, task);
+		prv_add_task(task);
 	}
 }
 
@@ -812,12 +810,11 @@ static void prv_object_method_call(GDBusConnection *conn,
 				   GDBusMethodInvocation *invocation,
 				   gpointer user_data)
 {
-	msu_context_t *context = user_data;
 	msu_task_t *task;
 
 	if (!strcmp(method, MSU_INTERFACE_DELETE)) {
 		task = msu_task_delete_new(invocation, object);
-		prv_add_task(context, task);
+		prv_add_task(task);
 	}
 }
 
@@ -828,13 +825,12 @@ static void prv_item_method_call(GDBusConnection *conn,
 				 GDBusMethodInvocation *invocation,
 				 gpointer user_data)
 {
-	msu_context_t *context = user_data;
 	msu_task_t *task;
 
 	if (!strcmp(method, MSU_INTERFACE_GET_COMPATIBLE_RESOURCE)) {
 		task = msu_task_get_resource_new(invocation, object,
 						 parameters);
-		prv_add_task(context, task);
+		prv_add_task(task);
 	}
 }
 
@@ -848,7 +844,6 @@ static void prv_con_method_call(GDBusConnection *conn,
 				GDBusMethodInvocation *invocation,
 				gpointer user_data)
 {
-	msu_context_t *context = user_data;
 	msu_task_t *task;
 
 	if (!strcmp(method, MSU_INTERFACE_LIST_CHILDREN))
@@ -884,7 +879,7 @@ static void prv_con_method_call(GDBusConnection *conn,
 	else
 		goto finished;
 
-	prv_add_task(context, task);
+	prv_add_task(task);
 
 finished:
 
@@ -900,7 +895,6 @@ static void prv_props_method_call(GDBusConnection *conn,
 				  GDBusMethodInvocation *invocation,
 				  gpointer user_data)
 {
-	msu_context_t *context = user_data;
 	msu_task_t *task;
 
 	if (!strcmp(method, MSU_INTERFACE_GET_ALL))
@@ -910,7 +904,7 @@ static void prv_props_method_call(GDBusConnection *conn,
 	else
 		goto finished;
 
-	prv_add_task(context, task);
+	prv_add_task(task);
 
 finished:
 
@@ -924,26 +918,23 @@ static void prv_device_method_call(GDBusConnection *conn,
 				   GDBusMethodInvocation *invocation,
 				   gpointer user_data)
 {
-	msu_context_t *context = user_data;
 	msu_task_t *task;
 
 	if (!strcmp(method, MSU_INTERFACE_UPLOAD_TO_ANY)) {
 		task = msu_task_upload_to_any_new(invocation, object,
 						  parameters);
-		prv_add_task(context, task);
+		prv_add_task(task);
 	} else if (!strcmp(method, MSU_INTERFACE_CREATE_CONTAINER_IN_ANY)) {
 		task = msu_task_create_container_new_generic(invocation,
 					MSU_TASK_CREATE_CONTAINER_IN_ANY,
 					object, parameters);
-		prv_add_task(context, task);
+		prv_add_task(task);
 	}
 }
 
 static void prv_found_media_server(const gchar *path, void *user_data)
 {
-	msu_context_t *context = user_data;
-
-	(void) g_dbus_connection_emit_signal(context->connection,
+	(void) g_dbus_connection_emit_signal(g_context.connection,
 					     NULL,
 					     MSU_OBJECT,
 					     MSU_INTERFACE_MANAGER,
@@ -954,9 +945,7 @@ static void prv_found_media_server(const gchar *path, void *user_data)
 
 static void prv_lost_media_server(const gchar *path, void *user_data)
 {
-	msu_context_t *context = user_data;
-
-	(void) g_dbus_connection_emit_signal(context->connection,
+	(void) g_dbus_connection_emit_signal(g_context.connection,
 					     NULL,
 					     MSU_OBJECT,
 					     MSU_INTERFACE_MANAGER,
@@ -968,30 +957,29 @@ static void prv_lost_media_server(const gchar *path, void *user_data)
 static void prv_bus_acquired(GDBusConnection *connection, const gchar *name,
 			     gpointer user_data)
 {
-	msu_context_t *context = user_data;
 	msu_interface_info_t *info;
 	unsigned int i;
 
-	context->connection = connection;
+	g_context.connection = connection;
 
-	context->msu_id =
+	g_context.msu_id =
 		g_dbus_connection_register_object(connection, MSU_OBJECT,
-						  context->root_node_info->
+						  g_context.root_node_info->
 						  interfaces[0],
 						  &g_msu_vtable,
 						  user_data, NULL, NULL);
 
-	if (!context->msu_id) {
-		context->error = true;
-		g_main_loop_quit(context->main_loop);
+	if (!g_context.msu_id) {
+		g_context.error = true;
+		g_main_loop_quit(g_context.main_loop);
 	} else {
 		info = g_new(msu_interface_info_t, MSU_INTERFACE_INFO_MAX);
 		for (i = 0; i < MSU_INTERFACE_INFO_MAX; ++i) {
 			info[i].interface =
-				context->server_node_info->interfaces[i];
+				g_context.server_node_info->interfaces[i];
 			info[i].vtable = g_server_vtables[i];
 		}
-		context->upnp = msu_upnp_new(connection, info,
+		g_context.upnp = msu_upnp_new(connection, info,
 					    prv_found_media_server,
 					    prv_lost_media_server,
 					    user_data);
@@ -1001,25 +989,21 @@ static void prv_bus_acquired(GDBusConnection *connection, const gchar *name,
 static void prv_name_lost(GDBusConnection *connection, const gchar *name,
 			  gpointer user_data)
 {
-	msu_context_t *context = user_data;
+	g_context.connection = NULL;
 
-	context->connection = NULL;
-
-	prv_quit(context);
+	prv_quit();
 }
 
 static gboolean prv_quit_handler(GIOChannel *source, GIOCondition condition,
 				 gpointer user_data)
 {
-	msu_context_t *context = user_data;
-
-	prv_quit(context);
-	context->sig_id = 0;
+	prv_quit();
+	g_context.sig_id = 0;
 
 	return FALSE;
 }
 
-static bool prv_init_signal_handler(sigset_t mask, msu_context_t *context)
+static bool prv_init_signal_handler(sigset_t mask)
 {
 	bool retval = false;
 	int fd = -1;
@@ -1040,9 +1024,9 @@ static bool prv_init_signal_handler(sigset_t mask, msu_context_t *context)
 	    G_IO_STATUS_NORMAL)
 		goto on_error;
 
-	context->sig_id = g_io_add_watch(channel, G_IO_IN | G_IO_PRI,
+	g_context.sig_id = g_io_add_watch(channel, G_IO_IN | G_IO_PRI,
 					 prv_quit_handler,
-					 context);
+					 NULL);
 
 	retval = true;
 
@@ -1067,12 +1051,10 @@ static void prv_unregister_client(gpointer user_data)
 
 int main(int argc, char *argv[])
 {
-	msu_context_t context;
-
 	sigset_t mask;
 	int retval = 1;
 
-	prv_msu_context_init(&context);
+	prv_msu_context_init();
 
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGTERM);
@@ -1084,43 +1066,43 @@ int main(int argc, char *argv[])
 	g_type_init();
 
 	msu_log_init(argv[0]);
-	msu_settings_new(&context.settings);
+	msu_settings_new(&g_context.settings);
 
-	context.root_node_info =
+	g_context.root_node_info =
 		g_dbus_node_info_new_for_xml(g_msu_root_introspection, NULL);
-	if (!context.root_node_info)
+	if (!g_context.root_node_info)
 		goto on_error;
 
-	context.server_node_info =
+	g_context.server_node_info =
 		g_dbus_node_info_new_for_xml(g_msu_server_introspection, NULL);
-	if (!context.server_node_info)
+	if (!g_context.server_node_info)
 		goto on_error;
 
-	context.main_loop = g_main_loop_new(NULL, FALSE);
+	g_context.main_loop = g_main_loop_new(NULL, FALSE);
 
-	context.owner_id = g_bus_own_name(G_BUS_TYPE_SESSION,
+	g_context.owner_id = g_bus_own_name(G_BUS_TYPE_SESSION,
 					  MSU_SERVER_NAME,
 					  G_BUS_NAME_OWNER_FLAGS_NONE,
 					  prv_bus_acquired, NULL,
-					  prv_name_lost, &context, NULL);
+					  prv_name_lost, NULL, NULL);
 
-	context.tasks = g_ptr_array_new();
+	g_context.tasks = g_ptr_array_new();
 
-	context.watchers = g_hash_table_new_full(g_str_hash, g_str_equal,
+	g_context.watchers = g_hash_table_new_full(g_str_hash, g_str_equal,
 						 g_free, prv_unregister_client);
 
-	if (!prv_init_signal_handler(mask, &context))
+	if (!prv_init_signal_handler(mask))
 		goto on_error;
 
-	g_main_loop_run(context.main_loop);
-	if (context.error)
+	g_main_loop_run(g_context.main_loop);
+	if (g_context.error)
 		goto on_error;
 
 	retval = 0;
 
 on_error:
 
-	prv_msu_context_free(&context);
+	prv_msu_context_free();
 
 	msu_log_finalize();
 
