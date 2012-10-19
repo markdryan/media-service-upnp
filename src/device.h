@@ -53,6 +53,7 @@ struct msu_device_t_ {
 	GVariant *search_caps;
 	GVariant *sort_caps;
 	GVariant *sort_ext_caps;
+	GVariant *feature_list;
 	gboolean shutting_down;
 };
 

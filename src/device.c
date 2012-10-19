@@ -82,7 +82,6 @@ struct prv_new_device_ct_t_ {
 	const GDBusSubtreeVTable *vtable;
 	void *user_data;
 	GHashTable *property_map;
-	guint counter;
 };
 
 static void prv_get_child_count(msu_async_cb_data_t *cb_data,
@@ -202,6 +201,7 @@ void msu_device_delete(void *device)
 		g_variant_unref(dev->search_caps);
 		g_variant_unref(dev->sort_caps);
 		g_variant_unref(dev->sort_ext_caps);
+		g_variant_unref(dev->feature_list);
 		g_free(dev);
 	}
 }
@@ -356,6 +356,132 @@ void msu_device_subscribe_to_contents_change(msu_device_t *device)
 				context);
 }
 
+static void prv_feature_list_add_feature(gchar* root_path,
+					 GUPnPFeature *feature,
+					 GVariantBuilder *vb)
+{
+	GVariantBuilder vbo;
+	GVariant *var_obj;
+	const char *name;
+	const char *version;
+	const char *obj_id;
+	gchar **obj;
+	gchar **saved;
+	gchar *path;
+
+	name = gupnp_feature_get_name(feature);
+	version = gupnp_feature_get_version(feature);
+	obj_id = gupnp_feature_get_object_ids(feature);
+
+	g_variant_builder_init(&vbo, G_VARIANT_TYPE("ao"));
+
+	if (obj_id != NULL && *obj_id) {
+		obj = g_strsplit(obj_id, ",", 0);
+		saved = obj;
+
+		while (obj && *obj) {
+			path = msu_path_from_id(root_path, *obj);
+			g_variant_builder_add(&vbo, "o", path);
+			g_free(path);
+			obj++;
+		}
+
+		g_strfreev(saved);
+	}
+
+	var_obj = g_variant_builder_end(&vbo);
+	g_variant_builder_add(vb, "(ss@ao)", name, version, var_obj);
+}
+
+static void prv_get_feature_list_analyze(msu_device_t *device, gchar *result)
+{
+	GUPnPFeatureListParser *parser;
+	GUPnPFeature *feature;
+	GList *list;
+	GList *item;
+	GError *error = NULL;
+	GVariantBuilder vb;
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+	char *str;
+#endif
+	parser = gupnp_feature_list_parser_new();
+	list = gupnp_feature_list_parser_parse_text(parser, result, &error);
+
+	if (error != NULL) {
+		MSU_LOG_WARNING("GetFeatureList parsing failed: %s",
+				error->message);
+		goto on_exit;
+	}
+
+	g_variant_builder_init(&vb, G_VARIANT_TYPE("a(ssao)"));
+	item = list;
+
+	while (item != NULL) {
+		feature = (GUPnPFeature *) item->data;
+		prv_feature_list_add_feature(device->path, feature, &vb);
+		g_object_unref(feature);
+		item = g_list_next(item);
+	}
+
+	device->feature_list = g_variant_ref_sink(g_variant_builder_end(&vb));
+
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+	str = g_variant_print(device->feature_list, FALSE);
+	MSU_LOG_DEBUG("%s = %s", MSU_INTERFACE_PROP_SV_FEATURE_LIST, str);
+	g_free(str);
+#endif
+
+on_exit:
+	g_list_free(list);
+	g_object_unref(parser);
+
+	if (error != NULL)
+		g_error_free(error);
+}
+
+static void prv_get_feature_list_cb(GUPnPServiceProxy *proxy,
+				    GUPnPServiceProxyAction *action,
+				    gpointer user_data)
+{
+	gchar *result = NULL;
+	GError *error = NULL;
+	prv_new_device_ct_t *priv_t = (prv_new_device_ct_t *) user_data;
+
+	if (!gupnp_service_proxy_end_action(proxy, action, &error,
+					    "FeatureList", G_TYPE_STRING,
+					    &result, NULL)) {
+		MSU_LOG_WARNING("GetFeatureList operation failed: %s",
+				error->message);
+		goto on_error;
+	}
+
+	MSU_LOG_DEBUG("GetFeatureList result: %s", result);
+
+	prv_get_feature_list_analyze(priv_t->dev, result);
+
+on_error:
+	if (error != NULL)
+		g_error_free(error);
+
+	g_free(result);
+}
+
+static GUPnPServiceProxyAction *prv_get_feature_list(msu_chain_task_t *chain,
+						     gboolean *failed)
+{
+	msu_device_t *device;
+	msu_device_context_t *context;
+
+	device = msu_chain_task_get_device(chain);
+	context = msu_device_get_context(device, NULL);
+	*failed = FALSE;
+
+	return gupnp_service_proxy_begin_action(context->service_proxy,
+						"GetFeatureList",
+						msu_chain_task_begin_action_cb,
+						chain, NULL);
+}
+
 static void prv_get_sort_ext_capabilities_analyze(msu_device_t *device,
 						  gchar *result)
 {
@@ -464,8 +590,7 @@ static void prv_get_capabilities_analyze(GHashTable *property_map,
 
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
 	prop_name = g_variant_print(*variant, FALSE);
-	MSU_LOG_DEBUG("%s = %s", MSU_INTERFACE_PROP_SV_SEARCH_CAPABILITIES,
-				 prop_name);
+	MSU_LOG_DEBUG("%s = %s", "   Variant", prop_name);
 	g_free(prop_name);
 #endif
 }
@@ -578,7 +703,6 @@ static GUPnPServiceProxyAction *prv_declare(msu_chain_task_t *chain,
 {
 	guint flags;
 	guint id;
-	gchar *new_path = NULL;
 	msu_device_t *device;
 	prv_new_device_ct_t *priv_t;
 
@@ -586,19 +710,14 @@ static GUPnPServiceProxyAction *prv_declare(msu_chain_task_t *chain,
 
 	priv_t = (prv_new_device_ct_t *) msu_chain_task_get_user_data(chain);
 
-	new_path = g_strdup_printf("%s/%u", MSU_SERVER_PATH, priv_t->counter);
-
-	MSU_LOG_DEBUG("Server Path %s", new_path);
-
 	flags = G_DBUS_SUBTREE_FLAGS_DISPATCH_TO_UNENUMERATED_NODES;
 	id =  g_dbus_connection_register_subtree(priv_t->connection,
-						 new_path,
+						 device->path,
 						 priv_t->vtable,
 						 flags,
 						 priv_t->user_data,
 						 NULL, NULL);
 	if (id) {
-		device->path = new_path;
 		device->id = id;
 
 		device->uploads = g_hash_table_new_full(g_int_hash, g_int_equal,
@@ -628,21 +747,25 @@ msu_device_t *msu_device_new(GDBusConnection *connection,
 {
 	msu_device_t *dev;
 	prv_new_device_ct_t *priv_t;
+	gchar *new_path;
 
 	MSU_LOG_DEBUG("New Device on %s", ip_address);
+
+	new_path = g_strdup_printf("%s/%u", MSU_SERVER_PATH, counter);
+	MSU_LOG_DEBUG("Server Path %s", new_path);
 
 	dev = g_new0(msu_device_t, 1);
 	priv_t = g_new0(prv_new_device_ct_t, 1);
 
 	dev->connection = connection;
 	dev->contexts = g_ptr_array_new_with_free_func(prv_msu_context_delete);
+	dev->path = new_path;
 
 	priv_t->dev = dev;
 	priv_t->connection = connection;
 	priv_t->vtable = vtable;
 	priv_t->user_data = user_data;
 	priv_t->property_map = property_map;
-	priv_t->counter = counter;
 
 	msu_device_append_new_context(dev, ip_address, proxy);
 
@@ -655,6 +778,9 @@ msu_device_t *msu_device_new(GDBusConnection *connection,
 	msu_chain_task_add(chain, prv_get_sort_ext_capabilities, dev,
 			   prv_get_sort_ext_capabilities_cb, NULL, priv_t);
 
+	msu_chain_task_add(chain, prv_get_feature_list, dev,
+			   prv_get_feature_list_cb, NULL, priv_t);
+MSU_LOG_DEBUG("AFTER");
 	msu_chain_task_add(chain, prv_subscribe, dev, NULL, NULL, NULL);
 	msu_chain_task_add(chain, prv_declare, dev, NULL, g_free, priv_t);
 

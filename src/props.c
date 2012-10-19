@@ -614,6 +614,11 @@ void msu_props_add_device(GUPnPDeviceInfo *proxy,
 		g_variant_builder_add(vb, "{sv}",
 				MSU_INTERFACE_PROP_SV_SORT_EXT_CAPABILITIES,
 				device->sort_ext_caps);
+
+	if (device->feature_list != NULL)
+		g_variant_builder_add(vb, "{sv}",
+				      MSU_INTERFACE_PROP_SV_FEATURE_LIST,
+				      device->feature_list);
 }
 
 GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
@@ -700,6 +705,15 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
 
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
 			copy = g_variant_print(device->sort_ext_caps, FALSE);
+			MSU_LOG_DEBUG("Prop %s = %s", prop, copy);
+#endif
+		}
+	} else if (!strcmp(MSU_INTERFACE_PROP_SV_FEATURE_LIST, prop)) {
+		if (device->feature_list != NULL){
+			retval = g_variant_ref(device->feature_list);
+
+#if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
+			copy = g_variant_print(device->feature_list, FALSE);
 			MSU_LOG_DEBUG("Prop %s = %s", prop, copy);
 #endif
 		}
