@@ -107,9 +107,6 @@
 #define MSU_INTERFACE_LIST_CONTAINERS_EX "ListContainersEx"
 #define MSU_INTERFACE_SEARCH_OBJECTS "SearchObjects"
 #define MSU_INTERFACE_SEARCH_OBJECTS_EX "SearchObjectsEx"
-#define MSU_INTERFACE_UPLOAD "Upload"
-#define MSU_INTERFACE_DELETE "Delete"
-#define MSU_INTERFACE_CREATE_CONTAINER "CreateContainer"
 
 #define MSU_INTERFACE_GET_COMPATIBLE_RESOURCE "GetCompatibleResource"
 
@@ -145,8 +142,13 @@
 #define MSU_INTERFACE_CONTAINER_UPDATE "ContainerUpdate"
 #define MSU_INTERFACE_CONTAINER_PATHS "ContainerPaths"
 
-#define MSU_INTERFACE_UPLOAD_TO_ANY "UploadToAnyContainer"
+#define MSU_INTERFACE_DELETE "Delete"
+
+#define MSU_INTERFACE_CREATE_CONTAINER "CreateContainer"
 #define MSU_INTERFACE_CREATE_CONTAINER_IN_ANY "CreateContainerInAnyContainer"
+
+#define MSU_INTERFACE_UPLOAD "Upload"
+#define MSU_INTERFACE_UPLOAD_TO_ANY "UploadToAnyContainer"
 #define MSU_INTERFACE_FILE_PATH "FilePath"
 #define MSU_INTERFACE_UPLOAD_ID "UploadId"
 
