@@ -47,6 +47,7 @@ AC_DEFUN_ONCE([MSU_COMPILER_FLAGS], [
 		CFLAGS+=" -Wno-overlength-strings"
 
 		CFLAGS+=" -DG_DISABLE_DEPRECATED"
+		CFLAGS+=" -DGLIB_DISABLE_DEPRECATION_WARNINGS"
 	fi
 
 	CFLAGS+=" -Wno-format-extra-args"
