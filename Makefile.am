@@ -25,7 +25,8 @@ media_service_upnp_sources = 	src/async.c		 \
 				src/settings.c		 \
 				src/sort.c		 \
 				src/task.c		 \
-				src/upnp.c
+				src/upnp.c		 \
+				src/task-processor.c
 
 media_service_upnp_headers =	src/async.h		\
 				src/chain-task.h	\
@@ -40,7 +41,9 @@ media_service_upnp_headers =	src/async.h		\
 				src/settings.h		\
 				src/sort.h		\
 				src/task.h		\
-				src/upnp.h
+				src/upnp.h		\
+				src/task-processor.h	\
+				src/task-atom.h
 
 
 bin_PROGRAMS = media-service-upnp

@@ -477,6 +477,11 @@ GVariant *msu_upnp_get_server_ids(msu_upnp_t *upnp)
 	return retval;
 }
 
+GHashTable *msu_upnp_get_server_udn_map(msu_upnp_t *upnp)
+{
+	return upnp->server_udn_map;
+}
+
 void msu_upnp_get_children(msu_upnp_t *upnp, msu_client_t *client,
 			   msu_task_t *task,
 			   GCancellable *cancellable,
@@ -1041,10 +1046,10 @@ void msu_upnp_get_upload_status(msu_upnp_t *upnp, msu_task_t *task)
 on_error:
 
 	if (error) {
-		msu_task_fail_and_delete(task, error);
+		msu_task_fail(task, error);
 		g_error_free(error);
 	} else {
-		msu_task_complete_and_delete(task);
+		msu_task_complete(task);
 	}
 
 	g_free(id);
@@ -1093,10 +1098,10 @@ void msu_upnp_get_upload_ids(msu_upnp_t *upnp, msu_task_t *task)
 on_error:
 
 	if (error) {
-		msu_task_fail_and_delete(task, error);
+		msu_task_fail(task, error);
 		g_error_free(error);
 	} else {
-		msu_task_complete_and_delete(task);
+		msu_task_complete(task);
 	}
 
 	g_free(id);
@@ -1145,10 +1150,10 @@ void msu_upnp_cancel_upload(msu_upnp_t *upnp, msu_task_t *task)
 on_error:
 
 	if (error) {
-		msu_task_fail_and_delete(task, error);
+		msu_task_fail(task, error);
 		g_error_free(error);
 	} else {
-		msu_task_complete_and_delete(task);
+		msu_task_complete(task);
 	}
 
 	g_free(id);
