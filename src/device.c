@@ -35,6 +35,11 @@
 #define MSU_CONTAINER_UPDATE_VAR "ContainerUpdateIDs"
 #define MEDIA_SERVER_DEVICE_TYPE "urn:schemas-upnp-org:device:MediaServer:"
 
+#define MSU_UPLOAD_STATUS_IN_PROGRESS "IN_PROGRESS"
+#define MSU_UPLOAD_STATUS_CANCELLED "CANCELLED"
+#define MSU_UPLOAD_STATUS_ERROR "ERROR"
+#define MSU_UPLOAD_STATUS_COMPLETED "COMPLETED"
+
 typedef gboolean (*msu_device_count_cb_t)(msu_async_cb_data_t *cb_data,
 					  gint count);
 
@@ -51,17 +56,22 @@ struct msu_device_object_builder_t_ {
 	gboolean needs_child_count;
 };
 
+typedef struct msu_device_upload_job_t_ msu_device_upload_job_t;
+
 typedef struct msu_device_upload_t_ msu_device_upload_t;
 struct msu_device_upload_t_ {
 	SoupSession *soup_session;
 	SoupMessage *msg;
 	GMappedFile *mapped_file;
+	const gchar *status;
+	guint64 bytes_uploaded;
+	guint64 bytes_to_upload;
 };
 
-typedef struct msu_device_upload_job_t_ msu_device_upload_job_t;
 struct msu_device_upload_job_t_ {
 	gint upload_id;
 	msu_device_t *device;
+	guint remove_idle;
 };
 
 /* Private structure used in chain task */
@@ -87,6 +97,7 @@ static void prv_system_update_cb(GUPnPServiceProxy *proxy,
 				GValue *value,
 				gpointer user_data);
 static void prv_msu_device_upload_delete(gpointer up);
+static void prv_msu_upload_job_delete(gpointer up);
 static void prv_get_sr_token_for_props(GUPnPServiceProxy *proxy,
 			     msu_device_t *device,
 			     GCancellable *cancellable,
@@ -175,6 +186,7 @@ void msu_device_delete(void *device)
 	msu_device_t *dev = device;
 
 	if (dev) {
+		g_hash_table_unref(dev->upload_jobs);
 		g_hash_table_unref(dev->uploads);
 
 		if (dev->timeout_id)
@@ -591,6 +603,11 @@ static GUPnPServiceProxyAction *prv_declare(msu_chain_task_t *chain,
 		device->uploads = g_hash_table_new_full(g_int_hash, g_int_equal,
 						g_free,
 						prv_msu_device_upload_delete);
+		device->upload_jobs =
+			g_hash_table_new_full(g_int_hash, g_int_equal,
+					      g_free,
+					      prv_msu_upload_job_delete);
+
 	} else
 		MSU_LOG_ERROR("g_dbus_connection_register_subtree FAILED");
 
@@ -2475,10 +2492,46 @@ static void prv_upload_delete_cb(GUPnPServiceProxy *proxy,
 	MSU_LOG_DEBUG("Exit");
 }
 
+static void prv_msu_upload_job_delete(gpointer up_job)
+{
+	msu_device_upload_job_t *upload_job = up_job;
+
+	if (up_job) {
+		if (upload_job->remove_idle)
+			(void) g_source_remove(upload_job->remove_idle);
+
+		g_free(upload_job);
+	}
+}
+
+static gboolean prv_remove_update_job(gpointer user_data)
+{
+	msu_device_upload_job_t *upload_job = user_data;
+	msu_device_upload_t *upload;
+
+	upload = g_hash_table_lookup(upload_job->device->uploads,
+				     &upload_job->upload_id);
+	if (upload) {
+		g_hash_table_remove(upload_job->device->uploads,
+				    &upload_job->upload_id);
+
+		MSU_LOG_DEBUG("Removing Upload Object: %d",
+			upload_job->upload_id);
+	}
+
+	upload_job->remove_idle = 0;
+	g_hash_table_remove(upload_job->device->upload_jobs,
+			    &upload_job->upload_id);
+
+	return FALSE;
+}
+
 static void prv_post_finished(SoupSession *session, SoupMessage *msg,
 			      gpointer user_data)
 {
 	msu_device_upload_job_t *upload_job = user_data;
+	msu_device_upload_t *upload;
+	gint *upload_id;
 
 	MSU_LOG_DEBUG("Enter");
 
@@ -2486,10 +2539,48 @@ static void prv_post_finished(SoupSession *session, SoupMessage *msg,
 		      upload_job->upload_id, msg->status_code,
 		      msg->reason_phrase);
 
-	if (msg->status_code != SOUP_STATUS_CANCELLED)
-		g_hash_table_remove(upload_job->device->uploads,
-				    &upload_job->upload_id);
-	g_free(upload_job);
+	/* SOUP_STATUS_CANCELLED means we are shutting down, i.e.,
+	 we have been called from prv_msu_device_upload_delete */
+
+	if (msg->status_code == SOUP_STATUS_CANCELLED)
+		goto on_error;
+
+	upload = g_hash_table_lookup(upload_job->device->uploads,
+				     &upload_job->upload_id);
+	if (upload) {
+		upload_job->remove_idle =
+			g_timeout_add(30000, prv_remove_update_job, user_data);
+
+		if (SOUP_STATUS_IS_SUCCESSFUL(msg->status_code)) {
+			upload->status = MSU_UPLOAD_STATUS_COMPLETED;
+			upload->bytes_uploaded = upload->bytes_to_upload;
+		} else {
+			upload->status = MSU_UPLOAD_STATUS_ERROR;
+		}
+
+		MSU_LOG_DEBUG("Upload Status: %s", upload->status);
+
+		g_object_unref(upload->msg);
+		upload->msg = NULL;
+
+		g_object_unref(upload->soup_session);
+		upload->soup_session = NULL;
+
+		g_mapped_file_unref(upload->mapped_file);
+		upload->mapped_file = NULL;
+
+		upload_id = g_new(gint, 1);
+		*upload_id = upload_job->upload_id;
+
+		g_hash_table_insert(upload_job->device->upload_jobs, upload_id,
+				    upload_job);
+
+		upload_job = NULL;
+	}
+
+on_error:
+
+	prv_msu_upload_job_delete(upload_job);
 
 	MSU_LOG_DEBUG("Exit");
 }
@@ -2518,6 +2609,16 @@ static void prv_msu_device_upload_delete(gpointer up)
 	}
 
 	MSU_LOG_DEBUG("Exit");
+}
+
+static void prv_post_bytes_written(SoupMessage *msg, SoupBuffer *chunk,
+				   gpointer user_data)
+{
+	msu_device_upload_t *upload = user_data;
+
+	upload->bytes_uploaded += chunk->length;
+	if (upload->bytes_uploaded > upload->bytes_to_upload)
+		upload->bytes_uploaded = upload->bytes_to_upload;
 }
 
 static msu_device_upload_t *prv_msu_device_upload_new(const gchar *file_path,
@@ -2556,12 +2657,16 @@ static msu_device_upload_t *prv_msu_device_upload_new(const gchar *file_path,
 				     "Invalid URI %s", import_uri);
 		goto on_error;
 	}
+	upload->status = MSU_UPLOAD_STATUS_IN_PROGRESS;
+	upload->bytes_to_upload = body_length;
 
 	soup_message_headers_set_expectations(upload->msg->request_headers,
 					      SOUP_EXPECTATION_CONTINUE);
 
 	soup_message_set_request(upload->msg, mime_type, SOUP_MEMORY_STATIC,
 				 body, body_length);
+	g_signal_connect(upload->msg, "wrote-body-data",
+			 G_CALLBACK(prv_post_bytes_written), upload);
 
 	MSU_LOG_DEBUG("Exit with Success");
 
@@ -2708,7 +2813,7 @@ static void prv_create_object_cb(GUPnPServiceProxy *proxy,
 	if (!upload)
 		goto on_error;
 
-	upload_job = g_new(msu_device_upload_job_t, 1);
+	upload_job = g_new0(msu_device_upload_job_t, 1);
 	upload_job->device = cb_task_data->device;
 	upload_job->upload_id = (gint) cb_task_data->device->upload_id;
 
@@ -2806,6 +2911,44 @@ void msu_device_upload(msu_device_t *device, msu_client_t *client,
 	g_free(didl);
 
 	MSU_LOG_DEBUG("Exit");
+}
+
+gboolean msu_device_get_upload_status(msu_device_t *device,
+				      msu_task_t *task, GError **error)
+{
+	msu_device_upload_t *upload;
+	gboolean retval = FALSE;
+	GVariant *out_params[3];
+	guint upload_id;
+
+	MSU_LOG_DEBUG("Enter");
+
+	upload_id = task->ut.get_upload_status.upload_id;
+
+	upload = g_hash_table_lookup(device->uploads, &upload_id);
+	if (!upload) {
+		*error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
+				     "Unknown Upload ID %u ", upload_id);
+		goto on_error;
+	}
+
+	out_params[0] = g_variant_new_string(upload->status);
+	out_params[1] = g_variant_new_uint64(upload->bytes_uploaded);
+	out_params[2] = g_variant_new_uint64(upload->bytes_to_upload);
+
+	MSU_LOG_DEBUG("Upload ( %s %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT" )",
+		      upload->status, upload->bytes_uploaded,
+		      upload->bytes_to_upload);
+
+	task->result = g_variant_new_tuple(out_params, 3);
+
+	retval = TRUE;
+
+on_error:
+
+	MSU_LOG_DEBUG("Exit");
+
+	return retval;
 }
 
 static void prv_destroy_object_cb(GUPnPServiceProxy *proxy,

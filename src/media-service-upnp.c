@@ -312,6 +312,16 @@ static const gchar g_msu_server_introspection[] =
 	"      <arg type='o' name='"MSU_INTERFACE_PATH"'"
 	"           direction='out'/>"
 	"    </method>"
+	"    <method name='"MSU_INTERFACE_GET_UPLOAD_STATUS"'>"
+	"      <arg type='u' name='"MSU_INTERFACE_UPLOAD_ID"'"
+	"           direction='in'/>"
+	"      <arg type='s' name='"MSU_INTERFACE_UPLOAD_STATUS"'"
+	"           direction='out'/>"
+	"      <arg type='t' name='"MSU_INTERFACE_LENGTH"'"
+	"           direction='out'/>"
+	"      <arg type='t' name='"MSU_INTERFACE_TOTAL"'"
+	"           direction='out'/>"
+	"    </method>"
 	"    <method name='"MSU_INTERFACE_CREATE_CONTAINER_IN_ANY"'>"
 	"      <arg type='s' name='"MSU_INTERFACE_PROP_DISPLAY_NAME"'"
 	"           direction='in'/>"
@@ -419,6 +429,9 @@ static void prv_process_sync_task(msu_task_t *task)
 					task->ut.prefer_local_addresses.prefer;
 		}
 		msu_task_complete_and_delete(task);
+		break;
+	case MSU_TASK_GET_UPLOAD_STATUS:
+		msu_upnp_get_upload_status(g_context.upnp, task);
 		break;
 
 	default:
@@ -934,6 +947,10 @@ static void prv_device_method_call(GDBusConnection *conn,
 		task = msu_task_create_container_new_generic(invocation,
 					MSU_TASK_CREATE_CONTAINER_IN_ANY,
 					object, parameters);
+		prv_add_task(task);
+	} else if (!strcmp(method, MSU_INTERFACE_GET_UPLOAD_STATUS)) {
+		task = msu_task_get_upload_status_new(invocation, object,
+						      parameters);
 		prv_add_task(task);
 	}
 }

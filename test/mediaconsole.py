@@ -146,6 +146,12 @@ class Device(Container):
                                                                     child_types)
         print "New container path: " + path
 
+    def get_upload_status(self, id):
+        (status, length, total) = self.__deviceIF.GetUploadStatus(id)
+        print "Status: " + status
+        print "Length: " + str(length)
+        print "Total: " + str(total)
+
 class UPNP(object):
 
     def __init__(self):

@@ -38,6 +38,7 @@ enum msu_task_type_t_ {
 	MSU_TASK_SET_PROTOCOL_INFO,
 	MSU_TASK_UPLOAD_TO_ANY,
 	MSU_TASK_UPLOAD,
+	MSU_TASK_GET_UPLOAD_STATUS,
 	MSU_TASK_DELETE_OBJECT,
 	MSU_TASK_CREATE_CONTAINER,
 	MSU_TASK_CREATE_CONTAINER_IN_ANY
@@ -99,6 +100,11 @@ struct msu_task_upload_t_ {
 	gchar *file_path;
 };
 
+typedef struct msu_task_get_upload_status_t_ msu_task_get_upload_status_t;
+struct msu_task_get_upload_status_t_ {
+	guint upload_id;
+};
+
 typedef struct msu_task_create_container_t_ msu_task_create_container_t;
 struct msu_task_create_container_t_ {
 	gchar *display_name;
@@ -124,6 +130,7 @@ struct msu_task_t_ {
 		msu_task_set_prefer_local_addresses_t prefer_local_addresses;
 		msu_task_set_protocol_info_t protocol_info;
 		msu_task_upload_t upload;
+		msu_task_get_upload_status_t get_upload_status;
 		msu_task_create_container_t create_container;
 	} ut;
 };
@@ -156,6 +163,9 @@ msu_task_t *msu_task_upload_to_any_new(GDBusMethodInvocation *invocation,
 				       const gchar *path, GVariant *parameters);
 msu_task_t *msu_task_upload_new(GDBusMethodInvocation *invocation,
 				const gchar *path, GVariant *parameters);
+msu_task_t *msu_task_get_upload_status_new(GDBusMethodInvocation *invocation,
+					   const gchar *path,
+					   GVariant *parameters);
 msu_task_t *msu_task_delete_new(GDBusMethodInvocation *invocation,
 				const gchar *path);
 msu_task_t *msu_task_create_container_new_generic(
