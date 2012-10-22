@@ -226,7 +226,7 @@ is emitted when this property changes.
 Methods:
 ---------
 
-The com.intel.UPnP.MediaDevice interface currently exposes two methods:
+The com.intel.UPnP.MediaDevice interface currently exposes three methods:
 
 UploadToAnyContainer(s DisplayName, s FilePath) -> (u UploadId, o ObjectPath)
 
@@ -250,6 +250,21 @@ in the new folder, e.g., ['video','container'].
 A special value of ['*'] indicates that no restriction is placed
 on the types of objects that can be stored in the container.
 The path of the newly created object is returned.
+
+GetUploadStatus(u UploadId) -> (s UploadStatus, t Length, t Total)
+
+GetUploadStatus returns the current status of an upload previously
+started by a call to Upload or UploadToAnyContainer.  Clients should
+pass in the UploadId they received as a return value from either 
+of these two functions.  This method returns three pieces of information.
+
+i.   UploadStatus, indicating the status of the upload.  Four separate
+     values are possible.  "IN_PROGRESS", "CANCELLED", "ERROR", "COMPLETED"
+ii.  Length, indicating the number of bytes that have been transferred so far.
+iii. Total, indicating the total size of the upload.
+
+Clients can call GetUploadStatus to retrieve the status of an upload up to
+30 seconds after the specified upload has finished.
 
 
 Signals:
