@@ -39,6 +39,7 @@ enum msu_task_type_t_ {
 	MSU_TASK_UPLOAD_TO_ANY,
 	MSU_TASK_UPLOAD,
 	MSU_TASK_GET_UPLOAD_STATUS,
+	MSU_TASK_GET_UPLOAD_IDS,
 	MSU_TASK_DELETE_OBJECT,
 	MSU_TASK_CREATE_CONTAINER,
 	MSU_TASK_CREATE_CONTAINER_IN_ANY
@@ -166,6 +167,8 @@ msu_task_t *msu_task_upload_new(GDBusMethodInvocation *invocation,
 msu_task_t *msu_task_get_upload_status_new(GDBusMethodInvocation *invocation,
 					   const gchar *path,
 					   GVariant *parameters);
+msu_task_t *msu_task_get_upload_ids_new(GDBusMethodInvocation *invocation,
+					const gchar *path);
 msu_task_t *msu_task_delete_new(GDBusMethodInvocation *invocation,
 				const gchar *path);
 msu_task_t *msu_task_create_container_new_generic(

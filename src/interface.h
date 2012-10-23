@@ -150,10 +150,12 @@
 #define MSU_INTERFACE_UPLOAD "Upload"
 #define MSU_INTERFACE_UPLOAD_TO_ANY "UploadToAnyContainer"
 #define MSU_INTERFACE_GET_UPLOAD_STATUS "GetUploadStatus"
+#define MSU_INTERFACE_GET_UPLOAD_IDS "GetUploadIDs"
 #define MSU_INTERFACE_TOTAL "Total"
 #define MSU_INTERFACE_LENGTH "Length"
 #define MSU_INTERFACE_FILE_PATH "FilePath"
 #define MSU_INTERFACE_UPLOAD_ID "UploadId"
+#define MSU_INTERFACE_UPLOAD_IDS "UploadIDs"
 #define MSU_INTERFACE_UPLOAD_STATUS "UploadStatus"
 
 #endif

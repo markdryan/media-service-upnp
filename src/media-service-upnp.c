@@ -322,6 +322,10 @@ static const gchar g_msu_server_introspection[] =
 	"      <arg type='t' name='"MSU_INTERFACE_TOTAL"'"
 	"           direction='out'/>"
 	"    </method>"
+	"    <method name='"MSU_INTERFACE_GET_UPLOAD_IDS"'>"
+	"      <arg type='au' name='"MSU_INTERFACE_TOTAL"'"
+	"           direction='out'/>"
+	"    </method>"
 	"    <method name='"MSU_INTERFACE_CREATE_CONTAINER_IN_ANY"'>"
 	"      <arg type='s' name='"MSU_INTERFACE_PROP_DISPLAY_NAME"'"
 	"           direction='in'/>"
@@ -433,7 +437,9 @@ static void prv_process_sync_task(msu_task_t *task)
 	case MSU_TASK_GET_UPLOAD_STATUS:
 		msu_upnp_get_upload_status(g_context.upnp, task);
 		break;
-
+	case MSU_TASK_GET_UPLOAD_IDS:
+		msu_upnp_get_upload_ids(g_context.upnp, task);
+		break;
 	default:
 		break;
 	}
@@ -951,6 +957,9 @@ static void prv_device_method_call(GDBusConnection *conn,
 	} else if (!strcmp(method, MSU_INTERFACE_GET_UPLOAD_STATUS)) {
 		task = msu_task_get_upload_status_new(invocation, object,
 						      parameters);
+		prv_add_task(task);
+	} else if (!strcmp(method, MSU_INTERFACE_GET_UPLOAD_IDS)) {
+		task = msu_task_get_upload_ids_new(invocation, object);
 		prv_add_task(task);
 	}
 }

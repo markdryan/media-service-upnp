@@ -226,7 +226,7 @@ is emitted when this property changes.
 Methods:
 ---------
 
-The com.intel.UPnP.MediaDevice interface currently exposes three methods:
+The com.intel.UPnP.MediaDevice interface currently exposes four methods:
 
 UploadToAnyContainer(s DisplayName, s FilePath) -> (u UploadId, o ObjectPath)
 
@@ -266,6 +266,12 @@ iii. Total, indicating the total size of the upload.
 Clients can call GetUploadStatus to retrieve the status of an upload up to
 30 seconds after the specified upload has finished.
 
+GetUploadIDs() -> (au UploadIDs)
+
+GetUploadIDs returns an array containing the IDs of all the outstanding upload
+tasks.  An empty array will be returned if no IDs are in progress on the
+current device.  As with GetUploadStatus, the IDs of upload tasks will be
+returned by GetUploadIDs for 30 seconds after the uploads have finished.
 
 Signals:
 ---------

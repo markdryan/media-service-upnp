@@ -99,6 +99,7 @@ void msu_device_upload(msu_device_t *device, msu_client_t *client,
 		       msu_async_cb_data_t *cb_data, GCancellable *cancellable);
 gboolean msu_device_get_upload_status(msu_device_t *device,
 				      msu_task_t *task, GError **error);
+void msu_device_get_upload_ids(msu_device_t *device, msu_task_t *task);
 void msu_device_delete_object(msu_device_t *device, msu_client_t *client,
 			      msu_task_t *task,
 			      msu_async_cb_data_t *cb_data,

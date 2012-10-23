@@ -2951,6 +2951,25 @@ on_error:
 	return retval;
 }
 
+void msu_device_get_upload_ids(msu_device_t *device, msu_task_t *task)
+{
+	GVariantBuilder vb;
+	GHashTableIter iter;
+	gpointer key;
+
+	MSU_LOG_DEBUG("Enter");
+
+	g_variant_builder_init(&vb, G_VARIANT_TYPE("au"));
+
+	g_hash_table_iter_init(&iter, device->uploads);
+	while (g_hash_table_iter_next(&iter, &key, NULL))
+		g_variant_builder_add(&vb, "u", (guint32) (*((gint *) key)));
+
+	task->result = g_variant_ref_sink(g_variant_builder_end(&vb));
+
+	MSU_LOG_DEBUG("Exit");
+}
+
 static void prv_destroy_object_cb(GUPnPServiceProxy *proxy,
 				  GUPnPServiceProxyAction *action,
 				  gpointer user_data)

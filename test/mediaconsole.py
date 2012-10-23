@@ -152,6 +152,10 @@ class Device(Container):
         print "Length: " + str(length)
         print "Total: " + str(total)
 
+    def get_upload_ids(self):
+        upload_ids  = self.__deviceIF.GetUploadIDs()
+        print_properties(upload_ids)
+
 class UPNP(object):
 
     def __init__(self):
