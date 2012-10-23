@@ -2940,7 +2940,7 @@ gboolean msu_device_get_upload_status(msu_device_t *device,
 		      upload->status, upload->bytes_uploaded,
 		      upload->bytes_to_upload);
 
-	task->result = g_variant_new_tuple(out_params, 3);
+	task->result = g_variant_ref_sink(g_variant_new_tuple(out_params, 3));
 
 	retval = TRUE;
 
