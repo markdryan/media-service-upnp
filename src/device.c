@@ -186,6 +186,7 @@ void msu_device_delete(void *device)
 	msu_device_t *dev = device;
 
 	if (dev) {
+		dev->shutting_down = TRUE;
 		g_hash_table_unref(dev->upload_jobs);
 		g_hash_table_unref(dev->uploads);
 
@@ -2539,11 +2540,22 @@ static void prv_post_finished(SoupSession *session, SoupMessage *msg,
 		      upload_job->upload_id, msg->status_code,
 		      msg->reason_phrase);
 
-	/* SOUP_STATUS_CANCELLED means we are shutting down, i.e.,
-	 we have been called from prv_msu_device_upload_delete */
+	/* This is clumsy but we need to distinguish between two cases:
+	   1. We cancel because the process is exitting.
+	   2. We cancel because a client has called CancelUpload.
 
-	if (msg->status_code == SOUP_STATUS_CANCELLED)
+	   We could use custom SOUP error messages to distinguish the cases
+	   but device->shutting_down seemed less hacky.
+
+	   We need this check as if we are shutting down it is
+	   dangerous to manipulate uploads as we are being called from its
+	   destructor.
+	*/
+
+	if (upload_job->device->shutting_down) {
+		MSU_LOG_DEBUG("Device shutting down. Cancelling Upload");
 		goto on_error;
+	}
 
 	upload = g_hash_table_lookup(upload_job->device->uploads,
 				     &upload_job->upload_id);
@@ -2554,6 +2566,8 @@ static void prv_post_finished(SoupSession *session, SoupMessage *msg,
 		if (SOUP_STATUS_IS_SUCCESSFUL(msg->status_code)) {
 			upload->status = MSU_UPLOAD_STATUS_COMPLETED;
 			upload->bytes_uploaded = upload->bytes_to_upload;
+		} else if (msg->status_code == SOUP_STATUS_CANCELLED) {
+			upload->status = MSU_UPLOAD_STATUS_CANCELLED;
 		} else {
 			upload->status = MSU_UPLOAD_STATUS_ERROR;
 		}
@@ -2923,7 +2937,7 @@ gboolean msu_device_get_upload_status(msu_device_t *device,
 
 	MSU_LOG_DEBUG("Enter");
 
-	upload_id = task->ut.get_upload_status.upload_id;
+	upload_id = task->ut.upload_action.upload_id;
 
 	upload = g_hash_table_lookup(device->uploads, &upload_id);
 	if (!upload) {
@@ -2968,6 +2982,39 @@ void msu_device_get_upload_ids(msu_device_t *device, msu_task_t *task)
 	task->result = g_variant_ref_sink(g_variant_builder_end(&vb));
 
 	MSU_LOG_DEBUG("Exit");
+}
+
+gboolean msu_device_cancel_upload(msu_device_t *device, msu_task_t *task,
+				  GError **error)
+{
+	msu_device_upload_t *upload;
+	gboolean retval = FALSE;
+	guint upload_id;
+
+	MSU_LOG_DEBUG("Enter");
+
+	upload_id = task->ut.upload_action.upload_id;
+
+	upload = g_hash_table_lookup(device->uploads, &upload_id);
+	if (!upload) {
+		*error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
+				     "Unknown Upload ID %u ", upload_id);
+		goto on_error;
+	}
+
+	if (upload->msg) {
+		soup_session_cancel_message(upload->soup_session, upload->msg,
+					    SOUP_STATUS_CANCELLED);
+		MSU_LOG_DEBUG("Cancelling Upload %u ", upload_id);
+	}
+
+	retval = TRUE;
+
+on_error:
+
+	MSU_LOG_DEBUG("Exit");
+
+	return retval;
 }
 
 static void prv_destroy_object_cb(GUPnPServiceProxy *proxy,

@@ -156,6 +156,9 @@ class Device(Container):
         upload_ids  = self.__deviceIF.GetUploadIDs()
         print_properties(upload_ids)
 
+    def cancel_upload(self, id):
+        self.__deviceIF.CancelUpload(id)
+
 class UPNP(object):
 
     def __init__(self):

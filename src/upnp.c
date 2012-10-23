@@ -1114,6 +1114,60 @@ on_error:
 	MSU_LOG_DEBUG("Exit");
 }
 
+void msu_upnp_cancel_upload(msu_upnp_t *upnp, msu_task_t *task)
+{
+	gchar *root_path = NULL;
+	gchar *id = NULL;
+	GError *error = NULL;
+	msu_device_t *device;
+
+	MSU_LOG_DEBUG("Enter");
+
+	if (!msu_path_get_path_and_id(task->path, &root_path, &id, &error)) {
+		MSU_LOG_WARNING("Bad path %s", task->path);
+
+		goto on_error;
+	}
+
+	MSU_LOG_DEBUG("Root Path %s Id %s", root_path, id);
+
+	device = msu_device_from_path(root_path, upnp->server_udn_map);
+	if (!device) {
+		MSU_LOG_WARNING("Cannot locate device for %s",
+				root_path);
+
+		error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
+				    "Cannot locate device corresponding to"
+				    " the specified path");
+		goto on_error;
+	}
+
+	if (strcmp(id, "0")) {
+		MSU_LOG_WARNING("Bad path %s", task->path);
+
+		error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
+				    "CancelUpload must be executed "
+				    " on a root path");
+		goto on_error;
+	}
+
+	(void) msu_device_cancel_upload(device, task, &error);
+
+on_error:
+
+	if (error) {
+		msu_task_fail_and_delete(task, error);
+		g_error_free(error);
+	} else {
+		msu_task_complete_and_delete(task);
+	}
+
+	g_free(id);
+	g_free(root_path);
+
+	MSU_LOG_DEBUG("Exit");
+}
+
 void msu_upnp_delete_object(msu_upnp_t *upnp, msu_client_t *client,
 			    msu_task_t *task,
 			    GCancellable *cancellable,
