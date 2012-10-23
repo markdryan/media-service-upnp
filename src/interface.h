@@ -151,6 +151,7 @@
 #define MSU_INTERFACE_UPLOAD_TO_ANY "UploadToAnyContainer"
 #define MSU_INTERFACE_GET_UPLOAD_STATUS "GetUploadStatus"
 #define MSU_INTERFACE_GET_UPLOAD_IDS "GetUploadIDs"
+#define MSU_INTERFACE_CANCEL_UPLOAD "CancelUpload"
 #define MSU_INTERFACE_TOTAL "Total"
 #define MSU_INTERFACE_LENGTH "Length"
 #define MSU_INTERFACE_FILE_PATH "FilePath"

@@ -259,7 +259,7 @@ msu_task_t *msu_task_get_upload_status_new(GDBusMethodInvocation *invocation,
 				   "(stt)");
 
 	g_variant_get(parameters, "(u)",
-		      &task->ut.get_upload_status.upload_id);
+		      &task->ut.upload_action.upload_id);
 	task->synchronous = TRUE;
 	task->multiple_retvals = TRUE;
 
@@ -274,6 +274,22 @@ msu_task_t *msu_task_get_upload_ids_new(GDBusMethodInvocation *invocation,
 	task = prv_m2spec_task_new(MSU_TASK_GET_UPLOAD_IDS, invocation, path,
 				   "(@au)");
 
+	task->synchronous = TRUE;
+
+	return task;
+}
+
+msu_task_t *msu_task_cancel_upload_new(GDBusMethodInvocation *invocation,
+				       const gchar *path,
+				       GVariant *parameters)
+{
+	msu_task_t *task;
+
+	task = prv_m2spec_task_new(MSU_TASK_CANCEL_UPLOAD, invocation, path,
+				   NULL);
+
+	g_variant_get(parameters, "(u)",
+		      &task->ut.upload_action.upload_id);
 	task->synchronous = TRUE;
 
 	return task;

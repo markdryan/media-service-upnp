@@ -226,7 +226,7 @@ is emitted when this property changes.
 Methods:
 ---------
 
-The com.intel.UPnP.MediaDevice interface currently exposes four methods:
+The com.intel.UPnP.MediaDevice interface currently exposes five methods:
 
 UploadToAnyContainer(s DisplayName, s FilePath) -> (u UploadId, o ObjectPath)
 
@@ -272,6 +272,11 @@ GetUploadIDs returns an array containing the IDs of all the outstanding upload
 tasks.  An empty array will be returned if no IDs are in progress on the
 current device.  As with GetUploadStatus, the IDs of upload tasks will be
 returned by GetUploadIDs for 30 seconds after the uploads have finished.
+
+CancelUpload(u UploadId) -> void
+
+Cancels the upload identified by UploadId.  This function has no effect if the
+upload has already completed, i.e., its status is set to COMPLETED.
 
 Signals:
 ---------
