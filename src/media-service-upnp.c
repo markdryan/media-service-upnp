@@ -387,6 +387,12 @@ static const gchar g_msu_server_introspection[] =
 	"    <signal name='"MSU_INTERFACE_CONTAINER_UPDATE"'>"
 	"      <arg type='ao' name='"MSU_INTERFACE_CONTAINER_PATHS"'/>"
 	"    </signal>"
+	"    <signal name='"MSU_INTERFACE_UPLOAD_UPDATE"'>"
+	"      <arg type='u' name='"MSU_INTERFACE_UPLOAD_ID"'/>"
+	"      <arg type='s' name='"MSU_INTERFACE_UPLOAD_STATUS"'/>"
+	"      <arg type='t' name='"MSU_INTERFACE_LENGTH"'/>"
+	"      <arg type='t' name='"MSU_INTERFACE_TOTAL"'/>"
+	"    </signal>"
 	"  </interface>"
 	"</node>";
 

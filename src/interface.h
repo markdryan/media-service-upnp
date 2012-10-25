@@ -158,5 +158,6 @@
 #define MSU_INTERFACE_UPLOAD_ID "UploadId"
 #define MSU_INTERFACE_UPLOAD_IDS "UploadIDs"
 #define MSU_INTERFACE_UPLOAD_STATUS "UploadStatus"
+#define MSU_INTERFACE_UPLOAD_UPDATE "UploadUpdate"
 
 #endif

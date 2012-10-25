@@ -291,7 +291,7 @@ upload has already completed, i.e., its status is set to COMPLETED.
 Signals:
 ---------
 
-The com.intel.UPnP.MediaDevice interface also exposes one signal.
+The com.intel.UPnP.MediaDevice interface also exposes two signals.
 
 ContainerUpdate(ao)
 
@@ -299,6 +299,14 @@ Is generated when the contents of one or more folders maintained by the
 server have changed. This signal contains an array of paths of the server
 containers that have changed.
 
+UploadUpdate(u UploadId, s UploadStatus, Length t, Total t)
+
+Is generated when an upload completes, fails or is cancelled.  The first
+parameter is the ID of the upload.   The second contains one of three values,
+"CANCELLED", "COMPLETED", "ERROR", indicating whether the upload was cancelled,
+completed successfully or failed, respectively.  The third parameter indicates
+the total amount of bytes that were uploaded and the fourth, the size of the
+file being uploaded.
 
 Here is some example code in python that enumerates all the media
 servers present on the network and prints their names and the paths of

@@ -2527,6 +2527,30 @@ static gboolean prv_remove_update_job(gpointer user_data)
 	return FALSE;
 }
 
+static void prv_generate_upload_update(msu_device_upload_job_t *upload_job,
+				       msu_device_upload_t *upload)
+{
+	GVariant *args;
+
+	args = g_variant_new("(ustt)", upload_job->upload_id, upload->status,
+			     upload->bytes_uploaded, upload->bytes_to_upload);
+
+	MSU_LOG_DEBUG(
+		"Emitting: %s (%u %s %"G_GUINT64_FORMAT" %"G_GUINT64_FORMAT")"
+		" on %s",
+		MSU_INTERFACE_UPLOAD_UPDATE, upload_job->upload_id,
+		upload->status, upload->bytes_uploaded,
+		upload->bytes_to_upload, upload_job->device->path);
+
+	(void) g_dbus_connection_emit_signal(upload_job->device->connection,
+					     NULL,
+					     upload_job->device->path,
+					     MSU_INTERFACE_MEDIA_DEVICE,
+					     MSU_INTERFACE_UPLOAD_UPDATE,
+					     args,
+					     NULL);
+}
+
 static void prv_post_finished(SoupSession *session, SoupMessage *msg,
 			      gpointer user_data)
 {
@@ -2573,6 +2597,8 @@ static void prv_post_finished(SoupSession *session, SoupMessage *msg,
 		}
 
 		MSU_LOG_DEBUG("Upload Status: %s", upload->status);
+
+		prv_generate_upload_update(upload_job, upload);
 
 		g_object_unref(upload->msg);
 		upload->msg = NULL;
