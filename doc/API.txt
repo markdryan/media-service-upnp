@@ -266,6 +266,16 @@ iii. Total, indicating the total size of the upload.
 Clients can call GetUploadStatus to retrieve the status of an upload up to
 30 seconds after the specified upload has finished.
 
+The only exception to this rule is if the DMS to which the file is being
+uploaded shuts down or disappears from the UPnP network.  If this happens
+all active uploads to this DMS will be cancelled and the Device object
+representing this DMS will disappear.  As the Device object is no longer
+available, clients cannot call GetUploadStatus to determine the status
+of their uploads.  Clients that initiate uploads should listen for
+the LostServer signal.  They should assume that any uploads to a DMS that
+were in progress when this signal is received for that DMS, have been
+cancelled.
+
 GetUploadIDs() -> (au UploadIDs)
 
 GetUploadIDs returns an array containing the IDs of all the outstanding upload
