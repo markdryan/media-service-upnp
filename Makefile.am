@@ -5,6 +5,7 @@ AM_CFLAGS =	$(GLIB_CFLAGS)				\
 		$(GSSDP_CFLAGS)				\
 		$(GUPNP_CFLAGS)				\
 		$(GUPNPAV_CFLAGS)			\
+		$(SOUP_CFLAGS)				\
 		-DSYS_CONFIG_DIR="\"$(sysconfdir)\""	\
 		-include config.h
 
@@ -51,7 +52,8 @@ media_service_upnp_LDADD =	$(GLIB_LIBS)	\
 				$(GIO_LIBS)	\
 				$(GSSDP_LIBS)	\
 				$(GUPNP_LIBS)	\
-				$(GUPNPAV_LIBS)
+				$(GUPNPAV_LIBS) \
+				$(SOUP_LIBS)
 
 
 dms_info_sources = test/dms-info.c
