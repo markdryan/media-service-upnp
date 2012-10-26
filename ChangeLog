@@ -1,3 +1,47 @@
+version 0.2.0
+	- Completed implementation of Upload.  It is now possible to
+	  upload files to remote DMSs, both to specific directories and to
+	  the AnyContainer ( if it is supported by your DMS ) .  Methods
+	  have also been added to allow clients to cancel uploads and to
+	  monitor their progress.
+	        https://github.com/01org/media-service-upnp/issues/34
+	- DMS objects and containers can now be deleted.
+	        https://github.com/01org/media-service-upnp/issues/35
+	- Containers can now be created on remote DMSs.
+	        https://github.com/01org/media-service-upnp/issues/43
+	- New properties have been added to provide more information about
+	  media objects exposed by DMSs.
+	  - DLNAManaged indicates which actions can be performed on an object,
+	    e.g., upload, delete, etc.
+	        https://github.com/01org/media-service-upnp/issues/36
+          - Creator which indicates the creator of the content.
+          - Artists which is an array of all the artists who worked on the
+	    object.
+          - CreateClass which identifies the type of objects that can be
+	    created in a given container.
+	        https://github.com/01org/media-service-upnp/issues/45
+	- The com.intel.UPnP.MediaDevice interface exposes some additional
+	  properties that inform clients about the optional features supported
+	  by DMSs.  These include:
+          - DLNACaps indicating the DLNA OCM operations supported by the server.
+          - FeatureList containing the list of features, e.g., BOOKMARK, EPG,
+	    supported by the server.
+          - SortCaps and SortExt Caps indicating the sorting capabilities of the
+	    server.
+          - SearchCaps indicating the searching capabilities of the server.
+	         https://github.com/01org/media-service-upnp/issues/24
+	- Some new methods and properties have been added to
+	  com.intel.UPnP.MediaDevice for ContentSync:
+          - The System ID property
+                 https://github.com/01org/media-service-upnp/issues/38
+          - GetSystemResetToken
+	         https://github.com/01org/media-service-upnp/issues/46
+        - The method com.intel.MediaServiceUPnP.PreferLocalAddresses has been
+	  added.  This is useful for writing DMCs.  It allows DMCs to instruct
+	  media-service-upnp to favour remote addresses.
+	         https://github.com/01org/media-service-upnp/issues/21
+
+
 version 0.1.0
 	- Implemented Upload
 	        https://github.com/01org/media-service-upnp/issues/34
