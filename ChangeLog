@@ -18,11 +18,11 @@ version 0.2.0
 	    e.g., upload, delete, etc.
 	        https://github.com/01org/media-service-upnp/issues/36
           - Creator which indicates the creator of the content.
-          - Artists which is an array of all the artists who worked on the
-	    object.
           - CreateClass which identifies the type of objects that can be
 	    created in a given container.
 	        https://github.com/01org/media-service-upnp/issues/45
+	- The Artists property has been added to org.gnome.UPnP.MediaItem2.
+	  Artists is an array of all the artists who worked on the object.
 	- The com.intel.UPnP.MediaDevice interface exposes some additional
 	  properties that inform clients about the optional features supported
 	  by DMSs.  These include:
@@ -32,7 +32,8 @@ version 0.2.0
           - SortCaps and SortExt Caps indicating the sorting capabilities of the
 	    server.
           - SearchCaps indicating the searching capabilities of the server.
-	         https://github.com/01org/media-service-upnp/issues/24
+	  - See https://github.com/01org/media-service-upnp/issues/24 for more
+	    details
 	- Some new methods and properties have been added to
 	  com.intel.UPnP.MediaDevice for ContentSync:
           - The System ID property

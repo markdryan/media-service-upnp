@@ -290,7 +290,7 @@ cancelled.
 GetUploadIDs() -> (au UploadIDs)
 
 GetUploadIDs returns an array containing the IDs of all the outstanding upload
-tasks.  An empty array will be returned if no IDs are in progress on the
+tasks.  An empty array will be returned if no uploads are in progress on the
 current device.  As with GetUploadStatus, the IDs of upload tasks will be
 returned by GetUploadIDs for 30 seconds after the uploads have finished.
 
@@ -304,7 +304,7 @@ Signals:
 
 The com.intel.UPnP.MediaDevice interface also exposes two signals.
 
-ContainerUpdate(ao)
+ContainerUpdate(ao ContainerPaths)
 
 Is generated when the contents of one or more folders maintained by the
 server have changed. This signal contains an array of paths of the server
@@ -721,12 +721,18 @@ below:
 |                 |      |      |  associated with an item                  |
 |---------------------------------------------------------------------------|
 | RefPath         |  o   |  o   | The presence of this property indicates   |
-|                 |      |      | that the item is a reference item that    |
-|                 |      |      | references another item located elsewhere |
-|                 |      |      | in the DMS's directory structure. The     |
-|                 |      |      | value of this property is the path of the |
-|                 |      |      | referenced item.                          |
+|                 |      |      |  that the item is a reference item that   |
+|                 |      |      |  references another item located elsewhere|
+|                 |      |      |  in the DMS's directory structure. The    |
+|                 |      |      |  value of this property is the path of    |
+|                 |      |      |  the referenced item.                     |
 |---------------------------------------------------------------------------|
+| Artists         |  o   |  m   | An array of all the artists who           |
+|                 |      |      |  contributed towards the creation of the  |
+|                 |      |      |  item. The array will be empty if no      |
+|                 |      |      |  artists are associated with the item.    |
+|---------------------------------------------------------------------------|
+
 
 
 Media-service-upnp does not implement the
