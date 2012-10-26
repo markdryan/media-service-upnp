@@ -1,3 +1,6 @@
+version 0.2.1
+	- Added missing soup dependencies to the main Makefile.am.
+
 version 0.2.0
 	- Completed implementation of Upload.  It is now possible to
 	  upload files to remote DMSs, both to specific directories and to
