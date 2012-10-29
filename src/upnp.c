@@ -191,7 +191,7 @@ static void prv_device_chain_end(msu_chain_task_t *chain, gpointer data)
 {
 	msu_device_t *device;
 	gboolean canceled;
-	prv_device_new_ct_t *priv_t = (prv_device_new_ct_t *) data;
+	prv_device_new_ct_t *priv_t = (prv_device_new_ct_t *)data;
 
 	device = msu_chain_task_get_device(chain);
 	canceled = msu_chain_task_is_canceled(chain);
@@ -228,7 +228,7 @@ static void prv_server_available_cb(GUPnPControlPoint *cp,
 	unsigned int i;
 	prv_device_new_ct_t *priv_t;
 
-	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *) proxy);
+	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *)proxy);
 	if (!udn)
 		goto on_error;
 
@@ -315,7 +315,7 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 
 	MSU_LOG_DEBUG("Enter");
 
-	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *) proxy);
+	udn = gupnp_device_info_get_udn((GUPnPDeviceInfo *)proxy);
 	if (!udn)
 		goto on_error;
 
@@ -508,7 +508,7 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_client_t *client,
 				      upnp->server_udn_map);
 	if (!device) {
 		MSU_LOG_WARNING("Cannot locate device for %s",
-			      cb_task_data->root_path);
+				cb_task_data->root_path);
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
@@ -519,8 +519,8 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_client_t *client,
 
 	cb_task_data->filter_mask =
 		msu_props_parse_filter(upnp->filter_map,
-					task->ut.get_children.filter,
-					&upnp_filter);
+				       task->ut.get_children.filter,
+				       &upnp_filter);
 
 	MSU_LOG_DEBUG("Filter Mask 0x%"G_GUINT64_FORMAT"x",
 		      cb_task_data->filter_mask);
@@ -586,7 +586,7 @@ void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_client_t *client,
 				      upnp->server_udn_map);
 	if (!device) {
 		MSU_LOG_WARNING("Cannot locate device for %s",
-			      cb_task_data->root_path);
+				cb_task_data->root_path);
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
@@ -649,7 +649,7 @@ void msu_upnp_get_prop(msu_upnp_t *upnp, msu_client_t *client,
 				      upnp->server_udn_map);
 	if (!device) {
 		MSU_LOG_WARNING("Cannot locate device for %s",
-			      cb_task_data->root_path);
+				cb_task_data->root_path);
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
@@ -708,7 +708,7 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
 				      upnp->server_udn_map);
 	if (!device) {
 		MSU_LOG_WARNING("Cannot locate device for %s",
-			      cb_task_data->root_path);
+				cb_task_data->root_path);
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
@@ -728,7 +728,7 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
 							task->ut.search.query);
 	if (!upnp_query) {
 		MSU_LOG_WARNING("Query string is not valid:%s",
-			      task->ut.search.query);
+				task->ut.search.query);
 
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_QUERY,
 					     "Query string is not valid.");
@@ -833,11 +833,11 @@ static gboolean prv_compute_mime_and_class(msu_task_t *task,
 	if (!g_file_test(task->ut.upload.file_path,
 			 G_FILE_TEST_IS_REGULAR | G_FILE_TEST_EXISTS)) {
 
-		MSU_LOG_WARNING("File %s does not exist or is not"
+		MSU_LOG_WARNING("File %s does not exist or is not"\
 				" a regular file", task->ut.upload.file_path);
 
 		*error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				     "File %s does not exist or is not"
+				     "File %s does not exist or is not"\
 				     " a regular file",
 				     task->ut.upload.file_path);
 		goto on_error;
@@ -848,12 +848,12 @@ static gboolean prv_compute_mime_and_class(msu_task_t *task,
 
 	if (!content_type) {
 
-		MSU_LOG_WARNING("Unable to determine Content Type "
-				"for %s", task->ut.upload.file_path);
+		MSU_LOG_WARNING("Unable to determine Content Type for %s",
+				task->ut.upload.file_path);
 
 		*error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_MIME,
-				     "Unable to determine Content Type "
-				     "for %s", task->ut.upload.file_path);
+				     "Unable to determine Content Type for %s",
+				     task->ut.upload.file_path);
 		goto on_error;
 	}
 
@@ -862,12 +862,12 @@ static gboolean prv_compute_mime_and_class(msu_task_t *task,
 
 	if (!cb_task_data->mime_type) {
 
-		MSU_LOG_WARNING("Unable to determine MIME Type for"
-				" %s", task->ut.upload.file_path);
+		MSU_LOG_WARNING("Unable to determine MIME Type for %s",
+				task->ut.upload.file_path);
 
 		*error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_MIME,
-				     "Unable to determine MIME Type for"
-				     " %s", task->ut.upload.file_path);
+				     "Unable to determine MIME Type for %s",
+				     task->ut.upload.file_path);
 		goto on_error;
 	}
 
@@ -879,12 +879,12 @@ static gboolean prv_compute_mime_and_class(msu_task_t *task,
 		cb_task_data->object_class = "object.item.videoItem";
 	} else {
 
-		MSU_LOG_WARNING("Unsupported MIME Type"
-				" %s", cb_task_data->mime_type);
+		MSU_LOG_WARNING("Unsupported MIME Type %s",
+				cb_task_data->mime_type);
 
 		*error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_MIME,
-				     "Unsupported MIME Type"
-				     " %s", cb_task_data->mime_type);
+				     "Unsupported MIME Type %s",
+				     cb_task_data->mime_type);
 		goto on_error;
 	}
 
@@ -1243,10 +1243,10 @@ void msu_upnp_create_container(msu_upnp_t *upnp, msu_client_t *client,
 		      cb_data->id);
 
 	device = msu_device_from_path(cb_task_data->root_path,
-							upnp->server_udn_map);
+				      upnp->server_udn_map);
 	if (!device) {
 		MSU_LOG_WARNING("Cannot locate device for %s",
-						cb_task_data->root_path);
+				cb_task_data->root_path);
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
@@ -1304,7 +1304,7 @@ void msu_upnp_create_container_in_any(msu_upnp_t *upnp, msu_client_t *client,
 							upnp->server_udn_map);
 	if (!device) {
 		MSU_LOG_WARNING("Cannot locate device for %s",
-						cb_task_data->root_path);
+				cb_task_data->root_path);
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,

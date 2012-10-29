@@ -769,7 +769,7 @@ static void prv_remove_client(const gchar *name)
 
 	pos = 0;
 	while (pos < g_context.tasks->len) {
-		task = (msu_task_t *) g_ptr_array_index(g_context.tasks, pos);
+		task = (msu_task_t *)g_ptr_array_index(g_context.tasks, pos);
 
 		client_name = g_dbus_method_invocation_get_sender(
 							task->invocation);
@@ -863,9 +863,9 @@ static void prv_object_method_call(GDBusConnection *conn,
 {
 	msu_task_t *task;
 
-	if (!strcmp(method, MSU_INTERFACE_DELETE)) {
+	if (!strcmp(method, MSU_INTERFACE_DELETE))
 		task = msu_task_delete_new(invocation, object);
-	} else if (!strcmp(method, MSU_INTERFACE_UPDATE))
+	else if (!strcmp(method, MSU_INTERFACE_UPDATE))
 		task = msu_task_update_new(invocation, object, parameters);
 	else
 		goto finished;
@@ -1178,4 +1178,3 @@ on_error:
 
 	return retval;
 }
-

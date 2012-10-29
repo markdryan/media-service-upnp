@@ -133,7 +133,7 @@ static GKeyFile *prv_msu_settings_load_keyfile(const gchar *filepath)
 	keyfile = g_key_file_new();
 
 	if (!g_key_file_load_from_file(keyfile, filepath, G_KEY_FILE_NONE,
-					NULL)) {
+				       NULL)) {
 		g_key_file_free(keyfile);
 		keyfile = NULL;
 	}
@@ -161,9 +161,9 @@ static int prv_msu_settings_to_log_level(gint *int_list, gsize length)
 	for (i = 0; i < length; ++i) {
 		level = int_list[i];
 
-		if (level > 0 && level < 7)
+		if (level > 0 && level < 7) {
 			log_level_value |= log_level_array[level];
-		else if ((level == 0) || (level == 7) || (level == 8)) {
+		} else if ((level == 0) || (level == 7) || (level == 8)) {
 			log_level_value = log_level_array[level];
 			break;
 		}
@@ -202,9 +202,9 @@ static void prv_msu_settings_read_keys(msu_settings_context_t *settings)
 						MSU_SETTINGS_KEY_NEVER_QUIT,
 						&error);
 
-	if (error == NULL)
+	if (error == NULL) {
 		settings->never_quit = b_val;
-	else {
+	} else {
 		g_error_free(error);
 		error = NULL;
 	}
@@ -213,9 +213,9 @@ static void prv_msu_settings_read_keys(msu_settings_context_t *settings)
 						  MSU_SETTINGS_KEY_LOG_TYPE,
 						  &error);
 
-	if (error == NULL)
+	if (error == NULL) {
 		settings->log_type = prv_msu_settings_to_log_type(int_val);
-	else {
+	} else {
 		g_error_free(error);
 		error = NULL;
 	}
@@ -223,13 +223,13 @@ static void prv_msu_settings_read_keys(msu_settings_context_t *settings)
 	g_key_file_set_list_separator(keyfile, ',');
 
 	int_star = g_key_file_get_integer_list(keyfile, MSU_SETTINGS_GROUP_LOG,
-						   MSU_SETTINGS_KEY_LOG_LEVEL,
-						   &length,
-						   &error);
+					       MSU_SETTINGS_KEY_LOG_LEVEL,
+					       &length,
+					       &error);
 
 	if (error == NULL) {
 		settings->log_level = prv_msu_settings_to_log_level(int_star,
-								     length);
+								    length);
 		g_free(int_star);
 	} else {
 		g_error_free(error);
@@ -291,7 +291,7 @@ static void prv_msu_settings_reload(msu_settings_context_t *settings)
 
 static gboolean prv_msu_settings_monitor_timout_cb(gpointer user_data)
 {
-	msu_settings_context_t *data = (msu_settings_context_t *) user_data;
+	msu_settings_context_t *data = (msu_settings_context_t *)user_data;
 
 	MSU_LOG_INFO("Change in local settings file: Reload");
 
@@ -307,7 +307,7 @@ static void prv_msu_settings_monitor_keyfile_cb(GFileMonitor *monitor,
 						GFileMonitorEvent event_type,
 						gpointer user_data)
 {
-	msu_settings_context_t *data = (msu_settings_context_t *) user_data;
+	msu_settings_context_t *data = (msu_settings_context_t *)user_data;
 
 	switch (event_type) {
 	case G_FILE_MONITOR_EVENT_CHANGED:

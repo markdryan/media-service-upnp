@@ -47,8 +47,8 @@ gchar *msu_search_translate_search_string(GHashTable *filter_map,
 	gchar *root_path;
 	gchar *id;
 
-	reg = g_regex_new("(\\w+)\\s+(=|!=|<|<=|>|>|contains|doesNotContain|"
-			  "derivedfrom|exists)\\s+"
+	reg = g_regex_new("(\\w+)\\s+(=|!=|<|<=|>|>|contains|doesNotContain|"\
+			  "derivedfrom|exists)\\s+"\
 			  "(\"[^\"]*\"|true|false)",
 			  0, 0, NULL);
 	str = g_string_new("");

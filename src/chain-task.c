@@ -63,7 +63,7 @@ static gboolean prv_idle_end_func(gpointer user_data)
 
 static gboolean prv_idle_next_task(gpointer user_data)
 {
-	msu_chain_task_t *chain = (msu_chain_task_t *) user_data;
+	msu_chain_task_t *chain = (msu_chain_task_t *)user_data;
 	GList *head = chain->task_list;
 
 	chain->task_list = g_list_remove_link(chain->task_list, head);
@@ -127,7 +127,7 @@ void msu_chain_task_begin_action_cb(GUPnPServiceProxy *proxy,
 				    GUPnPServiceProxyAction *action,
 				    gpointer user_data)
 {
-	msu_chain_task_t *chain = (msu_chain_task_t *) user_data;
+	msu_chain_task_t *chain = (msu_chain_task_t *)user_data;
 	msu_chain_task_atom_t *current;
 
 	if (chain != NULL) {

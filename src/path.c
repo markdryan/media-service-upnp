@@ -135,7 +135,7 @@ static gchar *prv_id_to_object_name(const gchar *id)
 	return retval;
 }
 
-gchar *msu_path_from_id(const gchar *root_path, const gchar* id)
+gchar *msu_path_from_id(const gchar *root_path, const gchar *id)
 {
 	gchar *coded_id;
 	gchar *path;

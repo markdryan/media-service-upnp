@@ -82,9 +82,10 @@ msu_task_t *msu_task_get_children_new(GDBusMethodInvocation *invocation,
 	task->ut.get_children.containers = containers;
 	task->ut.get_children.items = items;
 
-	g_variant_get(parameters, "(uu@as)", &task->ut.get_children.start,
-					     &task->ut.get_children.count,
-					     &task->ut.get_children.filter);
+	g_variant_get(parameters, "(uu@as)",
+		      &task->ut.get_children.start,
+		      &task->ut.get_children.count,
+		      &task->ut.get_children.filter);
 
 	task->ut.get_children.sort_by = g_strdup("");
 
@@ -104,10 +105,11 @@ msu_task_t *msu_task_get_children_ex_new(GDBusMethodInvocation *invocation,
 	task->ut.get_children.containers = containers;
 	task->ut.get_children.items = items;
 
-	g_variant_get(parameters, "(uu@ass)", &task->ut.get_children.start,
-					      &task->ut.get_children.count,
-					      &task->ut.get_children.filter,
-					      &task->ut.get_children.sort_by);
+	g_variant_get(parameters, "(uu@ass)",
+		      &task->ut.get_children.start,
+		      &task->ut.get_children.count,
+		      &task->ut.get_children.filter,
+		      &task->ut.get_children.sort_by);
 
 	return task;
 }
@@ -184,8 +186,9 @@ msu_task_t *msu_task_get_resource_new(GDBusMethodInvocation *invocation,
 	task = prv_m2spec_task_new(MSU_TASK_GET_RESOURCE, invocation, path,
 				   "(@a{sv})");
 
-	g_variant_get(parameters, "(s@as)", &task->ut.resource.protocol_info,
-					    &task->ut.resource.filter);
+	g_variant_get(parameters, "(s@as)",
+		      &task->ut.resource.protocol_info,
+		      &task->ut.resource.filter);
 
 	return task;
 }
@@ -316,9 +319,9 @@ msu_task_t *msu_task_create_container_new_generic(
 	task = prv_m2spec_task_new(type, invocation, path, "(@o)");
 
 	g_variant_get(parameters, "(ss@as)",
-					&task->ut.create_container.display_name,
-					&task->ut.create_container.type,
-					&task->ut.create_container.child_types);
+		      &task->ut.create_container.display_name,
+		      &task->ut.create_container.type,
+		      &task->ut.create_container.child_types);
 
 	return task;
 }

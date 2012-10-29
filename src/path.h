@@ -29,6 +29,6 @@ gboolean msu_path_get_non_root_id(const gchar *object_path,
 				  const gchar **slash_before_id);
 gboolean msu_path_get_path_and_id(const gchar *object_path, gchar **root_path,
 				  gchar **id, GError **error);
-gchar *msu_path_from_id(const gchar *root_path, const gchar* id);
+gchar *msu_path_from_id(const gchar *root_path, const gchar *id);
 
 #endif

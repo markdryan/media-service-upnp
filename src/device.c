@@ -3331,18 +3331,21 @@ static gchar *prv_get_new_xml_fragment(GUPnPDIDLLiteObject *object,
 	gchar *retval = NULL;
 
 	if (mask & MSU_UPNP_MASK_PROP_DISPLAY_NAME) {
-		gupnp_didl_lite_object_set_title(object,
-			g_variant_get_string(value, NULL));
+		gupnp_didl_lite_object_set_title(
+					object,
+					g_variant_get_string(value, NULL));
 
 		retval = gupnp_didl_lite_object_get_title_xml_string(object);
 	} else if (mask & MSU_UPNP_MASK_PROP_ALBUM) {
-		gupnp_didl_lite_object_set_album(object,
-			g_variant_get_string(value, NULL));
+		gupnp_didl_lite_object_set_album(
+					object,
+					g_variant_get_string(value, NULL));
 
 		retval = gupnp_didl_lite_object_get_album_xml_string(object);
 	} else if (mask & MSU_UPNP_MASK_PROP_DATE) {
-		gupnp_didl_lite_object_set_date(object,
-			g_variant_get_string(value, NULL));
+		gupnp_didl_lite_object_set_date(
+					object,
+					g_variant_get_string(value, NULL));
 
 		retval = gupnp_didl_lite_object_get_date_xml_string(object);
 	} else if (mask & MSU_UPNP_MASK_PROP_TYPE) {
@@ -3352,10 +3355,11 @@ static gchar *prv_get_new_xml_fragment(GUPnPDIDLLiteObject *object,
 		gupnp_didl_lite_object_set_upnp_class(object, upnp_class);
 
 		retval = gupnp_didl_lite_object_get_upnp_class_xml_string(
-			object);
+								object);
 	} else if (mask & MSU_UPNP_MASK_PROP_TRACK_NUMBER) {
-		gupnp_didl_lite_object_set_track_number(object,
-					g_variant_get_int32(value));
+		gupnp_didl_lite_object_set_track_number(
+						object,
+						g_variant_get_int32(value));
 
 		retval = gupnp_didl_lite_object_get_track_number_xml_string(
 			object);
@@ -3437,11 +3441,11 @@ static void prv_get_xml_fragments(GUPnPDIDLLiteParser *parser,
 		}
 
 		if (frag1) {
-			g_string_append(current_str, (const gchar *) frag1);
+			g_string_append(current_str, (const gchar *)frag1);
 			g_free(frag1);
 		}
 
-		g_string_append(new_str, (const gchar *) frag2);
+		g_string_append(new_str, (const gchar *)frag2);
 		g_free(frag2);
 	}
 
@@ -3461,7 +3465,7 @@ static void prv_get_xml_fragments(GUPnPDIDLLiteParser *parser,
 		else
 			first = FALSE;
 
-		g_string_append(current_str, (const gchar *) frag1);
+		g_string_append(current_str, (const gchar *)frag1);
 		g_free(frag1);
 	}
 
@@ -3522,13 +3526,12 @@ static void prv_update_object_browse_cb(GUPnPServiceProxy *proxy,
 					    "Property not defined for object");
 		} else {
 			MSU_LOG_WARNING("Unable to parse results of browse: %s",
-				      upnp_error->message);
+					upnp_error->message);
 
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_OPERATION_FAILED,
-					    "Unable to parse results of "
-					    "browse: %s",
+					    "Unable to parse results of browse: %s",
 					    upnp_error->message);
 		}
 

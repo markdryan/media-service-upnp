@@ -381,10 +381,10 @@ static gchar *prv_compute_upnp_filter(GHashTable *upnp_props)
 	str = g_string_new("");
 	g_hash_table_iter_init(&iter, upnp_props);
 	if (g_hash_table_iter_next(&iter, &key, NULL)) {
-		g_string_append(str, (const gchar *) key);
+		g_string_append(str, (const gchar *)key);
 		while (g_hash_table_iter_next(&iter, &key, NULL)) {
 			g_string_append(str, ",");
-			g_string_append(str, (const gchar *) key);
+			g_string_append(str, (const gchar *)key);
 		}
 	}
 
@@ -596,8 +596,8 @@ static void prv_add_int64_prop(GVariantBuilder *vb, const gchar *key,
 
 static void prv_add_list_dlna_str(gpointer data, gpointer user_data)
 {
-	GVariantBuilder *vb = (GVariantBuilder *) user_data;
-	gchar *cap_str = (gchar *) data;
+	GVariantBuilder *vb = (GVariantBuilder *)user_data;
+	gchar *cap_str = (gchar *)data;
 	gchar *str;
 	int value = 0;
 
@@ -616,7 +616,7 @@ static void prv_add_list_dlna_str(gpointer data, gpointer user_data)
 	prv_add_uint_prop(vb, cap_str, value);
 }
 
-static GVariant *prv_add_list_dlna_prop(GList* list)
+static GVariant *prv_add_list_dlna_prop(GList *list)
 {
 	GVariantBuilder vb;
 
@@ -629,7 +629,7 @@ static GVariant *prv_add_list_dlna_prop(GList* list)
 
 static void prv_add_list_artists_str(gpointer data, gpointer user_data)
 {
-	GVariantBuilder *vb = (GVariantBuilder *) user_data;
+	GVariantBuilder *vb = (GVariantBuilder *)user_data;
 	GUPnPDIDLLiteContributor *contributor = data;
 	const char *str;
 
@@ -706,7 +706,7 @@ void msu_props_add_device(GUPnPDeviceInfo *proxy,
 	g_free(str);
 
 	list = gupnp_device_info_list_dlna_capabilities(proxy);
-	if (list != NULL){
+	if (list != NULL) {
 		dlna_caps = prv_add_list_dlna_prop(list);
 		g_variant_builder_add(vb, "{sv}",
 				      MSU_INTERFACE_PROP_SV_DLNA_CAPABILITIES,
@@ -725,7 +725,8 @@ void msu_props_add_device(GUPnPDeviceInfo *proxy,
 				      device->sort_caps);
 
 	if (device->sort_ext_caps != NULL)
-		g_variant_builder_add(vb, "{sv}",
+		g_variant_builder_add(
+				vb, "{sv}",
 				MSU_INTERFACE_PROP_SV_SORT_EXT_CAPABILITIES,
 				device->sort_ext_caps);
 
@@ -785,7 +786,7 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
 		str = copy;
 	} else if (!strcmp(MSU_INTERFACE_PROP_SV_DLNA_CAPABILITIES, prop)) {
 		list = gupnp_device_info_list_dlna_capabilities(proxy);
-		if (list != NULL){
+		if (list != NULL) {
 			dlna_caps = prv_add_list_dlna_prop(list);
 			g_list_free_full(list, g_free);
 			retval = g_variant_ref_sink(dlna_caps);
@@ -796,7 +797,7 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
 #endif
 		}
 	} else if (!strcmp(MSU_INTERFACE_PROP_SV_SEARCH_CAPABILITIES, prop)) {
-		if (device->search_caps != NULL){
+		if (device->search_caps != NULL) {
 			retval = g_variant_ref(device->search_caps);
 
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
@@ -805,7 +806,7 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
 #endif
 		}
 	} else if (!strcmp(MSU_INTERFACE_PROP_SV_SORT_CAPABILITIES, prop)) {
-		if (device->sort_caps != NULL){
+		if (device->sort_caps != NULL) {
 			retval = g_variant_ref(device->sort_caps);
 
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
@@ -814,7 +815,7 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
 #endif
 		}
 	} else if (!strcmp(MSU_INTERFACE_PROP_SV_SORT_EXT_CAPABILITIES, prop)) {
-		if (device->sort_ext_caps != NULL){
+		if (device->sort_ext_caps != NULL) {
 			retval = g_variant_ref(device->sort_ext_caps);
 
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
@@ -823,7 +824,7 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
 #endif
 		}
 	} else if (!strcmp(MSU_INTERFACE_PROP_SV_FEATURE_LIST, prop)) {
-		if (device->feature_list != NULL){
+		if (device->feature_list != NULL) {
 			retval = g_variant_ref(device->feature_list);
 
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
@@ -833,7 +834,7 @@ GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
 		}
 	}
 
-	if (!retval){
+	if (!retval) {
 		if (str) {
 			MSU_LOG_DEBUG("Prop %s = %s", prop, str);
 
@@ -906,8 +907,10 @@ static GUPnPDIDLLiteResource *prv_get_matching_resource
 			retval = prv_match_resource(res, pi_str_array);
 			if (!retval)
 				g_object_unref(res);
-		} else
+		} else {
 			g_object_unref(res);
+		}
+
 		ptr = ptr->next;
 	}
 
@@ -1389,7 +1392,7 @@ void msu_props_add_item(GVariantBuilder *item_vb,
 		if (str_val != NULL) {
 			path = msu_path_from_id(root_path, str_val);
 			prv_add_path_prop(item_vb, MSU_INTERFACE_PROP_REFPATH,
-					    path);
+					  path);
 			g_free(path);
 		}
 	}
@@ -1714,7 +1717,7 @@ GVariant *msu_props_get_container_prop(const gchar *prop,
 	if (!GUPNP_IS_DIDL_LITE_CONTAINER(object))
 		goto on_error;
 
-	container = (GUPnPDIDLLiteContainer *) object;
+	container = (GUPnPDIDLLiteContainer *)object;
 	if (!strcmp(prop, MSU_INTERFACE_PROP_CHILD_COUNT)) {
 		child_count =
 			gupnp_didl_lite_container_get_child_count(container);
