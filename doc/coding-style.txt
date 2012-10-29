@@ -154,6 +154,26 @@ your changes before submitting patches.
 Do not submit multiple features or bugs fixes in the same patch.  Split your
 changes into separate smaller patches.
 
+Checking files:
+---------------
+
+To check sources and headers files, you can use the script checkpatch.pl,
+provided by the kernel.  You can find it a the location below, depending of your
+kernel version:
+
+/usr/src/linux-headers-X.Y.Z-TT/scripts/checkpatch.pl
+
+You can run it on files with these options:
+
+checkpatch.pl --no-tree -f --strict --show-types --ignore NEW_TYPEDEFS
+
+checkpatch.pl exceptions:
+-------------------------
+
+There is currently 1 checkpatch exceptions
+
+    - Line over 80 chars. Allowed only for error messages.
+
 References
 ----------
 (1) http://www.kernel.org/doc/Documentation/CodingStyle
