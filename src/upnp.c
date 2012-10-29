@@ -522,7 +522,8 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_client_t *client,
 					task->ut.get_children.filter,
 					&upnp_filter);
 
-	MSU_LOG_DEBUG("Filter Mask 0x%x", cb_task_data->filter_mask);
+	MSU_LOG_DEBUG("Filter Mask 0x%"G_GUINT64_FORMAT"x",
+		      cb_task_data->filter_mask);
 
 	sort_by = msu_sort_translate_sort_string(upnp->filter_map,
 						 task->ut.get_children.sort_by);
@@ -720,7 +721,8 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
 		msu_props_parse_filter(upnp->filter_map,
 				       task->ut.search.filter, &upnp_filter);
 
-	MSU_LOG_DEBUG("Filter Mask 0x%x", cb_task_data->filter_mask);
+	MSU_LOG_DEBUG("Filter Mask 0x%"G_GUINT64_FORMAT"x",
+		      cb_task_data->filter_mask);
 
 	upnp_query = msu_search_translate_search_string(upnp->filter_map,
 							task->ut.search.query);
@@ -805,7 +807,8 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_client_t *client,
 		msu_props_parse_filter(upnp->filter_map,
 				       task->ut.resource.filter, &upnp_filter);
 
-	MSU_LOG_DEBUG("Filter Mask 0x%x", cb_task_data->filter_mask);
+	MSU_LOG_DEBUG("Filter Mask 0x%"G_GUINT64_FORMAT"x",
+		      cb_task_data->filter_mask);
 
 	msu_device_get_resource(device, client, task, cb_data, upnp_filter,
 				cancellable);
@@ -1330,7 +1333,7 @@ void msu_upnp_update_object(msu_upnp_t *upnp, msu_client_t *client,
 	msu_async_cb_data_t *cb_data;
 	msu_async_update_t *cb_task_data;
 	msu_device_t *device;
-	guint32 mask;
+	msu_upnp_prop_mask mask;
 	gchar *root_path = NULL;
 	gchar *upnp_filter = NULL;
 	msu_task_update_t *task_data;
@@ -1376,7 +1379,7 @@ void msu_upnp_update_object(msu_upnp_t *upnp, msu_client_t *client,
 	cb_task_data->map = upnp->filter_map;
 
 	MSU_LOG_DEBUG("Filter = %s", upnp_filter);
-	MSU_LOG_DEBUG("Mask = 0x%x", mask);
+	MSU_LOG_DEBUG("Mask = 0x%"G_GUINT64_FORMAT"x", mask);
 
 	if (mask == 0) {
 		MSU_LOG_WARNING("Empty Parameters");

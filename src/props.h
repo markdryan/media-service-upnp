@@ -26,40 +26,43 @@
 #include <libgupnp-av/gupnp-av.h>
 #include "async.h"
 
-enum msu_upnp_prop_mask_ {
-	MSU_UPNP_MASK_PROP_PARENT = 1,
-	MSU_UPNP_MASK_PROP_TYPE = 1 << 1,
-	MSU_UPNP_MASK_PROP_PATH = 1 << 2,
-	MSU_UPNP_MASK_PROP_DISPLAY_NAME = 1 << 3,
-	MSU_UPNP_MASK_PROP_CHILD_COUNT = 1 << 4,
-	MSU_UPNP_MASK_PROP_SEARCHABLE = 1 << 5,
-	MSU_UPNP_MASK_PROP_URLS = 1 << 6,
-	MSU_UPNP_MASK_PROP_MIME_TYPE = 1 << 7,
-	MSU_UPNP_MASK_PROP_ARTIST = 1 << 8,
-	MSU_UPNP_MASK_PROP_ALBUM = 1 << 9,
-	MSU_UPNP_MASK_PROP_DATE = 1 << 10,
-	MSU_UPNP_MASK_PROP_GENRE = 1 << 11,
-	MSU_UPNP_MASK_PROP_DLNA_PROFILE = 1 << 12,
-	MSU_UPNP_MASK_PROP_TRACK_NUMBER = 1 << 13,
-	MSU_UPNP_MASK_PROP_SIZE = 1 << 14,
-	MSU_UPNP_MASK_PROP_DURATION = 1 << 15,
-	MSU_UPNP_MASK_PROP_BITRATE = 1 << 16,
-	MSU_UPNP_MASK_PROP_SAMPLE_RATE = 1 << 17,
-	MSU_UPNP_MASK_PROP_BITS_PER_SAMPLE = 1 << 18,
-	MSU_UPNP_MASK_PROP_WIDTH = 1 << 19,
-	MSU_UPNP_MASK_PROP_HEIGHT = 1 << 20,
-	MSU_UPNP_MASK_PROP_COLOR_DEPTH = 1 << 21,
-	MSU_UPNP_MASK_PROP_ALBUM_ART_URL = 1 << 22,
-	MSU_UPNP_MASK_PROP_RESOURCES = 1 << 23,
-	MSU_UPNP_MASK_PROP_URL = 1 << 24,
-	MSU_UPNP_MASK_PROP_REFPATH = 1 << 25,
-	MSU_UPNP_MASK_PROP_RESTRICTED = 1 << 26,
-	MSU_UPNP_MASK_PROP_DLNA_MANAGED = 1 << 27,
-	MSU_UPNP_MASK_PROP_CREATOR = 1 << 28,
-	MSU_UPNP_MASK_PROP_ARTISTS = 1 << 29,
-	MSU_UPNP_MASK_PROP_CREATE_CLASSES = 1 << 30
-};
-typedef enum msu_upnp_prop_mask_ msu_upnp_prop_mask;
+#define MSU_UPNP_MASK_PROP_PARENT			(1LL << 0)
+#define MSU_UPNP_MASK_PROP_TYPE				(1LL << 1)
+#define MSU_UPNP_MASK_PROP_PATH				(1LL << 2)
+#define MSU_UPNP_MASK_PROP_DISPLAY_NAME			(1LL << 3)
+#define MSU_UPNP_MASK_PROP_CHILD_COUNT			(1LL << 4)
+#define MSU_UPNP_MASK_PROP_SEARCHABLE			(1LL << 5)
+#define MSU_UPNP_MASK_PROP_URLS				(1LL << 6)
+#define MSU_UPNP_MASK_PROP_MIME_TYPE			(1LL << 7)
+#define MSU_UPNP_MASK_PROP_ARTIST			(1LL << 8)
+#define MSU_UPNP_MASK_PROP_ALBUM			(1LL << 9)
+#define MSU_UPNP_MASK_PROP_DATE				(1LL << 10)
+#define MSU_UPNP_MASK_PROP_GENRE			(1LL << 11)
+#define MSU_UPNP_MASK_PROP_DLNA_PROFILE			(1LL << 12)
+#define MSU_UPNP_MASK_PROP_TRACK_NUMBER			(1LL << 13)
+#define MSU_UPNP_MASK_PROP_SIZE				(1LL << 14)
+#define MSU_UPNP_MASK_PROP_DURATION			(1LL << 15)
+#define MSU_UPNP_MASK_PROP_BITRATE			(1LL << 16)
+#define MSU_UPNP_MASK_PROP_SAMPLE_RATE			(1LL << 17)
+#define MSU_UPNP_MASK_PROP_BITS_PER_SAMPLE		(1LL << 18)
+#define MSU_UPNP_MASK_PROP_WIDTH			(1LL << 19)
+#define MSU_UPNP_MASK_PROP_HEIGHT			(1LL << 20)
+#define MSU_UPNP_MASK_PROP_COLOR_DEPTH			(1LL << 21)
+#define MSU_UPNP_MASK_PROP_ALBUM_ART_URL		(1LL << 22)
+#define MSU_UPNP_MASK_PROP_RESOURCES			(1LL << 23)
+#define MSU_UPNP_MASK_PROP_URL				(1LL << 24)
+#define MSU_UPNP_MASK_PROP_REFPATH			(1LL << 25)
+#define MSU_UPNP_MASK_PROP_RESTRICTED			(1LL << 26)
+#define MSU_UPNP_MASK_PROP_DLNA_MANAGED			(1LL << 27)
+#define MSU_UPNP_MASK_PROP_CREATOR			(1LL << 28)
+#define MSU_UPNP_MASK_PROP_ARTISTS			(1LL << 29)
+#define MSU_UPNP_MASK_PROP_CREATE_CLASSES		(1LL << 30)
+#define MSU_UPNP_MASK_PROP_OBJECT_UPDATE_ID		(1LL << 31)
+#define MSU_UPNP_MASK_PROP_UPDATE_COUNT			(1LL << 32)
+#define MSU_UPNP_MASK_PROP_CONTAINER_UPDATE_ID		(1LL << 33)
+#define MSU_UPNP_MASK_PROP_TOTAL_DELETED_CHILD_COUNT	(1LL << 34)
+
+#define MSU_UPNP_MASK_ALL_PROPS 0xffffffffffffffff
 
 typedef struct msu_prop_map_t_ msu_prop_map_t;
 struct msu_prop_map_t_ {
@@ -72,12 +75,14 @@ struct msu_prop_map_t_ {
 
 void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map);
 
-guint32 msu_props_parse_filter(GHashTable *filter_map, GVariant *filter,
-			       gchar **upnp_filter);
+msu_upnp_prop_mask msu_props_parse_filter(GHashTable *filter_map,
+					  GVariant *filter,
+					  gchar **upnp_filter);
 
 gboolean msu_props_parse_update_filter(GHashTable *filter_map,
 				       GVariant *to_add_update,
-				       GVariant *to_delete, guint32 *mask,
+				       GVariant *to_delete,
+				       msu_upnp_prop_mask *mask,
 				       gchar **upnp_filter);
 
 void msu_props_add_device(GUPnPDeviceInfo *proxy,
@@ -92,14 +97,14 @@ gboolean msu_props_add_object(GVariantBuilder *item_vb,
 			      GUPnPDIDLLiteObject *object,
 			      const char *root_path,
 			      const gchar *parent_path,
-			      guint32 filter_mask);
+			      msu_upnp_prop_mask filter_mask);
 
 GVariant *msu_props_get_object_prop(const gchar *prop, const gchar *root_path,
 				    GUPnPDIDLLiteObject *object);
 
 void msu_props_add_container(GVariantBuilder *item_vb,
 			     GUPnPDIDLLiteContainer *object,
-			     guint32 filter_mask,
+			     msu_upnp_prop_mask filter_mask,
 			     gboolean *have_child_count);
 
 void msu_props_add_child_count(GVariantBuilder *item_vb, gint value);
@@ -109,13 +114,13 @@ GVariant *msu_props_get_container_prop(const gchar *prop,
 
 void msu_props_add_resource(GVariantBuilder *item_vb,
 			    GUPnPDIDLLiteObject *object,
-			    guint32 filter_mask,
+			    msu_upnp_prop_mask filter_mask,
 			    const gchar *protocol_info);
 
 void msu_props_add_item(GVariantBuilder *item_vb,
 			GUPnPDIDLLiteObject *object,
 			const gchar *root_path,
-			guint32 filter_mask,
+			msu_upnp_prop_mask filter_mask,
 			const gchar *protocol_info);
 
 GVariant *msu_props_get_item_prop(const gchar *prop, const gchar *root_path,

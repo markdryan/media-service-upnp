@@ -1114,7 +1114,7 @@ static void prv_get_item(GUPnPDIDLLiteParser *parser,
 	if (!GUPNP_IS_DIDL_LITE_CONTAINER(object))
 		msu_props_add_item(cb_task_data->vb, object,
 				   cb_task_data->root_path,
-				   0xffffffff,
+				   MSU_UPNP_MASK_ALL_PROPS,
 				   cb_task_data->protocol_info);
 	else
 		cb_data->error = g_error_new(MSU_ERROR,
@@ -1134,7 +1134,7 @@ static void prv_get_container(GUPnPDIDLLiteParser *parser,
 	if (GUPNP_IS_DIDL_LITE_CONTAINER(object)) {
 		msu_props_add_container(cb_task_data->vb,
 					(GUPnPDIDLLiteContainer *) object,
-					0xffffffff,
+					MSU_UPNP_MASK_ALL_PROPS,
 					&have_child_count);
 		if (!have_child_count)
 			cb_task_data->need_child_count = TRUE;
@@ -1167,7 +1167,7 @@ static void prv_get_object(GUPnPDIDLLiteParser *parser,
 
 	if (!msu_props_add_object(cb_task_data->vb, object,
 				  cb_task_data->root_path,
-				  parent_path, 0xffffffff))
+				  parent_path, MSU_UPNP_MASK_ALL_PROPS))
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_RESULT,
 					     "Unable to retrieve mandatory "
 					     " object properties");
@@ -1189,7 +1189,7 @@ static void prv_get_all(GUPnPDIDLLiteParser *parser,
 			msu_props_add_container(
 				cb_task_data->vb,
 				(GUPnPDIDLLiteContainer *)
-				object, 0xffffffff,
+				object, MSU_UPNP_MASK_ALL_PROPS,
 				&have_child_count);
 			if (!have_child_count)
 				cb_task_data->need_child_count = TRUE;
@@ -1197,7 +1197,7 @@ static void prv_get_all(GUPnPDIDLLiteParser *parser,
 			msu_props_add_item(cb_task_data->vb,
 					   object,
 					   cb_task_data->root_path,
-					   0xffffffff,
+					   MSU_UPNP_MASK_ALL_PROPS,
 					   cb_task_data->protocol_info);
 		}
 	}
@@ -3298,7 +3298,7 @@ static void prv_update_object_update_cb(GUPnPServiceProxy *proxy,
 }
 
 static gchar *prv_get_current_xml_fragment(GUPnPDIDLLiteObject *object,
-					   guint32 mask)
+					   msu_upnp_prop_mask mask)
 {
 	gchar *retval = NULL;
 
@@ -3321,7 +3321,7 @@ static gchar *prv_get_current_xml_fragment(GUPnPDIDLLiteObject *object,
 }
 
 static gchar *prv_get_new_xml_fragment(GUPnPDIDLLiteObject *object,
-				       guint32 mask,
+				       msu_upnp_prop_mask mask,
 				       GVariant *value)
 {
 	GUPnPDIDLLiteContributor *artist;

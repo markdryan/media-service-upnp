@@ -333,6 +333,41 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	g_hash_table_insert(p_map, "upnp:originalTrackNumber",
 			    MSU_INTERFACE_PROP_TRACK_NUMBER);
 
+	/* res@updateCount */
+	prop_t = prv_msu_prop_map_new("res@updateCount",
+				      MSU_UPNP_MASK_PROP_UPDATE_COUNT,
+				      TRUE, TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_UPDATE_COUNT,
+			    prop_t);
+	g_hash_table_insert(p_map, "res@updateCount",
+			    MSU_INTERFACE_PROP_UPDATE_COUNT);
+
+	/* upnp:objectUpdateID */
+	prop_t = prv_msu_prop_map_new("upnp:objectUpdateID",
+				      MSU_UPNP_MASK_PROP_OBJECT_UPDATE_ID,
+				      TRUE, TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_OBJECT_UPDATE_ID, prop_t);
+	g_hash_table_insert(p_map, "upnp:objectUpdateID",
+			    MSU_INTERFACE_PROP_OBJECT_UPDATE_ID);
+
+	/* upnp:containerUpdateID */
+	prop_t = prv_msu_prop_map_new("upnp:containerUpdateID",
+				      MSU_UPNP_MASK_PROP_CONTAINER_UPDATE_ID,
+				      TRUE, TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_CONTAINER_UPDATE_ID,
+			    prop_t);
+	g_hash_table_insert(p_map, "upnp:containerUpdateID",
+			    MSU_INTERFACE_PROP_CONTAINER_UPDATE_ID);
+
+	/* upnp:totalDeletedChildCount */
+	prop_t = prv_msu_prop_map_new("upnp:totalDeletedChildCount",
+				MSU_UPNP_MASK_PROP_TOTAL_DELETED_CHILD_COUNT,
+				TRUE, TRUE, FALSE);
+	g_hash_table_insert(f_map, MSU_INTERFACE_PROP_TOTAL_DELETED_CHILD_COUNT,
+			    prop_t);
+	g_hash_table_insert(p_map, "upnp:totalDeletedChildCount",
+			    MSU_INTERFACE_PROP_TOTAL_DELETED_CHILD_COUNT);
+
 	*filter_map = f_map;
 	*property_map = p_map;
 }
@@ -356,14 +391,15 @@ static gchar *prv_compute_upnp_filter(GHashTable *upnp_props)
 	return g_string_free(str, FALSE);
 }
 
-static guint32 prv_parse_filter_list(GHashTable *filter_map, GVariant *filter,
-				     gchar **upnp_filter)
+static msu_upnp_prop_mask prv_parse_filter_list(GHashTable *filter_map,
+						GVariant *filter,
+						gchar **upnp_filter)
 {
 	GVariantIter viter;
 	const gchar *prop;
 	msu_prop_map_t *prop_map;
 	GHashTable *upnp_props;
-	guint32 mask = 0;
+	msu_upnp_prop_mask mask = 0;
 
 	upnp_props = g_hash_table_new_full(g_str_hash, g_str_equal,
 					   NULL, NULL);
@@ -389,12 +425,13 @@ static guint32 prv_parse_filter_list(GHashTable *filter_map, GVariant *filter,
 	return mask;
 }
 
-guint32 msu_props_parse_filter(GHashTable *filter_map, GVariant *filter,
-			       gchar **upnp_filter)
+msu_upnp_prop_mask msu_props_parse_filter(GHashTable *filter_map,
+					  GVariant *filter,
+					  gchar **upnp_filter)
 {
 	gchar *str;
 	gboolean parse_filter = TRUE;
-	guint32 mask;
+	msu_upnp_prop_mask mask;
 
 	if (g_variant_n_children(filter) == 1) {
 		g_variant_get_child(filter, 0, "&s", &str);
@@ -405,7 +442,7 @@ guint32 msu_props_parse_filter(GHashTable *filter_map, GVariant *filter,
 	if (parse_filter) {
 		mask = prv_parse_filter_list(filter_map, filter, upnp_filter);
 	} else {
-		mask = 0xffffffff;
+		mask = MSU_UPNP_MASK_ALL_PROPS;
 		*upnp_filter = g_strdup("*");
 	}
 
@@ -414,7 +451,8 @@ guint32 msu_props_parse_filter(GHashTable *filter_map, GVariant *filter,
 
 gboolean msu_props_parse_update_filter(GHashTable *filter_map,
 				       GVariant *to_add_update,
-				       GVariant *to_delete, guint32 *mask,
+				       GVariant *to_delete,
+				       msu_upnp_prop_mask *mask,
 				       gchar **upnp_filter)
 {
 	GVariantIter viter;
@@ -882,12 +920,13 @@ static GUPnPDIDLLiteResource *prv_get_matching_resource
 
 static void prv_parse_resources(GVariantBuilder *item_vb,
 				GUPnPDIDLLiteResource *res,
-				guint32 filter_mask)
+				msu_upnp_prop_mask filter_mask)
 {
 	GUPnPProtocolInfo *protocol_info;
 	int int_val;
 	gint64 int64_val;
 	const char *str_val;
+	guint uint_val;
 
 	if (filter_mask & MSU_UPNP_MASK_PROP_SIZE) {
 		int64_val = gupnp_didl_lite_resource_get_size64(res);
@@ -930,6 +969,12 @@ static void prv_parse_resources(GVariantBuilder *item_vb,
 		int_val = (int) gupnp_didl_lite_resource_get_color_depth(res);
 		prv_add_int_prop(item_vb, MSU_INTERFACE_PROP_COLOR_DEPTH,
 				 int_val);
+	}
+
+	if (filter_mask & MSU_UPNP_MASK_PROP_UPDATE_COUNT) {
+		uint_val = gupnp_didl_lite_resource_get_update_count(res);
+		prv_add_uint_prop(item_vb, MSU_INTERFACE_PROP_UPDATE_COUNT,
+				  uint_val);
 	}
 
 	protocol_info = gupnp_didl_lite_resource_get_protocol_info(res);
@@ -1114,7 +1159,7 @@ gboolean msu_props_add_object(GVariantBuilder *item_vb,
 			      GUPnPDIDLLiteObject *object,
 			      const char *root_path,
 			      const gchar *parent_path,
-			      guint32 filter_mask)
+			      msu_upnp_prop_mask filter_mask)
 {
 	gchar *path = NULL;
 	const char *id;
@@ -1125,6 +1170,7 @@ gboolean msu_props_add_object(GVariantBuilder *item_vb,
 	gboolean retval = FALSE;
 	gboolean rest;
 	GUPnPOCMFlags flags;
+	guint uint_val;
 
 	id = gupnp_didl_lite_object_get_id(object);
 	if (!id)
@@ -1170,6 +1216,12 @@ gboolean msu_props_add_object(GVariantBuilder *item_vb,
 				     prv_props_get_dlna_managed_dict(flags));
 	}
 
+	if (filter_mask & MSU_UPNP_MASK_PROP_OBJECT_UPDATE_ID) {
+		uint_val = gupnp_didl_lite_object_get_update_id(object);
+		prv_add_uint_prop(item_vb, MSU_INTERFACE_PROP_OBJECT_UPDATE_ID,
+				  uint_val);
+	}
+
 	retval = TRUE;
 
 on_error:
@@ -1181,11 +1233,12 @@ on_error:
 
 void msu_props_add_container(GVariantBuilder *item_vb,
 			     GUPnPDIDLLiteContainer *object,
-			     guint32 filter_mask,
+			     msu_upnp_prop_mask filter_mask,
 			     gboolean *have_child_count)
 {
 	int child_count;
 	gboolean searchable;
+	guint uint_val;
 
 	*have_child_count = FALSE;
 	if (filter_mask & MSU_UPNP_MASK_PROP_CHILD_COUNT) {
@@ -1208,10 +1261,26 @@ void msu_props_add_container(GVariantBuilder *item_vb,
 		prv_add_variant_prop(item_vb,
 				     MSU_INTERFACE_PROP_CREATE_CLASSES,
 				     prv_compute_create_classes(object));
+
+	if (filter_mask & MSU_UPNP_MASK_PROP_CONTAINER_UPDATE_ID) {
+		uint_val = gupnp_didl_lite_container_get_container_update_id(
+									object);
+		prv_add_uint_prop(item_vb,
+				  MSU_INTERFACE_PROP_CONTAINER_UPDATE_ID,
+				  uint_val);
+	}
+
+	if (filter_mask & MSU_UPNP_MASK_PROP_TOTAL_DELETED_CHILD_COUNT) {
+		uint_val =
+		gupnp_didl_lite_container_get_total_deleted_child_count(object);
+		prv_add_uint_prop(item_vb,
+				  MSU_INTERFACE_PROP_TOTAL_DELETED_CHILD_COUNT,
+				  uint_val);
+	}
 }
 
 static GVariant *prv_compute_resources(GUPnPDIDLLiteObject *object,
-				       guint32 filter_mask)
+				       msu_upnp_prop_mask filter_mask)
 {
 	GUPnPDIDLLiteResource *res = NULL;
 	GList *resources;
@@ -1257,7 +1326,7 @@ static GVariant *prv_compute_resources(GUPnPDIDLLiteObject *object,
 
 static void prv_add_resources(GVariantBuilder *item_vb,
 			      GUPnPDIDLLiteObject *object,
-			      guint32 filter_mask)
+			      msu_upnp_prop_mask filter_mask)
 {
 	GVariant *val;
 
@@ -1269,7 +1338,7 @@ static void prv_add_resources(GVariantBuilder *item_vb,
 void msu_props_add_item(GVariantBuilder *item_vb,
 			GUPnPDIDLLiteObject *object,
 			const gchar *root_path,
-			guint32 filter_mask,
+			msu_upnp_prop_mask filter_mask,
 			const gchar *protocol_info)
 {
 	int track_number;
@@ -1344,7 +1413,7 @@ void msu_props_add_item(GVariantBuilder *item_vb,
 
 void msu_props_add_resource(GVariantBuilder *item_vb,
 			    GUPnPDIDLLiteObject *object,
-			    guint32 filter_mask,
+			    msu_upnp_prop_mask filter_mask,
 			    const gchar *protocol_info)
 {
 	GUPnPDIDLLiteResource *res;
@@ -1616,7 +1685,7 @@ GVariant *msu_props_get_item_prop(const gchar *prop, const gchar *root_path,
 		g_free(path);
 	} else if (!strcmp(prop, MSU_INTERFACE_PROP_RESOURCES)) {
 		retval = g_variant_ref_sink(
-			prv_compute_resources(object, 0xffffffff));
+			prv_compute_resources(object, MSU_UPNP_MASK_ALL_PROPS));
 	} else {
 		res = prv_get_matching_resource(object, protocol_info);
 		if (!res)

@@ -30,12 +30,13 @@
 
 typedef struct msu_async_cb_data_t_ msu_async_cb_data_t;
 typedef struct msu_device_t_ msu_device_t;
+typedef guint64 msu_upnp_prop_mask;
 
 typedef void (*msu_async_cb_t)(msu_async_cb_data_t *cb_data);
 
 typedef struct msu_async_bas_t_ msu_async_bas_t;
 struct msu_async_bas_t_ {
-	guint32 filter_mask;
+	msu_upnp_prop_mask filter_mask;
 	gchar *root_path;
 	GPtrArray *vbs;
 	const gchar *protocol_info;
@@ -57,7 +58,7 @@ struct msu_async_get_all_t_ {
 	GCallback prop_func;
 	GVariantBuilder *vb;
 	gchar *root_path;
-	guint32 filter_mask;
+	msu_upnp_prop_mask filter_mask;
 	const gchar *protocol_info;
 	gboolean need_child_count;
 	gboolean device_object;

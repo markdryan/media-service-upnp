@@ -36,6 +36,7 @@
 #define MSU_INTERFACE_PROP_TYPE "Type"
 #define MSU_INTERFACE_PROP_CREATOR "Creator"
 #define MSU_INTERFACE_PROP_DLNA_MANAGED "DLNAManaged"
+#define MSU_INTERFACE_PROP_OBJECT_UPDATE_ID "ObjectUpdateID"
 
 /* Item Properties */
 #define MSU_INTERFACE_PROP_REFPATH "RefPath"
@@ -52,6 +53,8 @@
 #define MSU_INTERFACE_PROP_SEARCHABLE "Searchable"
 #define MSU_INTERFACE_PROP_CHILD_COUNT "ChildCount"
 #define MSU_INTERFACE_PROP_CREATE_CLASSES "CreateClasses"
+#define MSU_INTERFACE_PROP_CONTAINER_UPDATE_ID "ContainerUpdateID"
+#define MSU_INTERFACE_PROP_TOTAL_DELETED_CHILD_COUNT "TotalDeletedChildCount"
 
 /* Device Properties */
 #define MSU_INTERFACE_PROP_LOCATION "Location"
@@ -86,6 +89,7 @@
 #define MSU_INTERFACE_PROP_COLOR_DEPTH "ColorDepth"
 #define MSU_INTERFACE_PROP_URLS "URLs"
 #define MSU_INTERFACE_PROP_URL "URL"
+#define MSU_INTERFACE_PROP_UPDATE_COUNT "UpdateCount"
 
 /* Evented State Variable Properties */
 #define MSU_INTERFACE_PROP_ESV_SYSTEM_UPDATE_ID "SystemUpdateID"
