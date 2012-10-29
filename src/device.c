@@ -1036,8 +1036,8 @@ static void prv_get_children_cb(GUPnPServiceProxy *proxy,
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
-					     "Unable to parse results of "
-					     "browse: %s", upnp_error->message);
+					     "Unable to parse results of browse: %s",
+					     upnp_error->message);
 		goto on_error;
 	}
 
@@ -1127,8 +1127,7 @@ static void prv_get_item(GUPnPDIDLLiteParser *parser,
 	else
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_UNKNOWN_INTERFACE,
-					     "Interface not supported on "
-					     "container.");
+					     "Interface not supported on container.");
 }
 
 static void prv_get_container(GUPnPDIDLLiteParser *parser,
@@ -1149,8 +1148,7 @@ static void prv_get_container(GUPnPDIDLLiteParser *parser,
 	} else {
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_UNKNOWN_INTERFACE,
-					     "Interface not supported on "
-					     "item.");
+					     "Interface not supported on item.");
 	}
 }
 
@@ -1177,8 +1175,7 @@ static void prv_get_object(GUPnPDIDLLiteParser *parser,
 				  cb_task_data->root_path,
 				  parent_path, MSU_UPNP_MASK_ALL_PROPS))
 		cb_data->error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_RESULT,
-					     "Unable to retrieve mandatory "
-					     " object properties");
+					     "Unable to retrieve mandatory object properties");
 	g_free(path);
 }
 
@@ -1653,8 +1650,7 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_OPERATION_FAILED,
-					    "Unable to parse results of "
-					    "browse: %s",
+					    "Unable to parse results of browse: %s",
 					    upnp_error->message);
 		}
 		goto on_error;
@@ -1795,8 +1791,7 @@ void msu_device_get_all_props(msu_device_t *device,  msu_client_t *client,
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_UNKNOWN_INTERFACE,
-					    "Interface is only valid on "
-					    "root objects.");
+					    "Interface is only valid on root objects.");
 
 			(void) g_idle_add(msu_async_complete_task, cb_data);
 		}
@@ -2043,8 +2038,7 @@ static void prv_get_ms2spec_prop_cb(GUPnPServiceProxy *proxy,
 			cb_data->error =
 				g_error_new(MSU_ERROR,
 					    MSU_ERROR_OPERATION_FAILED,
-					    "Unable to parse results of "
-					    "browse: %s",
+					    "Unable to parse results of browse: %s",
 					    upnp_error->message);
 		}
 		goto on_error;
@@ -2382,8 +2376,8 @@ static void prv_search_cb(GUPnPServiceProxy *proxy,
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
-					     "Unable to parse results of "
-					     "search: %s", upnp_error->message);
+					     "Unable to parse results of search: %s",
+					     upnp_error->message);
 		goto on_error;
 	}
 
@@ -2893,8 +2887,7 @@ static void prv_create_container_cb(GUPnPServiceProxy *proxy,
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
-					     "Create Object operation "
-					     " failed: %s",
+					     "Create Object operation failed: %s",
 					     upnp_error->message);
 		goto on_error;
 	}
@@ -2975,8 +2968,7 @@ static void prv_create_object_cb(GUPnPServiceProxy *proxy,
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
-					     "Unable to parse results of "
-					     "CreateObject: %s",
+					     "Unable to parse results of CreateObject: %s",
 					     upnp_error->message);
 		goto on_error;
 	}
@@ -3030,8 +3022,9 @@ static void prv_create_object_cb(GUPnPServiceProxy *proxy,
 on_error:
 
 	if (cb_data->error && delete_needed) {
-		MSU_LOG_WARNING("Upload failed deleting created object "\
-				"with id %s", object_id);
+		MSU_LOG_WARNING(
+			"Upload failed deleting created object with id %s",
+			object_id);
 
 		cb_data->action = gupnp_service_proxy_begin_action(
 			cb_data->proxy, "DestroyObject", prv_upload_delete_cb,
@@ -3205,8 +3198,7 @@ static void prv_destroy_object_cb(GUPnPServiceProxy *proxy,
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
-					     "Destroy Object operation "
-					     " failed: %s",
+					     "Destroy Object operation failed: %s",
 					     upnp_error->message);
 	}
 

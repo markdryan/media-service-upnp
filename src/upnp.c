@@ -353,15 +353,15 @@ static void prv_server_unavailable_cb(GUPnPControlPoint *cp,
 		(void) g_ptr_array_remove_index(device->contexts, i);
 		if (device->contexts->len == 0) {
 			if (!under_construction) {
-				MSU_LOG_DEBUG("Last Context lost. " \
-					       "Delete device");
+				MSU_LOG_DEBUG(
+					"Last Context lost. Delete device");
 
 				upnp->lost_server(device->path,
 						  upnp->user_data);
 				g_hash_table_remove(upnp->server_udn_map, udn);
 			} else {
-				MSU_LOG_WARNING("Device under construction. "\
-						 "Cancelling");
+				MSU_LOG_WARNING(
+					"Device under construction. Cancelling");
 
 				msu_chain_task_cancel(priv_t->chain);
 				prv_device_chain_end(priv_t->chain, priv_t);
@@ -512,8 +512,7 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_client_t *client,
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
@@ -590,8 +589,7 @@ void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_client_t *client,
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
@@ -653,8 +651,7 @@ void msu_upnp_get_prop(msu_upnp_t *upnp, msu_client_t *client,
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
@@ -712,8 +709,7 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
@@ -798,8 +794,7 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_client_t *client,
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
@@ -833,12 +828,12 @@ static gboolean prv_compute_mime_and_class(msu_task_t *task,
 	if (!g_file_test(task->ut.upload.file_path,
 			 G_FILE_TEST_IS_REGULAR | G_FILE_TEST_EXISTS)) {
 
-		MSU_LOG_WARNING("File %s does not exist or is not"\
-				" a regular file", task->ut.upload.file_path);
+		MSU_LOG_WARNING(
+			"File %s does not exist or is not a regular file",
+			task->ut.upload.file_path);
 
 		*error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				     "File %s does not exist or is not"\
-				     " a regular file",
+				     "File %s does not exist or is not a regular file",
 				     task->ut.upload.file_path);
 		goto on_error;
 	}
@@ -927,8 +922,7 @@ void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_client_t *client,
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
@@ -937,8 +931,7 @@ void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_client_t *client,
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
-				    "UploadToAnyContainer must be executed "
-				    " on a root path");
+				    "UploadToAnyContainer must be executed on a root path");
 		goto on_error;
 	}
 
@@ -987,8 +980,7 @@ void msu_upnp_upload(msu_upnp_t *upnp, msu_client_t *client, msu_task_t *task,
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
@@ -1032,8 +1024,7 @@ void msu_upnp_get_upload_status(msu_upnp_t *upnp, msu_task_t *task)
 				root_path);
 
 		error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
@@ -1041,8 +1032,7 @@ void msu_upnp_get_upload_status(msu_upnp_t *upnp, msu_task_t *task)
 		MSU_LOG_WARNING("Bad path %s", task->path);
 
 		error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
-				    "GetUploadStatus must be executed "
-				    " on a root path");
+				    "GetUploadStatus must be executed on a root path");
 		goto on_error;
 	}
 
@@ -1086,8 +1076,7 @@ void msu_upnp_get_upload_ids(msu_upnp_t *upnp, msu_task_t *task)
 				root_path);
 
 		error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
@@ -1095,8 +1084,7 @@ void msu_upnp_get_upload_ids(msu_upnp_t *upnp, msu_task_t *task)
 		MSU_LOG_WARNING("Bad path %s", task->path);
 
 		error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
-				    "GetUploadIDs must be executed "
-				    " on a root path");
+				    "GetUploadIDs must be executed on a root path");
 		goto on_error;
 	}
 
@@ -1140,8 +1128,7 @@ void msu_upnp_cancel_upload(msu_upnp_t *upnp, msu_task_t *task)
 				root_path);
 
 		error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
@@ -1149,8 +1136,7 @@ void msu_upnp_cancel_upload(msu_upnp_t *upnp, msu_task_t *task)
 		MSU_LOG_WARNING("Bad path %s", task->path);
 
 		error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
-				    "CancelUpload must be executed "
-				    " on a root path");
+				    "CancelUpload must be executed on a root path");
 		goto on_error;
 	}
 
@@ -1201,8 +1187,7 @@ void msu_upnp_delete_object(msu_upnp_t *upnp, msu_client_t *client,
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
@@ -1250,8 +1235,7 @@ void msu_upnp_create_container(msu_upnp_t *upnp, msu_client_t *client,
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
@@ -1295,8 +1279,7 @@ void msu_upnp_create_container_in_any(msu_upnp_t *upnp, msu_client_t *client,
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
-				    "CreateContainerInAnyContainer must be "
-				    "executed on a root path");
+				    "CreateContainerInAnyContainer must be executed on a root path");
 		goto on_error;
 	}
 
@@ -1308,8 +1291,7 @@ void msu_upnp_create_container_in_any(msu_upnp_t *upnp, msu_client_t *client,
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
+				    "Cannot locate device corresponding to the specified path");
 		goto on_error;
 	}
 
