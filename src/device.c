@@ -145,6 +145,8 @@ static void prv_msu_context_delete(gpointer context)
 						MSU_CONTAINER_UPDATE_VAR,
 						prv_container_update_cb,
 						ctx->device);
+			gupnp_service_proxy_set_subscribed(ctx->service_proxy,
+							   FALSE);
 		}
 
 		if (ctx->device_proxy)
