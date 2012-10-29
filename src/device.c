@@ -40,8 +40,8 @@
 #define MSU_UPLOAD_STATUS_ERROR "ERROR"
 #define MSU_UPLOAD_STATUS_COMPLETED "COMPLETED"
 
-typedef gboolean (*msu_device_count_cb_t)(msu_async_cb_data_t *cb_data,
-					  gint count);
+typedef gboolean(*msu_device_count_cb_t)(msu_async_cb_data_t *cb_data,
+					 gint count);
 
 typedef struct msu_device_count_data_t_ msu_device_count_data_t;
 struct msu_device_count_data_t_ {
@@ -137,11 +137,13 @@ static void prv_msu_context_delete(gpointer context)
 			(void) g_source_remove(ctx->timeout_id);
 
 		if (ctx->subscribed) {
-			gupnp_service_proxy_remove_notify(ctx->service_proxy,
+			gupnp_service_proxy_remove_notify(
+						ctx->service_proxy,
 						MSU_SYSTEM_UPDATE_VAR,
 						prv_system_update_cb,
 						ctx->device);
-			gupnp_service_proxy_remove_notify(ctx->service_proxy,
+			gupnp_service_proxy_remove_notify(
+						ctx->service_proxy,
 						MSU_CONTAINER_UPDATE_VAR,
 						prv_container_update_cb,
 						ctx->device);
@@ -174,7 +176,7 @@ static void prv_msu_context_new(const gchar *ip_address,
 	ctx->device = device;
 	g_object_ref(proxy);
 	ctx->service_proxy = (GUPnPServiceProxy *)
-		gupnp_device_info_get_service((GUPnPDeviceInfo *) proxy,
+		gupnp_device_info_get_service((GUPnPDeviceInfo *)proxy,
 					      service_type);
 	ctx->subscribed = FALSE;
 	ctx->timeout_id = 0;
@@ -247,16 +249,17 @@ static void prv_container_update_cb(GUPnPServiceProxy *proxy,
 
 	g_variant_builder_init(&array, G_VARIANT_TYPE("ao"));
 	prv_build_container_update_array(device->path,
-					g_value_get_string(value),
-					&array);
+					 g_value_get_string(value),
+					 &array);
 
 	(void) g_dbus_connection_emit_signal(device->connection,
-			NULL,
-			device->path,
-			MSU_INTERFACE_MEDIA_DEVICE,
-			MSU_INTERFACE_CONTAINER_UPDATE,
-			g_variant_new("(@ao)", g_variant_builder_end(&array)),
-			NULL);
+					     NULL,
+					     device->path,
+					     MSU_INTERFACE_MEDIA_DEVICE,
+					     MSU_INTERFACE_CONTAINER_UPDATE,
+					     g_variant_new("(@ao)",
+					     g_variant_builder_end(&array)),
+					     NULL);
 }
 
 static void prv_system_update_cb(GUPnPServiceProxy *proxy,
@@ -308,8 +311,9 @@ static void prv_subscription_lost_cb(GUPnPServiceProxy *proxy,
 
 	if (!context->timeout_id) {
 		gupnp_service_proxy_set_subscribed(context->service_proxy,
-									TRUE);
-		context->timeout_id = g_timeout_add_seconds(10,
+						   TRUE);
+		context->timeout_id = g_timeout_add_seconds(
+						10,
 						prv_re_enable_subscription,
 						context);
 	} else {
@@ -338,27 +342,27 @@ void msu_device_subscribe_to_contents_change(msu_device_t *device)
 		      context->ip_address);
 
 	gupnp_service_proxy_add_notify(context->service_proxy,
-				MSU_SYSTEM_UPDATE_VAR,
-				G_TYPE_UINT,
-				prv_system_update_cb,
-				device);
+				       MSU_SYSTEM_UPDATE_VAR,
+				       G_TYPE_UINT,
+				       prv_system_update_cb,
+				       device);
 
 	gupnp_service_proxy_add_notify(context->service_proxy,
-				MSU_CONTAINER_UPDATE_VAR,
-				G_TYPE_STRING,
-				prv_container_update_cb,
-				device);
+				       MSU_CONTAINER_UPDATE_VAR,
+				       G_TYPE_STRING,
+				       prv_container_update_cb,
+				       device);
 
 	context->subscribed = TRUE;
 	gupnp_service_proxy_set_subscribed(context->service_proxy, TRUE);
 
 	g_signal_connect(context->service_proxy,
-				"subscription-lost",
-				G_CALLBACK(prv_subscription_lost_cb),
-				context);
+			 "subscription-lost",
+			 G_CALLBACK(prv_subscription_lost_cb),
+			 context);
 }
 
-static void prv_feature_list_add_feature(gchar* root_path,
+static void prv_feature_list_add_feature(gchar *root_path,
 					 GUPnPFeature *feature,
 					 GVariantBuilder *vb)
 {
@@ -419,7 +423,7 @@ static void prv_get_feature_list_analyze(msu_device_t *device, gchar *result)
 	item = list;
 
 	while (item != NULL) {
-		feature = (GUPnPFeature *) item->data;
+		feature = (GUPnPFeature *)item->data;
 		prv_feature_list_add_feature(device->path, feature, &vb);
 		g_object_unref(feature);
 		item = g_list_next(item);
@@ -447,7 +451,7 @@ static void prv_get_feature_list_cb(GUPnPServiceProxy *proxy,
 {
 	gchar *result = NULL;
 	GError *error = NULL;
-	prv_new_device_ct_t *priv_t = (prv_new_device_ct_t *) user_data;
+	prv_new_device_ct_t *priv_t = (prv_new_device_ct_t *)user_data;
 
 	if (!gupnp_service_proxy_end_action(proxy, action, &error,
 					    "FeatureList", G_TYPE_STRING,
@@ -512,7 +516,7 @@ static void prv_get_sort_ext_capabilities_analyze(msu_device_t *device,
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
 	props = g_variant_print(device->sort_ext_caps, FALSE);
 	MSU_LOG_DEBUG("%s = %s", MSU_INTERFACE_PROP_SV_SORT_EXT_CAPABILITIES,
-				 props);
+		      props);
 	g_free(props);
 #endif
 }
@@ -523,7 +527,7 @@ static void prv_get_sort_ext_capabilities_cb(GUPnPServiceProxy *proxy,
 {
 	gchar *result = NULL;
 	GError *error = NULL;
-	prv_new_device_ct_t *priv_t = (prv_new_device_ct_t *) user_data;
+	prv_new_device_ct_t *priv_t = (prv_new_device_ct_t *)user_data;
 
 	if (!gupnp_service_proxy_end_action(proxy, action, &error,
 					    "SortExtensionCaps",
@@ -603,7 +607,7 @@ static void prv_get_sort_capabilities_cb(GUPnPServiceProxy *proxy,
 {
 	gchar *result = NULL;
 	GError *error = NULL;
-	prv_new_device_ct_t *priv_t = (prv_new_device_ct_t *) user_data;
+	prv_new_device_ct_t *priv_t = (prv_new_device_ct_t *)user_data;
 
 	if (!gupnp_service_proxy_end_action(proxy, action, &error, "SortCaps",
 					    G_TYPE_STRING, &result, NULL)) {
@@ -648,7 +652,7 @@ static void prv_get_search_capabilities_cb(GUPnPServiceProxy *proxy,
 {
 	gchar *result = NULL;
 	GError *error = NULL;
-	prv_new_device_ct_t *priv_t = (prv_new_device_ct_t *) user_data;
+	prv_new_device_ct_t *priv_t = (prv_new_device_ct_t *)user_data;
 
 	if (!gupnp_service_proxy_end_action(proxy, action, &error, "SearchCaps",
 					    G_TYPE_STRING, &result, NULL)) {
@@ -710,7 +714,7 @@ static GUPnPServiceProxyAction *prv_declare(msu_chain_task_t *chain,
 
 	device = msu_chain_task_get_device(chain);
 
-	priv_t = (prv_new_device_ct_t *) msu_chain_task_get_user_data(chain);
+	priv_t = (prv_new_device_ct_t *)msu_chain_task_get_user_data(chain);
 
 	flags = G_DBUS_SUBTREE_FLAGS_DISPATCH_TO_UNENUMERATED_NODES;
 	id =  g_dbus_connection_register_subtree(priv_t->connection,
@@ -722,16 +726,20 @@ static GUPnPServiceProxyAction *prv_declare(msu_chain_task_t *chain,
 	if (id) {
 		device->id = id;
 
-		device->uploads = g_hash_table_new_full(g_int_hash, g_int_equal,
+		device->uploads = g_hash_table_new_full(
+						g_int_hash,
+						g_int_equal,
 						g_free,
 						prv_msu_device_upload_delete);
 		device->upload_jobs =
-			g_hash_table_new_full(g_int_hash, g_int_equal,
+			g_hash_table_new_full(g_int_hash,
+					      g_int_equal,
 					      g_free,
 					      prv_msu_upload_job_delete);
 
-	} else
-		MSU_LOG_ERROR("g_dbus_connection_register_subtree FAILED");
+	} else {
+		MSU_LOG_WARNING("g_dbus_connection_register_subtree FAILED");
+	}
 
 	*failed = (!id);
 
@@ -882,7 +890,7 @@ static void prv_found_child(GUPnPDIDLLiteParser *parser,
 
 	if (GUPNP_IS_DIDL_LITE_CONTAINER(object)) {
 		msu_props_add_container(builder->vb,
-					(GUPnPDIDLLiteContainer *) object,
+					(GUPnPDIDLLiteContainer *)object,
 					cb_task_data->filter_mask,
 					&have_child_count);
 
@@ -1002,7 +1010,7 @@ static void prv_get_children_cb(GUPnPServiceProxy *proxy,
 					    "Result", G_TYPE_STRING,
 					    &result, NULL)) {
 		MSU_LOG_WARNING("Browse operation failed: %s",
-			      upnp_error->message);
+				upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
@@ -1021,10 +1029,10 @@ static void prv_get_children_cb(GUPnPServiceProxy *proxy,
 	cb_task_data->vbs = g_ptr_array_new_with_free_func(
 		prv_msu_device_object_builder_delete);
 
-	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)
-		&& upnp_error->code != GUPNP_XML_ERROR_EMPTY_NODE) {
+	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error) &&
+	    upnp_error->code != GUPNP_XML_ERROR_EMPTY_NODE) {
 		MSU_LOG_WARNING("Unable to parse results of browse: %s",
-			      upnp_error->message);
+				upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
@@ -1133,7 +1141,7 @@ static void prv_get_container(GUPnPDIDLLiteParser *parser,
 
 	if (GUPNP_IS_DIDL_LITE_CONTAINER(object)) {
 		msu_props_add_container(cb_task_data->vb,
-					(GUPnPDIDLLiteContainer *) object,
+					(GUPnPDIDLLiteContainer *)object,
 					MSU_UPNP_MASK_ALL_PROPS,
 					&have_child_count);
 		if (!have_child_count)
@@ -1234,14 +1242,15 @@ static void prv_system_update_id_for_prop_cb(GUPnPServiceProxy *proxy,
 					    "Id", G_TYPE_UINT,
 					    &id,
 					    NULL)) {
-		MSU_LOG_ERROR("Unable to retrieve ServiceUpdateID: %s %s",
-			       g_quark_to_string(upnp_error->domain),
-			       upnp_error->message);
-
-		cb_data->error = g_error_new(MSU_ERROR,
-				MSU_ERROR_OPERATION_FAILED,
-				"Unable to retrieve ServiceUpdateID: %s",
+		MSU_LOG_WARNING("Unable to retrieve ServiceUpdateID: %s %s",
+				g_quark_to_string(upnp_error->domain),
 				upnp_error->message);
+
+		cb_data->error = g_error_new(
+				   MSU_ERROR,
+				   MSU_ERROR_OPERATION_FAILED,
+				   "Unable to retrieve ServiceUpdateID: %s",
+				   upnp_error->message);
 
 		goto on_complete;
 	}
@@ -1288,8 +1297,8 @@ static void prv_get_system_update_id_for_prop(GUPnPServiceProxy *proxy,
 
 	cb_data->cancel_id =
 	g_cancellable_connect(cancellable,
-				      G_CALLBACK(msu_async_task_cancelled),
-				      cb_data, NULL);
+			      G_CALLBACK(msu_async_task_cancelled),
+			      cb_data, NULL);
 	cb_data->cancellable = cancellable;
 
 on_complete:
@@ -1312,14 +1321,14 @@ static void prv_system_update_id_for_props_cb(GUPnPServiceProxy *proxy,
 					    "Id", G_TYPE_UINT,
 					    &id,
 					    NULL)) {
-		MSU_LOG_ERROR("Unable to retrieve ServiceUpdateID: %s %s",
-			       g_quark_to_string(upnp_error->domain),
-			       upnp_error->message);
+		MSU_LOG_WARNING("Unable to retrieve ServiceUpdateID: %s %s",
+				g_quark_to_string(upnp_error->domain),
+				upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
-				MSU_ERROR_OPERATION_FAILED,
-				"Unable to retrieve ServiceUpdateID: %s",
-				upnp_error->message);
+				   MSU_ERROR_OPERATION_FAILED,
+				   "Unable to retrieve ServiceUpdateID: %s",
+				   upnp_error->message);
 
 		goto on_complete;
 	}
@@ -1381,8 +1390,8 @@ static void prv_get_system_update_id_for_props(GUPnPServiceProxy *proxy,
 
 	cb_data->cancel_id =
 	g_cancellable_connect(cancellable,
-				      G_CALLBACK(msu_async_task_cancelled),
-				      cb_data, NULL);
+			      G_CALLBACK(msu_async_task_cancelled),
+			      cb_data, NULL);
 	cb_data->cancellable = cancellable;
 
 on_complete:
@@ -1401,7 +1410,7 @@ static int prv_get_media_server_version(msu_device_t *device)
 							context->device_proxy);
 
 	if (strncmp(device_type, MEDIA_SERVER_DEVICE_TYPE,
-					sizeof(MEDIA_SERVER_DEVICE_TYPE) - 1))
+		    sizeof(MEDIA_SERVER_DEVICE_TYPE) - 1))
 		goto on_error;
 
 	version = device_type + sizeof(MEDIA_SERVER_DEVICE_TYPE) - 1;
@@ -1427,9 +1436,9 @@ static void prv_service_reset_for_prop_cb(GUPnPServiceProxy *proxy,
 					    "ResetToken", G_TYPE_STRING,
 					    &token,
 					    NULL)) {
-		MSU_LOG_ERROR("Unable to retrieve ServiceResetToken: %s %s",
+		MSU_LOG_WARNING("Unable to retrieve ServiceResetToken: %s %s",
 				g_quark_to_string(upnp_error->domain),
-				 upnp_error->message);
+				upnp_error->message);
 
 
 		cb_data->error = g_error_new(MSU_ERROR,
@@ -1506,9 +1515,9 @@ static void prv_service_reset_for_props_cb(GUPnPServiceProxy *proxy,
 					    "ResetToken", G_TYPE_STRING,
 					    &token,
 					    NULL)) {
-		MSU_LOG_ERROR("Unable to retrieve ServiceResetToken: %s %s",
-			      g_quark_to_string(upnp_error->domain),
-			      upnp_error->message);
+		MSU_LOG_WARNING("Unable to retrieve ServiceResetToken: %s %s",
+				g_quark_to_string(upnp_error->domain),
+				upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
@@ -1613,7 +1622,7 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 					    "Result", G_TYPE_STRING,
 					    &result, NULL)) {
 		MSU_LOG_WARNING("Browse operation failed: %s",
-			      upnp_error->message);
+				upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
@@ -1639,7 +1648,7 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 					    "Property not defined for object");
 		} else {
 			MSU_LOG_WARNING("Unable to parse results of browse: %s",
-				      upnp_error->message);
+					upnp_error->message);
 
 			cb_data->error =
 				g_error_new(MSU_ERROR,
@@ -1658,13 +1667,14 @@ static void prv_get_all_ms2spec_props_cb(GUPnPServiceProxy *proxy,
 		MSU_LOG_DEBUG("Need Child Count");
 
 		prv_get_child_count(cb_data, prv_get_all_child_count_cb,
-			cb_data->id);
+				    cb_data->id);
 
 		goto no_complete;
 	} else if (cb_data->task->type == MSU_TASK_GET_ALL_PROPS &&
 						cb_task_data->device_object) {
 		prv_get_system_update_id_for_props(proxy, cb_task_data->device,
-						cb_data->cancellable, cb_data);
+						   cb_data->cancellable,
+						   cb_data);
 
 		goto no_complete;
 	} else {
@@ -1700,15 +1710,17 @@ static void prv_get_all_ms2spec_props(msu_device_context_t *context,
 
 	MSU_LOG_DEBUG("Enter called");
 
-	if (!strcmp(MSU_INTERFACE_MEDIA_CONTAINER, task_data->interface_name))
+	if (!strcmp(MSU_INTERFACE_MEDIA_CONTAINER, task_data->interface_name)) {
 		cb_task_data->prop_func = G_CALLBACK(prv_get_container);
-	else if (!strcmp(MSU_INTERFACE_MEDIA_ITEM, task_data->interface_name))
+	} else if (!strcmp(MSU_INTERFACE_MEDIA_ITEM,
+		   task_data->interface_name)) {
 		cb_task_data->prop_func = G_CALLBACK(prv_get_item);
-	else if (!strcmp(MSU_INTERFACE_MEDIA_OBJECT, task_data->interface_name))
+	} else if (!strcmp(MSU_INTERFACE_MEDIA_OBJECT,
+		   task_data->interface_name)) {
 		cb_task_data->prop_func = G_CALLBACK(prv_get_object);
-	else  if (!strcmp("", task_data->interface_name))
+	} else  if (!strcmp("", task_data->interface_name)) {
 		cb_task_data->prop_func = G_CALLBACK(prv_get_all);
-	else {
+	} else {
 		MSU_LOG_WARNING("Interface is unknown.");
 
 		cb_data->error =
@@ -1770,7 +1782,7 @@ void msu_device_get_all_props(msu_device_t *device,  msu_client_t *client,
 	if (!strcmp(task_data->interface_name, MSU_INTERFACE_MEDIA_DEVICE)) {
 		if (root_object) {
 			msu_props_add_device(
-				(GUPnPDeviceInfo *) context->device_proxy,
+				(GUPnPDeviceInfo *)context->device_proxy,
 				device,
 				cb_task_data->vb);
 
@@ -1795,7 +1807,7 @@ void msu_device_get_all_props(msu_device_t *device,  msu_client_t *client,
 	} else {
 		if (root_object)
 			msu_props_add_device(
-				(GUPnPDeviceInfo *) context->device_proxy,
+				(GUPnPDeviceInfo *)context->device_proxy,
 				device,
 				cb_task_data->vb);
 
@@ -1921,7 +1933,7 @@ static void prv_count_children_cb(GUPnPServiceProxy *proxy,
 					    &count,
 					    NULL)) {
 		MSU_LOG_WARNING("Browse operation failed: %s",
-			      upnp_error->message);
+				upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
@@ -2000,7 +2012,7 @@ static void prv_get_ms2spec_prop_cb(GUPnPServiceProxy *proxy,
 					    "Result", G_TYPE_STRING,
 					    &result, NULL)) {
 		MSU_LOG_WARNING("Browse operation failed: %s",
-			      upnp_error->message);
+				upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
@@ -2026,7 +2038,7 @@ static void prv_get_ms2spec_prop_cb(GUPnPServiceProxy *proxy,
 					    "Property not defined for object");
 		} else {
 			MSU_LOG_WARNING("Unable to parse results of browse: %s",
-				      upnp_error->message);
+					upnp_error->message);
 
 			cb_data->error =
 				g_error_new(MSU_ERROR,
@@ -2108,7 +2120,7 @@ static void prv_get_ms2spec_prop(msu_device_context_t *context,
 		cb_task_data->prop_func = G_CALLBACK(prv_get_all_property);
 	} else {
 		MSU_LOG_WARNING("Interface is unknown.%s",
-			      task_data->interface_name);
+				task_data->interface_name);
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_UNKNOWN_INTERFACE,
@@ -2166,14 +2178,16 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 
 	if (!strcmp(task_data->interface_name, MSU_INTERFACE_MEDIA_DEVICE)) {
 		if (root_object) {
-			if (!strcmp(task_data->prop_name,
+			if (!strcmp(
+				task_data->prop_name,
 				MSU_INTERFACE_PROP_ESV_SYSTEM_UPDATE_ID)) {
 				prv_get_system_update_id_for_prop(
 							context->service_proxy,
 							device,
 							cancellable,
 							cb_data);
-			} else if (!strcmp(task_data->prop_name,
+			} else if (!strcmp(
+				  task_data->prop_name,
 				  MSU_INTERFACE_PROP_ESV_SERVICE_RESET_TOKEN)) {
 				prv_get_sr_token_for_prop(
 							context->service_proxy,
@@ -2212,7 +2226,8 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 				     cancellable, cb_data);
 	} else {
 		if (root_object) {
-			if (!strcmp(task_data->prop_name,
+			if (!strcmp(
+				task_data->prop_name,
 				MSU_INTERFACE_PROP_ESV_SYSTEM_UPDATE_ID)) {
 				prv_get_system_update_id_for_prop(
 							context->service_proxy,
@@ -2220,7 +2235,8 @@ void msu_device_get_prop(msu_device_t *device, msu_client_t *client,
 							cancellable,
 							cb_data);
 				complete = TRUE;
-			} else if (!strcmp(task_data->prop_name,
+			} else if (!strcmp(
+				  task_data->prop_name,
 				  MSU_INTERFACE_PROP_ESV_SERVICE_RESET_TOKEN)) {
 				prv_get_sr_token_for_prop(
 							context->service_proxy,
@@ -2285,7 +2301,7 @@ static void prv_found_target(GUPnPDIDLLiteParser *parser,
 
 	if (GUPNP_IS_DIDL_LITE_CONTAINER(object)) {
 		msu_props_add_container(builder->vb,
-					(GUPnPDIDLLiteContainer *) object,
+					(GUPnPDIDLLiteContainer *)object,
 					cb_task_data->filter_mask,
 					&have_child_count);
 
@@ -2340,7 +2356,7 @@ static void prv_search_cb(GUPnPServiceProxy *proxy,
 					    NULL)) {
 
 		MSU_LOG_WARNING("Search operation failed %s",
-			      upnp_error->message);
+				upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
@@ -2359,10 +2375,10 @@ static void prv_search_cb(GUPnPServiceProxy *proxy,
 
 	MSU_LOG_DEBUG("Server Search result: %s", result);
 
-	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)
-		&& upnp_error->code != GUPNP_XML_ERROR_EMPTY_NODE) {
+	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error) &&
+	    upnp_error->code != GUPNP_XML_ERROR_EMPTY_NODE) {
 		MSU_LOG_WARNING("Unable to parse results of search: %s",
-			      upnp_error->message);
+				upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
@@ -2510,7 +2526,8 @@ static gchar *prv_create_new_container_didl(const gchar *parent_id,
 	container = GUPNP_DIDL_LITE_CONTAINER(item);
 
 	gupnp_didl_lite_object_set_id(item, "");
-	gupnp_didl_lite_object_set_title(item,
+	gupnp_didl_lite_object_set_title(
+					item,
 					task->ut.create_container.display_name);
 	gupnp_didl_lite_object_set_parent_id(item, parent_id);
 	actual_type = msu_props_media_spec_to_upnp_class(
@@ -2645,7 +2662,7 @@ static gboolean prv_remove_update_job(gpointer user_data)
 				    &upload_job->upload_id);
 
 		MSU_LOG_DEBUG("Removing Upload Object: %d",
-			upload_job->upload_id);
+			      upload_job->upload_id);
 	}
 
 	upload_job->remove_idle = 0;
@@ -2871,8 +2888,8 @@ static void prv_create_container_cb(GUPnPServiceProxy *proxy,
 					    "Result", G_TYPE_STRING,
 					    &result,
 					    NULL)) {
-		MSU_LOG_ERROR("Create Object operation failed: %s",
-							upnp_error->message);
+		MSU_LOG_WARNING("Create Object operation failed: %s",
+				upnp_error->message);
 
 		cb_data->error = g_error_new(MSU_ERROR,
 					     MSU_ERROR_OPERATION_FAILED,
@@ -2950,8 +2967,8 @@ static void prv_create_object_cb(GUPnPServiceProxy *proxy,
 
 	MSU_LOG_DEBUG("Create Object Result: %s", result);
 
-	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error)
-		&& upnp_error->code != GUPNP_XML_ERROR_EMPTY_NODE) {
+	if (!gupnp_didl_lite_parser_parse_didl(parser, result, &upnp_error) &&
+	    upnp_error->code != GUPNP_XML_ERROR_EMPTY_NODE) {
 
 		MSU_LOG_WARNING("Unable to parse results of CreateObject: %s",
 				upnp_error->message);
@@ -3013,7 +3030,7 @@ static void prv_create_object_cb(GUPnPServiceProxy *proxy,
 on_error:
 
 	if (cb_data->error && delete_needed) {
-		MSU_LOG_WARNING("Upload failed deleting created object "
+		MSU_LOG_WARNING("Upload failed deleting created object "\
 				"with id %s", object_id);
 
 		cb_data->action = gupnp_service_proxy_begin_action(
@@ -3131,7 +3148,7 @@ void msu_device_get_upload_ids(msu_device_t *device, msu_task_t *task)
 
 	g_hash_table_iter_init(&iter, device->uploads);
 	while (g_hash_table_iter_next(&iter, &key, NULL))
-		g_variant_builder_add(&vb, "u", (guint32) (*((gint *) key)));
+		g_variant_builder_add(&vb, "u", (guint32) (*((gint *)key)));
 
 	task->result = g_variant_ref_sink(g_variant_builder_end(&vb));
 
