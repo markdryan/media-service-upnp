@@ -162,6 +162,9 @@ class Device(Container):
     def cancel_upload(self, id):
         self.__deviceIF.CancelUpload(id)
 
+    def cancel(self):
+        return self.__deviceIF.Cancel()
+
 class UPNP(object):
 
     def __init__(self):

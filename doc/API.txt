@@ -237,7 +237,7 @@ is emitted when this property changes.
 Methods:
 ---------
 
-The com.intel.UPnP.MediaDevice interface currently exposes five methods:
+The com.intel.UPnP.MediaDevice interface currently exposes six methods:
 
 UploadToAnyContainer(s DisplayName, s FilePath) -> (u UploadId, o ObjectPath)
 
@@ -298,6 +298,11 @@ CancelUpload(u UploadId) -> void
 
 Cancels the upload identified by UploadId.  This function has no effect if the
 upload has already completed, i.e., its status is set to COMPLETED.
+
+Cancel() -> void
+
+Cancels all requests a client has outstanding on that server.
+
 
 Signals:
 ---------

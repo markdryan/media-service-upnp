@@ -348,6 +348,8 @@ static const gchar g_msu_server_introspection[] =
 	"      <arg type='o' name='"MSU_INTERFACE_PATH"'"
 	"           direction='out'/>"
 	"    </method>"
+	"    <method name='"MSU_INTERFACE_CANCEL"'>"
+	"    </method>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_LOCATION"'"
 	"       access='read'/>"
 	"    <property type='s' name='"MSU_INTERFACE_PROP_UDN"'"
@@ -1023,6 +1025,8 @@ static void prv_device_method_call(GDBusConnection *conn,
 	msu_task_t *task;
 	const gchar *device_id = NULL;
 	GError* error = NULL;
+	const gchar *client_name;
+	const msu_task_queue_key_t *queue_id;
 
 	device_id = prv_get_device_id(object, &error);
 	if (!device_id) {
@@ -1052,6 +1056,15 @@ static void prv_device_method_call(GDBusConnection *conn,
 		task = msu_task_cancel_upload_new(invocation, object,
 						  parameters);
 		prv_add_task(task, device_id);
+	} else if (!strcmp(method, MSU_INTERFACE_CANCEL)) {
+		client_name = g_dbus_method_invocation_get_sender(invocation);
+
+		queue_id = msu_task_processor_lookup_queue(g_context.processor,
+							client_name, device_id);
+		if (queue_id)
+			msu_task_processor_cancel_queue(queue_id);
+
+		g_dbus_method_invocation_return_value(invocation, NULL);
 	}
 
 finished:

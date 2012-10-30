@@ -57,7 +57,7 @@ const msu_task_queue_key_t *msu_task_processor_lookup_queue(
 					const msu_task_processor_t *processor,
 					const gchar *source,
 					const gchar *sink);
-void msu_task_processor_cancel_queue(msu_task_queue_key_t *queue_id);
+void msu_task_processor_cancel_queue(const msu_task_queue_key_t *queue_id);
 void msu_task_processor_remove_queues_for_source(
 						msu_task_processor_t *processor,
 						const gchar *source);

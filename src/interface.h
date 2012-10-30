@@ -167,5 +167,7 @@
 #define MSU_INTERFACE_UPLOAD_UPDATE "UploadUpdate"
 #define MSU_INTERFACE_TO_ADD_UPDATE "ToAddUpdate"
 #define MSU_INTERFACE_TO_DELETE "ToDelete"
+#define MSU_INTERFACE_CANCEL "Cancel"
+
 #endif
 

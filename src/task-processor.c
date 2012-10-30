@@ -231,7 +231,7 @@ void msu_task_processor_set_quitting(msu_task_processor_t *processor)
 		g_idle_add(processor->on_quit_cb, NULL);
 }
 
-void msu_task_processor_cancel_queue(msu_task_queue_key_t *queue_id)
+void msu_task_processor_cancel_queue(const msu_task_queue_key_t *queue_id)
 {
 	msu_task_queue_t *queue;
 
