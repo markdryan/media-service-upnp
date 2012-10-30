@@ -1,3 +1,15 @@
+version 0.3.0
+	- Implemented the Update method which allows server side object
+	  meta data to be added, updated and deleted.
+
+	        https://github.com/01org/media-service-upnp/pull/98
+
+	- Unsubscribe to service notifications when a context is lost.  This is
+	  necessary to fix a bug reported by the UPnP test tool.
+
+	- Fixed a few problems with the API.txt file.
+
+
 version 0.2.1
 	- Added missing soup dependencies to the main Makefile.am.
 
