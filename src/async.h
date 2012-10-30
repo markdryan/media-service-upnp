@@ -77,6 +77,13 @@ struct msu_async_create_container_t_ {
 	gchar *root_path;
 };
 
+typedef struct msu_async_update_t_ msu_async_update_t;
+struct msu_async_update_t_ {
+	gchar *current_tag_value;
+	gchar *new_tag_value;
+	GHashTable *map;
+};
+
 struct msu_async_cb_data_t_ {
 	msu_task_type_t type;
 	msu_task_t *task;
@@ -94,6 +101,7 @@ struct msu_async_cb_data_t_ {
 		msu_async_get_all_t get_all;
 		msu_async_upload_t upload;
 		msu_async_create_container_t create_container;
+		msu_async_update_t update;
 	} ut;
 };
 

@@ -323,17 +323,17 @@ msu_task_t *msu_task_create_container_new_generic(
 	return task;
 }
 
-msu_task_t *msu_task_update_ex_new(GDBusMethodInvocation *invocation,
-				   const gchar *path, GVariant *parameters)
+msu_task_t *msu_task_update_new(GDBusMethodInvocation *invocation,
+				const gchar *path, GVariant *parameters)
 {
 	msu_task_t *task;
 
-	task = prv_m2spec_task_new(MSU_TASK_UPDATE_EX_OBJECT, invocation,
-				   path, NULL);
+	task = prv_m2spec_task_new(MSU_TASK_UPDATE_OBJECT, invocation, path,
+				   NULL);
 
 	g_variant_get(parameters, "(@a{sv}@as)",
-		      &task->ut.update_ex.to_add_update,
-		      &task->ut.update_ex.to_delete);
+		      &task->ut.update.to_add_update,
+		      &task->ut.update.to_delete);
 
 	return task;
 }
@@ -379,13 +379,11 @@ static void prv_msu_task_delete(msu_task_t *task)
 		g_free(task->ut.create_container.type);
 		g_variant_unref(task->ut.create_container.child_types);
 		break;
-	case MSU_TASK_UPDATE_EX_OBJECT:
-		if (task->ut.update_ex.to_add_update)
-			g_variant_unref(task->ut.update_ex.to_add_update);
-		if (task->ut.update_ex.to_delete)
-			g_variant_unref(task->ut.update_ex.to_delete);
-		g_free(task->ut.update_ex.current_tag_value);
-		g_free(task->ut.update_ex.new_tag_value);
+	case MSU_TASK_UPDATE_OBJECT:
+		if (task->ut.update.to_add_update)
+			g_variant_unref(task->ut.update.to_add_update);
+		if (task->ut.update.to_delete)
+			g_variant_unref(task->ut.update.to_delete);
 		break;
 	default:
 		break;

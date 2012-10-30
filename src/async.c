@@ -63,6 +63,10 @@ void msu_async_cb_data_delete(msu_async_cb_data_t *cb_data)
 		case MSU_TASK_CREATE_CONTAINER:
 			g_free(cb_data->ut.create_container.root_path);
 			break;
+		case MSU_TASK_UPDATE_OBJECT:
+			g_free(cb_data->ut.update.current_tag_value);
+			g_free(cb_data->ut.update.new_tag_value);
+			break;
 		default:
 			break;
 		}

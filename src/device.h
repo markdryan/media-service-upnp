@@ -113,10 +113,10 @@ void msu_device_create_container(msu_device_t *device, msu_client_t *client,
 				 const gchar *parent_id,
 				 msu_async_cb_data_t *cb_data,
 				 GCancellable *cancellable);
-void msu_device_update_ex_object(msu_device_t *device, msu_client_t *client,
-				 msu_task_t *task,
-				 msu_async_cb_data_t *cb_data,
-				 const gchar *upnp_filter,
-				 GCancellable *cancellable);
+void msu_device_update_object(msu_device_t *device, msu_client_t *client,
+			      msu_task_t *task,
+			      msu_async_cb_data_t *cb_data,
+			      const gchar *upnp_filter,
+			      GCancellable *cancellable);
 
 #endif

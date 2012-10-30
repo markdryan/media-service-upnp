@@ -337,6 +337,25 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map)
 	*property_map = p_map;
 }
 
+static gchar *prv_compute_upnp_filter(GHashTable *upnp_props)
+{
+	gpointer key;
+	GString *str;
+	GHashTableIter iter;
+
+	str = g_string_new("");
+	g_hash_table_iter_init(&iter, upnp_props);
+	if (g_hash_table_iter_next(&iter, &key, NULL)) {
+		g_string_append(str, (const gchar *) key);
+		while (g_hash_table_iter_next(&iter, &key, NULL)) {
+			g_string_append(str, ",");
+			g_string_append(str, (const gchar *) key);
+		}
+	}
+
+	return g_string_free(str, FALSE);
+}
+
 static guint32 prv_parse_filter_list(GHashTable *filter_map, GVariant *filter,
 				     gchar **upnp_filter)
 {
@@ -344,10 +363,7 @@ static guint32 prv_parse_filter_list(GHashTable *filter_map, GVariant *filter,
 	const gchar *prop;
 	msu_prop_map_t *prop_map;
 	GHashTable *upnp_props;
-	GHashTableIter iter;
 	guint32 mask = 0;
-	gpointer key;
-	GString *str;
 
 	upnp_props = g_hash_table_new_full(g_str_hash, g_str_equal,
 					   NULL, NULL);
@@ -367,16 +383,7 @@ static guint32 prv_parse_filter_list(GHashTable *filter_map, GVariant *filter,
 				    (gpointer) prop_map->upnp_prop_name, NULL);
 	}
 
-	str = g_string_new("");
-	g_hash_table_iter_init(&iter, upnp_props);
-	if (g_hash_table_iter_next(&iter, &key, NULL)) {
-		g_string_append(str, (const gchar *) key);
-		while (g_hash_table_iter_next(&iter, &key, NULL)) {
-			g_string_append(str, ",");
-			g_string_append(str, (const gchar *) key);
-		}
-	}
-	*upnp_filter = g_string_free(str, FALSE);
+	*upnp_filter = prv_compute_upnp_filter(upnp_props);
 	g_hash_table_unref(upnp_props);
 
 	return mask;
@@ -403,6 +410,73 @@ guint32 msu_props_parse_filter(GHashTable *filter_map, GVariant *filter,
 	}
 
 	return mask;
+}
+
+gboolean msu_props_parse_update_filter(GHashTable *filter_map,
+				       GVariant *to_add_update,
+				       GVariant *to_delete, guint32 *mask,
+				       gchar **upnp_filter)
+{
+	GVariantIter viter;
+	const gchar *prop;
+	GVariant *value;
+	msu_prop_map_t *prop_map;
+	GHashTable *upnp_props;
+	gboolean retval = FALSE;
+
+	*mask = 0;
+
+	upnp_props = g_hash_table_new_full(g_str_hash, g_str_equal,
+					   NULL, NULL);
+
+	(void) g_variant_iter_init(&viter, to_add_update);
+
+	while (g_variant_iter_next(&viter, "{&sv}", &prop, &value)) {
+		MSU_LOG_DEBUG("to_add_update = %s", prop);
+
+		prop_map = g_hash_table_lookup(filter_map, prop);
+
+		if ((!prop_map) || (!prop_map->updateable))
+			goto on_error;
+
+		*mask |= prop_map->type;
+
+		if (!prop_map->filter)
+			continue;
+
+		g_hash_table_insert(upnp_props,
+				    (gpointer) prop_map->upnp_prop_name, NULL);
+	}
+
+	(void) g_variant_iter_init(&viter, to_delete);
+
+	while (g_variant_iter_next(&viter, "&s", &prop)) {
+		MSU_LOG_DEBUG("to_delete = %s", prop);
+
+		prop_map = g_hash_table_lookup(filter_map, prop);
+
+		if ((!prop_map) || (!prop_map->updateable) ||
+		    (*mask & prop_map->type) != 0)
+			goto on_error;
+
+		*mask |= prop_map->type;
+
+		if (!prop_map->filter)
+			continue;
+
+		g_hash_table_insert(upnp_props,
+				    (gpointer) prop_map->upnp_prop_name, NULL);
+	}
+
+	*upnp_filter = prv_compute_upnp_filter(upnp_props);
+
+	retval = TRUE;
+
+on_error:
+
+	g_hash_table_unref(upnp_props);
+
+	return retval;
 }
 
 static void prv_add_string_prop(GVariantBuilder *vb, const gchar *key,

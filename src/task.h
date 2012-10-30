@@ -44,7 +44,7 @@ enum msu_task_type_t_ {
 	MSU_TASK_DELETE_OBJECT,
 	MSU_TASK_CREATE_CONTAINER,
 	MSU_TASK_CREATE_CONTAINER_IN_ANY,
-	MSU_TASK_UPDATE_EX_OBJECT
+	MSU_TASK_UPDATE_OBJECT
 };
 typedef enum msu_task_type_t_ msu_task_type_t;
 
@@ -115,14 +115,10 @@ struct msu_task_create_container_t_ {
 	GVariant *child_types;
 };
 
-typedef struct msu_task_update_ex_t_ msu_task_update_ex_t;
-struct msu_task_update_ex_t_ {
+typedef struct msu_task_update_t_ msu_task_update_t;
+struct msu_task_update_t_ {
 	GVariant *to_add_update;
 	GVariant *to_delete;
-	guint32 mask;
-	gchar *current_tag_value;
-	gchar *new_tag_value;
-	GHashTable *map;
 };
 
 typedef struct msu_task_t_ msu_task_t;
@@ -145,7 +141,7 @@ struct msu_task_t_ {
 		msu_task_upload_t upload;
 		msu_task_upload_action_t upload_action;
 		msu_task_create_container_t create_container;
-		msu_task_update_ex_t update_ex;
+		msu_task_update_t update;
 	} ut;
 };
 
@@ -192,7 +188,7 @@ msu_task_t *msu_task_create_container_new_generic(
 					msu_task_type_t type,
 					const gchar *path,
 					GVariant *parameters);
-msu_task_t *msu_task_update_ex_new(GDBusMethodInvocation *invocation,
+msu_task_t *msu_task_update_new(GDBusMethodInvocation *invocation,
 				   const gchar *path, GVariant *parameters);
 void msu_task_complete_and_delete(msu_task_t *task);
 void msu_task_fail_and_delete(msu_task_t *task, GError *error);

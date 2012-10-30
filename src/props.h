@@ -75,6 +75,11 @@ void msu_prop_maps_new(GHashTable **property_map, GHashTable **filter_map);
 guint32 msu_props_parse_filter(GHashTable *filter_map, GVariant *filter,
 			       gchar **upnp_filter);
 
+gboolean msu_props_parse_update_filter(GHashTable *filter_map,
+				       GVariant *to_add_update,
+				       GVariant *to_delete, guint32 *mask,
+				       gchar **upnp_filter);
+
 void msu_props_add_device(GUPnPDeviceInfo *proxy,
 			  msu_device_t *device,
 			  GVariantBuilder *vb);
