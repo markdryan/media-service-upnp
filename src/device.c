@@ -3266,9 +3266,9 @@ void msu_device_create_container(msu_device_t *device, msu_client_t *client,
 	MSU_LOG_DEBUG("Exit");
 }
 
-static void prv_update_ex_object_update_cb(GUPnPServiceProxy *proxy,
-				  GUPnPServiceProxyAction *action,
-				  gpointer user_data)
+static void prv_update_object_update_cb(GUPnPServiceProxy *proxy,
+					GUPnPServiceProxyAction *action,
+					gpointer user_data)
 {
 	GError *upnp_error = NULL;
 	msu_async_cb_data_t *cb_data = user_data;
@@ -3537,7 +3537,7 @@ static void prv_update_object_browse_cb(GUPnPServiceProxy *proxy,
 
 	cb_data->action = gupnp_service_proxy_begin_action(
 		cb_data->proxy, "UpdateObject",
-		prv_update_ex_object_update_cb, cb_data,
+		prv_update_object_update_cb, cb_data,
 		"ObjectID", G_TYPE_STRING, cb_data->id,
 		"CurrentTagValue", G_TYPE_STRING,
 		cb_task_data->current_tag_value,
