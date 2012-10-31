@@ -837,7 +837,7 @@ static const gchar *prv_get_device_id(const gchar *object, GError **error)
 	device = msu_device_from_path(root_path,
 				msu_upnp_get_server_udn_map(g_context.upnp));
 
-	if (!device ) {
+	if (!device) {
 		MSU_LOG_WARNING("Cannot locate device for %s", root_path);
 
 		*error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
@@ -866,7 +866,7 @@ static void prv_object_method_call(GDBusConnection *conn,
 {
 	msu_task_t *task;
 	const gchar *device_id;
-	GError* error = NULL;
+	GError *error = NULL;
 
 	device_id = prv_get_device_id(object, &error);
 	if (!device_id) {
@@ -899,7 +899,7 @@ static void prv_item_method_call(GDBusConnection *conn,
 {
 	msu_task_t *task;
 	const gchar *device_id = NULL;
-	GError* error = NULL;
+	GError *error = NULL;
 
 	device_id = prv_get_device_id(object, &error);
 	if (!device_id) {
@@ -932,7 +932,7 @@ static void prv_con_method_call(GDBusConnection *conn,
 {
 	msu_task_t *task;
 	const gchar *device_id = NULL;
-	GError* error = NULL;
+	GError *error = NULL;
 
 	device_id = prv_get_device_id(object, &error);
 	if (!device_id) {
@@ -993,7 +993,7 @@ static void prv_props_method_call(GDBusConnection *conn,
 {
 	msu_task_t *task;
 	const gchar *device_id = NULL;
-	GError* error = NULL;
+	GError *error = NULL;
 
 	device_id = prv_get_device_id(object, &error);
 	if (!device_id) {
@@ -1026,7 +1026,7 @@ static void prv_device_method_call(GDBusConnection *conn,
 {
 	msu_task_t *task;
 	const gchar *device_id = NULL;
-	GError* error = NULL;
+	GError *error = NULL;
 	const gchar *client_name;
 	const msu_task_queue_key_t *queue_id;
 
@@ -1050,7 +1050,7 @@ static void prv_device_method_call(GDBusConnection *conn,
 	} else if (!strcmp(method, MSU_INTERFACE_GET_UPLOAD_STATUS)) {
 		task = msu_task_get_upload_status_new(invocation, object,
 						      parameters);
-		prv_add_task(task,device_id);
+		prv_add_task(task, device_id);
 	} else if (!strcmp(method, MSU_INTERFACE_GET_UPLOAD_IDS)) {
 		task = msu_task_get_upload_ids_new(invocation, object);
 		prv_add_task(task, device_id);

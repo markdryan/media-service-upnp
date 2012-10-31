@@ -65,7 +65,8 @@ void msu_task_processor_remove_queues_for_sink(msu_task_processor_t *processor,
 					       const gchar *sink);
 
 void msu_task_queue_start(const msu_task_queue_key_t *queue_id);
-void msu_task_queue_add_task(const msu_task_queue_key_t *queue_id, msu_task_atom_t *task);
+void msu_task_queue_add_task(const msu_task_queue_key_t *queue_id,
+			     msu_task_atom_t *task);
 void msu_task_queue_task_completed(const msu_task_queue_key_t *queue_id);
 
 #endif /* MSU_TASK_PROCESSOR_H__ */
