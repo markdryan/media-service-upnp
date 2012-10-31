@@ -837,8 +837,6 @@ static const gchar *prv_get_device_id(const gchar *object, GError **error)
 	device = msu_device_from_path(root_path,
 				msu_upnp_get_server_udn_map(g_context.upnp));
 
-	g_free(root_path);
-
 	if (!device ) {
 		MSU_LOG_WARNING("Cannot locate device for %s", root_path);
 
@@ -848,9 +846,13 @@ static const gchar *prv_get_device_id(const gchar *object, GError **error)
 		goto on_error;
 	}
 
+	g_free(root_path);
+
 	return device->path;
 
 on_error:
+
+	g_free(root_path);
 
 	return NULL;
 }
