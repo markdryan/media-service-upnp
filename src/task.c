@@ -428,8 +428,10 @@ void msu_task_fail(msu_task_t *task, GError *error)
 	if (!task)
 		goto finished;
 
-	if (task->invocation)
+	if (task->invocation) {
 		g_dbus_method_invocation_return_gerror(task->invocation, error);
+		task->invocation = NULL;
+	}
 
 finished:
 
@@ -447,6 +449,7 @@ void msu_task_cancel(msu_task_t *task)
 		error = g_error_new(MSU_ERROR, MSU_ERROR_CANCELLED,
 				    "Operation cancelled.");
 		g_dbus_method_invocation_return_gerror(task->invocation, error);
+		task->invocation = NULL;
 		g_error_free(error);
 	}
 

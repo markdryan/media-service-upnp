@@ -223,12 +223,16 @@ static void prv_cancel_all_queues(msu_task_processor_t *processor)
 
 void msu_task_processor_set_quitting(msu_task_processor_t *processor)
 {
+	MSU_LOG_DEBUG("Enter");
+
 	processor->quitting = TRUE;
 
 	if (processor->running_tasks > 0)
 		prv_cancel_all_queues(processor);
 	else
 		g_idle_add(processor->on_quit_cb, NULL);
+
+	MSU_LOG_DEBUG("Exit");
 }
 
 void msu_task_processor_cancel_queue(const msu_task_queue_key_t *queue_id)
@@ -355,10 +359,14 @@ void msu_task_queue_start(const msu_task_queue_key_t *queue_id)
 	queue = g_hash_table_lookup(queue_id->processor->task_queues,
 				    queue_id);
 
+	if (queue->defer_remove)
+		goto exit;
+
 	if (!queue->cancellable && !queue->idle_id)
 		queue->idle_id = g_idle_add(prv_task_queue_process_task,
 					    (gpointer)queue_id);
 
+exit:
 	MSU_LOG_DEBUG("Exit");
 }
 
@@ -376,12 +384,16 @@ void msu_task_queue_add_task(const msu_task_queue_key_t *queue_id,
 	task->queue_id = queue_id;
 	g_ptr_array_add(queue->tasks, task);
 
+	if (queue->defer_remove)
+		goto exit;
+
 	if (queue->flags & MSU_TASK_QUEUE_FLAG_AUTO_START) {
 		if (!queue->cancellable && !queue->idle_id)
 			queue->idle_id = g_idle_add(prv_task_queue_process_task,
 						    (gpointer)queue_id);
 	}
 
+exit:
 	MSU_LOG_DEBUG("Exit");
 }
 
