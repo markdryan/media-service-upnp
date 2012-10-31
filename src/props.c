@@ -1524,6 +1524,7 @@ GVariant *msu_props_get_object_prop(const gchar *prop, const gchar *root_path,
 	gboolean rest;
 	GVariant *retval = NULL;
 	GUPnPOCMFlags dlna_managed;
+	guint uint_val;
 
 	if (!strcmp(prop, MSU_INTERFACE_PROP_PARENT)) {
 		id = gupnp_didl_lite_object_get_parent_id(object);
@@ -1592,6 +1593,12 @@ GVariant *msu_props_get_object_prop(const gchar *prop, const gchar *root_path,
 
 		retval = g_variant_ref_sink(
 				prv_props_get_dlna_managed_dict(dlna_managed));
+	} else if (!strcmp(prop, MSU_INTERFACE_PROP_OBJECT_UPDATE_ID)) {
+		uint_val = gupnp_didl_lite_object_get_update_id(object);
+
+		MSU_LOG_DEBUG("Prop %s = %u", prop, uint_val);
+
+		retval = g_variant_ref_sink(g_variant_new_uint32(uint_val));
 	}
 
 on_error:
@@ -1711,6 +1718,7 @@ GVariant *msu_props_get_container_prop(const gchar *prop,
 	gboolean searchable;
 	GUPnPDIDLLiteContainer *container;
 	GVariant *retval = NULL;
+	guint uint_val;
 #if MSU_LOG_LEVEL & MSU_LOG_LEVEL_DEBUG
 	gchar *create_classes;
 #endif
@@ -1744,6 +1752,22 @@ GVariant *msu_props_get_container_prop(const gchar *prop,
 		MSU_LOG_DEBUG("Prop %s = %s", prop, create_classes);
 		g_free(create_classes);
 #endif
+	} else if (!strcmp(prop, MSU_INTERFACE_PROP_CONTAINER_UPDATE_ID)) {
+		uint_val = gupnp_didl_lite_container_get_container_update_id(
+								container);
+
+		MSU_LOG_DEBUG("Prop %s = %u", prop, uint_val);
+
+		retval = g_variant_ref_sink(g_variant_new_uint32(uint_val));
+	} else if (!strcmp(prop,
+				MSU_INTERFACE_PROP_TOTAL_DELETED_CHILD_COUNT)) {
+		uint_val =
+			gupnp_didl_lite_container_get_total_deleted_child_count(
+								container);
+
+		MSU_LOG_DEBUG("Prop %s = %u", prop, uint_val);
+
+		retval = g_variant_ref_sink(g_variant_new_uint32(uint_val));
 	}
 
 on_error:
