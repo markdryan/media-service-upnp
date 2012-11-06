@@ -27,9 +27,10 @@
 
 typedef struct msu_device_t_ msu_device_t;
 
-gboolean msu_media_service_get_device_info(const gchar *path, gchar **root_path,
+gboolean msu_media_service_get_object_info(const gchar *object_path,
+					   gchar **root_path,
 					   gchar **object_id,
-					   const msu_device_t **device,
+					   msu_device_t **device,
 					   GError **error);
 
 #endif /* MSU_MEDIA_SERVICE_UPNP_H__ */

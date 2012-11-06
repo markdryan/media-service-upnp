@@ -489,7 +489,6 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_client_t *client,
 {
 	msu_async_cb_data_t *cb_data;
 	msu_async_bas_t *cb_task_data;
-	msu_device_t *device;
 	gchar *upnp_filter = NULL;
 	gchar *sort_by = NULL;
 
@@ -501,26 +500,6 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_client_t *client,
 
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.bas;
-
-	if (!msu_path_get_path_and_id(task->target.path,
-				      &cb_task_data->root_path,
-				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
-
-		goto on_error;
-	}
-
-	device = msu_device_from_path(cb_task_data->root_path,
-				      upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s",
-				cb_task_data->root_path);
-
-		cb_data->error =
-			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
 
 	cb_task_data->filter_mask =
 		msu_props_parse_filter(upnp->filter_map,
@@ -544,7 +523,7 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_client_t *client,
 
 	cb_task_data->protocol_info = client->protocol_info;
 
-	msu_device_get_children(device, client, task, cb_data,
+	msu_device_get_children(client, task, cb_data,
 				upnp_filter, sort_by, cancellable);
 
 on_error:
@@ -566,7 +545,6 @@ void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_client_t *client,
 	gboolean root_object;
 	msu_async_cb_data_t *cb_data;
 	msu_async_get_all_t *cb_task_data;
-	msu_device_t *device;
 
 	MSU_LOG_DEBUG("Enter");
 
@@ -576,44 +554,16 @@ void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_client_t *client,
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.get_all;
 
-	if (!msu_path_get_path_and_id(task->target.path,
-				      &cb_task_data->root_path,
-				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
-
-		goto on_error;
-	}
-
-	root_object = cb_data->id[0] == '0' && cb_data->id[1] == 0;
+	root_object = task->target.id[0] == '0' && task->target.id[1] == 0;
 
 	MSU_LOG_DEBUG("Root Object = %d", root_object);
 
-	device = msu_device_from_path(cb_task_data->root_path,
-				      upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s",
-				cb_task_data->root_path);
-
-		cb_data->error =
-			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
-
 	cb_task_data->protocol_info = client->protocol_info;
 
-	msu_device_get_all_props(device, client, task, cb_data, root_object,
+	msu_device_get_all_props(client, task, cb_data, root_object,
 				 cancellable);
 
 	MSU_LOG_DEBUG("Exit with SUCCESS");
-
-	return;
-
-on_error:
-
-	(void) g_idle_add(msu_async_complete_task, cb_data);
-
-	MSU_LOG_DEBUG("Exit with FAIL");
 }
 
 void msu_upnp_get_prop(msu_upnp_t *upnp, msu_client_t *client,
@@ -624,7 +574,6 @@ void msu_upnp_get_prop(msu_upnp_t *upnp, msu_client_t *client,
 	gboolean root_object;
 	msu_async_cb_data_t *cb_data;
 	msu_async_get_prop_t *cb_task_data;
-	msu_device_t *device;
 	msu_prop_map_t *prop_map;
 	msu_task_get_prop_t *task_data;
 
@@ -638,46 +587,17 @@ void msu_upnp_get_prop(msu_upnp_t *upnp, msu_client_t *client,
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.get_prop;
 
-	if (!msu_path_get_path_and_id(task->target.path,
-				      &cb_task_data->root_path,
-				      &cb_data->id,
-				      &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
-
-		goto on_error;
-	}
-
-	root_object = cb_data->id[0] == '0' && cb_data->id[1] == 0;
+	root_object = task->target.id[0] == '0' && task->target.id[1] == 0;
 
 	MSU_LOG_DEBUG("Root Object = %d", root_object);
-
-	device = msu_device_from_path(cb_task_data->root_path,
-				      upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s",
-				cb_task_data->root_path);
-
-		cb_data->error =
-			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
 
 	cb_task_data->protocol_info = client->protocol_info;
 	prop_map = g_hash_table_lookup(upnp->filter_map, task_data->prop_name);
 
-	msu_device_get_prop(device, client, task, cb_data, prop_map,
+	msu_device_get_prop(client, task, cb_data, prop_map,
 			    root_object, cancellable);
 
 	MSU_LOG_DEBUG("Exit with SUCCESS");
-
-	return;
-
-on_error:
-
-	(void) g_idle_add(msu_async_complete_task, cb_data);
-
-	MSU_LOG_DEBUG("Exit with FAIL");
 }
 
 void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
@@ -690,7 +610,6 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
 	gchar *sort_by = NULL;
 	msu_async_cb_data_t *cb_data;
 	msu_async_bas_t *cb_task_data;
-	msu_device_t *device;
 
 	MSU_LOG_DEBUG("Enter");
 
@@ -701,26 +620,6 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
 
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.bas;
-
-	if (!msu_path_get_path_and_id(task->target.path,
-				      &cb_task_data->root_path,
-				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
-
-		goto on_error;
-	}
-
-	device = msu_device_from_path(cb_task_data->root_path,
-				      upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s",
-				cb_task_data->root_path);
-
-		cb_data->error =
-			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
 
 	cb_task_data->filter_mask =
 		msu_props_parse_filter(upnp->filter_map,
@@ -756,7 +655,7 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
 
 	cb_task_data->protocol_info = client->protocol_info;
 
-	msu_device_search(device, client, task, cb_data, upnp_filter,
+	msu_device_search(client, task, cb_data, upnp_filter,
 			  upnp_query, sort_by, cancellable);
 on_error:
 
@@ -777,9 +676,7 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_client_t *client,
 {
 	msu_async_cb_data_t *cb_data;
 	msu_async_get_all_t *cb_task_data;
-	msu_device_t *device;
 	gchar *upnp_filter = NULL;
-	gchar *root_path = NULL;
 
 	MSU_LOG_DEBUG("Enter");
 
@@ -788,25 +685,8 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_client_t *client,
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.get_all;
 
-	if (!msu_path_get_path_and_id(task->target.path,
-				      &root_path, &cb_data->id,
-				      &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
-
-		goto on_error;
-	}
-
-	MSU_LOG_DEBUG("Root Path %s Id %s", root_path, cb_data->id);
-
-	device = msu_device_from_path(root_path, upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s", root_path);
-
-		cb_data->error =
-			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
+	MSU_LOG_DEBUG("Root Path %s Id %s", task->target.root_path,
+		      task->target.id);
 
 	cb_task_data->filter_mask =
 		msu_props_parse_filter(upnp->filter_map,
@@ -815,18 +695,10 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_client_t *client,
 	MSU_LOG_DEBUG("Filter Mask 0x%"G_GUINT64_FORMAT"x",
 		      cb_task_data->filter_mask);
 
-	msu_device_get_resource(device, client, task, cb_data, upnp_filter,
+	msu_device_get_resource(client, task, cb_data, upnp_filter,
 				cancellable);
 
-on_error:
-
-	if (!cb_data->action)
-		(void) g_idle_add(msu_async_complete_task, cb_data);
-
-	g_free(upnp_filter);
-	g_free(root_path);
-
-	MSU_LOG_DEBUG("Exit with %s", !cb_data->action ? "FAIL" : "SUCCESS");
+	MSU_LOG_DEBUG("Exit");
 }
 
 static gboolean prv_compute_mime_and_class(msu_task_t *task,
@@ -907,37 +779,16 @@ void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_client_t *client,
 {
 	msu_async_cb_data_t *cb_data;
 	msu_async_upload_t *cb_task_data;
-	msu_device_t *device;
 
 	MSU_LOG_DEBUG("Enter");
 
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.upload;
 
-	if (!msu_path_get_path_and_id(task->target.path,
-				      &cb_task_data->root_path,
-				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
+	MSU_LOG_DEBUG("Root Path %s Id %s", task->target.root_path,
+		      task->target.id);
 
-		goto on_error;
-	}
-
-	MSU_LOG_DEBUG("Root Path %s Id %s", cb_task_data->root_path,
-		      cb_data->id);
-
-	device = msu_device_from_path(cb_task_data->root_path,
-				      upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s",
-				cb_task_data->root_path);
-
-		cb_data->error =
-			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
-
-	if (strcmp(cb_data->id, "0")) {
+	if (strcmp(task->target.id, "0")) {
 		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		cb_data->error =
@@ -952,7 +803,7 @@ void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_client_t *client,
 	MSU_LOG_DEBUG("MIME Type %s", cb_task_data->mime_type);
 	MSU_LOG_DEBUG("Object class %s", cb_task_data->object_class);
 
-	msu_device_upload(device, client, task, "DLNA.ORG_AnyContainer",
+	msu_device_upload(client, task, "DLNA.ORG_AnyContainer",
 			  cb_data, cancellable);
 
 on_error:
@@ -969,32 +820,11 @@ void msu_upnp_upload(msu_upnp_t *upnp, msu_client_t *client, msu_task_t *task,
 {
 	msu_async_cb_data_t *cb_data;
 	msu_async_upload_t *cb_task_data;
-	msu_device_t *device;
 
 	MSU_LOG_DEBUG("Enter");
 
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.upload;
-
-	if (!msu_path_get_path_and_id(task->target.path,
-				      &cb_task_data->root_path,
-				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
-
-		goto on_error;
-	}
-
-	device = msu_device_from_path(cb_task_data->root_path,
-				      upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s",
-				cb_task_data->root_path);
-
-		cb_data->error =
-			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
 
 	if (!prv_compute_mime_and_class(task, cb_task_data, &cb_data->error))
 		goto on_error;
@@ -1002,7 +832,7 @@ void msu_upnp_upload(msu_upnp_t *upnp, msu_client_t *client, msu_task_t *task,
 	MSU_LOG_DEBUG("MIME Type %s", cb_task_data->mime_type);
 	MSU_LOG_DEBUG("Object class %s", cb_task_data->object_class);
 
-	msu_device_upload(device, client, task, cb_data->id, cb_data,
+	msu_device_upload(client, task, task->target.id, cb_data,
 			  cancellable);
 
 on_error:
@@ -1015,33 +845,14 @@ on_error:
 
 void msu_upnp_get_upload_status(msu_upnp_t *upnp, msu_task_t *task)
 {
-	gchar *root_path = NULL;
-	gchar *id = NULL;
 	GError *error = NULL;
-	msu_device_t *device;
 
 	MSU_LOG_DEBUG("Enter");
 
-	if (!msu_path_get_path_and_id(task->target.path,
-				      &root_path, &id, &error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
+	MSU_LOG_DEBUG("Root Path %s Id %s", task->target.root_path,
+		      task->target.id);
 
-		goto on_error;
-	}
-
-	MSU_LOG_DEBUG("Root Path %s Id %s", root_path, id);
-
-	device = msu_device_from_path(root_path, upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s",
-				root_path);
-
-		error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
-
-	if (strcmp(id, "0")) {
+	if (strcmp(task->target.id, "0")) {
 		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
@@ -1049,7 +860,7 @@ void msu_upnp_get_upload_status(msu_upnp_t *upnp, msu_task_t *task)
 		goto on_error;
 	}
 
-	(void) msu_device_get_upload_status(device, task, &error);
+	(void) msu_device_get_upload_status(task, &error);
 
 on_error:
 
@@ -1060,41 +871,19 @@ on_error:
 		msu_task_complete(task);
 	}
 
-	g_free(id);
-	g_free(root_path);
-
 	MSU_LOG_DEBUG("Exit");
 }
 
 void msu_upnp_get_upload_ids(msu_upnp_t *upnp, msu_task_t *task)
 {
-	gchar *root_path = NULL;
-	gchar *id = NULL;
 	GError *error = NULL;
-	msu_device_t *device;
 
 	MSU_LOG_DEBUG("Enter");
 
-	if (!msu_path_get_path_and_id(task->target.path,
-				      &root_path, &id, &error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
+	MSU_LOG_DEBUG("Root Path %s Id %s", task->target.root_path,
+		      task->target.id);
 
-		goto on_error;
-	}
-
-	MSU_LOG_DEBUG("Root Path %s Id %s", root_path, id);
-
-	device = msu_device_from_path(root_path, upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s",
-				root_path);
-
-		error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
-
-	if (strcmp(id, "0")) {
+	if (strcmp(task->target.id, "0")) {
 		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
@@ -1102,7 +891,7 @@ void msu_upnp_get_upload_ids(msu_upnp_t *upnp, msu_task_t *task)
 		goto on_error;
 	}
 
-	 msu_device_get_upload_ids(device, task);
+	 msu_device_get_upload_ids(task);
 
 on_error:
 
@@ -1113,41 +902,19 @@ on_error:
 		msu_task_complete(task);
 	}
 
-	g_free(id);
-	g_free(root_path);
-
 	MSU_LOG_DEBUG("Exit");
 }
 
 void msu_upnp_cancel_upload(msu_upnp_t *upnp, msu_task_t *task)
 {
-	gchar *root_path = NULL;
-	gchar *id = NULL;
 	GError *error = NULL;
-	msu_device_t *device;
 
 	MSU_LOG_DEBUG("Enter");
 
-	if (!msu_path_get_path_and_id(task->target.path, &root_path,
-				      &id, &error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
+	MSU_LOG_DEBUG("Root Path %s Id %s", task->target.root_path,
+		      task->target.id);
 
-		goto on_error;
-	}
-
-	MSU_LOG_DEBUG("Root Path %s Id %s", root_path, id);
-
-	device = msu_device_from_path(root_path, upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s",
-				root_path);
-
-		error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
-
-	if (strcmp(id, "0")) {
+	if (strcmp(task->target.id, "0")) {
 		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
@@ -1155,7 +922,7 @@ void msu_upnp_cancel_upload(msu_upnp_t *upnp, msu_task_t *task)
 		goto on_error;
 	}
 
-	(void) msu_device_cancel_upload(device, task, &error);
+	(void) msu_device_cancel_upload(task, &error);
 
 on_error:
 
@@ -1165,9 +932,6 @@ on_error:
 	} else {
 		msu_task_complete(task);
 	}
-
-	g_free(id);
-	g_free(root_path);
 
 	MSU_LOG_DEBUG("Exit");
 }
@@ -1178,42 +942,15 @@ void msu_upnp_delete_object(msu_upnp_t *upnp, msu_client_t *client,
 			    msu_upnp_task_complete_t cb)
 {
 	msu_async_cb_data_t *cb_data;
-	msu_device_t *device;
-	gchar *root_path = NULL;
 
 	MSU_LOG_DEBUG("Enter");
 
 	cb_data = msu_async_cb_data_new(task, cb);
 
-	if (!msu_path_get_path_and_id(task->target.path, &root_path,
-				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
+	MSU_LOG_DEBUG("Root Path %s Id %s", task->target.root_path,
+		      task->target.id);
 
-		goto on_error;
-	}
-
-	MSU_LOG_DEBUG("Root Path %s Id %s", root_path,
-		      cb_data->id);
-
-	device = msu_device_from_path(root_path, upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s",
-				root_path);
-
-		cb_data->error =
-			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
-
-	msu_device_delete_object(device, client, task, cb_data, cancellable);
-
-on_error:
-
-	if (root_path)
-		g_free(root_path);
-	if (!cb_data->action)
-		(void) g_idle_add(msu_async_complete_task, cb_data);
+	msu_device_delete_object(client, task, cb_data, cancellable);
 
 	MSU_LOG_DEBUG("Exit");
 }
@@ -1224,44 +961,16 @@ void msu_upnp_create_container(msu_upnp_t *upnp, msu_client_t *client,
 			       msu_upnp_task_complete_t cb)
 {
 	msu_async_cb_data_t *cb_data;
-	msu_async_create_container_t *cb_task_data;
-	msu_device_t *device;
 
 	MSU_LOG_DEBUG("Enter");
 
 	cb_data = msu_async_cb_data_new(task, cb);
-	cb_task_data = &cb_data->ut.create_container;
 
-	if (!msu_path_get_path_and_id(task->target.path,
-				      &cb_task_data->root_path,
-				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
+	MSU_LOG_DEBUG("Root Path %s Id %s", task->target.root_path,
+		      task->target.id);
 
-		goto on_error;
-	}
-
-	MSU_LOG_DEBUG("Root Path %s Id %s", cb_task_data->root_path,
-		      cb_data->id);
-
-	device = msu_device_from_path(cb_task_data->root_path,
-				      upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s",
-				cb_task_data->root_path);
-
-		cb_data->error =
-			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
-
-	msu_device_create_container(device, client, task, cb_data->id,
+	msu_device_create_container(client, task, task->target.id,
 				    cb_data, cancellable);
-
-on_error:
-
-	if (!cb_data->action)
-		(void) g_idle_add(msu_async_complete_task, cb_data);
 
 	MSU_LOG_DEBUG("Exit");
 }
@@ -1272,26 +981,15 @@ void msu_upnp_create_container_in_any(msu_upnp_t *upnp, msu_client_t *client,
 				      msu_upnp_task_complete_t cb)
 {
 	msu_async_cb_data_t *cb_data;
-	msu_async_create_container_t *cb_task_data;
-	msu_device_t *device;
 
 	MSU_LOG_DEBUG("Enter");
 
 	cb_data = msu_async_cb_data_new(task, cb);
-	cb_task_data = &cb_data->ut.create_container;
 
-	if (!msu_path_get_path_and_id(task->target.path,
-				      &cb_task_data->root_path,
-				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
+	MSU_LOG_DEBUG("Root Path %s Id %s", task->target.root_path,
+		      task->target.id);
 
-		goto on_error;
-	}
-
-	MSU_LOG_DEBUG("Root Path %s Id %s", cb_task_data->root_path,
-		      cb_data->id);
-
-	if (strcmp(cb_data->id, "0")) {
+	if (strcmp(task->target.id, "0")) {
 		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		cb_data->error =
@@ -1300,19 +998,7 @@ void msu_upnp_create_container_in_any(msu_upnp_t *upnp, msu_client_t *client,
 		goto on_error;
 	}
 
-	device = msu_device_from_path(cb_task_data->root_path,
-							upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s",
-				cb_task_data->root_path);
-
-		cb_data->error =
-			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to the specified path");
-		goto on_error;
-	}
-
-	msu_device_create_container(device, client, task,
+	msu_device_create_container(client, task,
 				    "DLNA.ORG_AnyContainer",
 				    cb_data, cancellable);
 
@@ -1331,9 +1017,7 @@ void msu_upnp_update_object(msu_upnp_t *upnp, msu_client_t *client,
 {
 	msu_async_cb_data_t *cb_data;
 	msu_async_update_t *cb_task_data;
-	msu_device_t *device;
 	msu_upnp_prop_mask mask;
-	gchar *root_path = NULL;
 	gchar *upnp_filter = NULL;
 	msu_task_update_t *task_data;
 
@@ -1343,25 +1027,8 @@ void msu_upnp_update_object(msu_upnp_t *upnp, msu_client_t *client,
 	cb_task_data = &cb_data->ut.update;
 	task_data = &task->ut.update;
 
-	if (!msu_path_get_path_and_id(task->target.path, &root_path,
-				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->target.path);
-
-		goto on_error;
-	}
-
-	MSU_LOG_DEBUG("Root Path = %s, Id = %s", root_path, cb_data->id);
-
-	device = msu_device_from_path(root_path, upnp->server_udn_map);
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s", root_path);
-
-		cb_data->error =
-			g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
-				    "Cannot locate device corresponding to"
-				    " the specified path");
-		goto on_error;
-	}
+	MSU_LOG_DEBUG("Root Path %s Id %s", task->target.root_path,
+		      task->target.id);
 
 	if (!msu_props_parse_update_filter(upnp->filter_map,
 					   task_data->to_add_update,
@@ -1390,13 +1057,10 @@ void msu_upnp_update_object(msu_upnp_t *upnp, msu_client_t *client,
 		goto on_error;
 	}
 
-	msu_device_update_object(device, client, task, cb_data, upnp_filter,
+	msu_device_update_object(client, task, cb_data, upnp_filter,
 				 cancellable);
 
 on_error:
-
-	if (root_path)
-		g_free(root_path);
 
 	g_free(upnp_filter);
 

@@ -42,26 +42,17 @@ void msu_async_cb_data_delete(msu_async_cb_data_t *cb_data)
 		switch (cb_data->type) {
 		case MSU_TASK_GET_CHILDREN:
 		case MSU_TASK_SEARCH:
-			g_free(cb_data->ut.bas.root_path);
 			if (cb_data->ut.bas.vbs)
 				g_ptr_array_unref(cb_data->ut.bas.vbs);
 			break;
-		case MSU_TASK_GET_PROP:
-			g_free(cb_data->ut.get_prop.root_path);
-			break;
 		case MSU_TASK_GET_ALL_PROPS:
 		case MSU_TASK_GET_RESOURCE:
-			g_free(cb_data->ut.get_all.root_path);
 			if (cb_data->ut.get_all.vb)
 				g_variant_builder_unref(cb_data->ut.get_all.vb);
 			break;
 		case MSU_TASK_UPLOAD_TO_ANY:
 		case MSU_TASK_UPLOAD:
-			g_free(cb_data->ut.upload.root_path);
 			g_free(cb_data->ut.upload.mime_type);
-			break;
-		case MSU_TASK_CREATE_CONTAINER:
-			g_free(cb_data->ut.create_container.root_path);
 			break;
 		case MSU_TASK_UPDATE_OBJECT:
 			g_free(cb_data->ut.update.current_tag_value);
@@ -71,7 +62,6 @@ void msu_async_cb_data_delete(msu_async_cb_data_t *cb_data)
 			break;
 		}
 
-		g_free(cb_data->id);
 		g_free(cb_data);
 	}
 }

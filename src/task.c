@@ -115,7 +115,7 @@ static gboolean prv_set_task_target_info(msu_task_t *task, const gchar *path,
 	task->target.path = g_strdup(path);
 	g_strstrip(task->target.path);
 
-	return msu_media_service_get_device_info(path, &task->target.root_path,
+	return msu_media_service_get_object_info(path, &task->target.root_path,
 					       &task->target.id,
 					       &task->target.device, error);
 }

@@ -827,13 +827,15 @@ static void prv_msu_method_call(GDBusConnection *conn,
 	}
 }
 
-gboolean msu_media_service_get_device_info(const gchar *path, gchar **root_path,
+gboolean msu_media_service_get_object_info(const gchar *object_path,
+					   gchar **root_path,
 					   gchar **object_id,
-					   const msu_device_t **device,
+					   msu_device_t **device,
 					   GError **error)
 {
-	if (!msu_path_get_path_and_id(path, root_path, object_id, error)) {
-		MSU_LOG_WARNING("Bad object %s", path);
+	if (!msu_path_get_path_and_id(object_path, root_path, object_id,
+				      error)) {
+		MSU_LOG_WARNING("Bad object %s", object_path);
 
 		goto on_error;
 	}
@@ -863,11 +865,11 @@ on_error:
 
 static const gchar *prv_get_device_id(const gchar *object, GError **error)
 {
-	const msu_device_t *device;
+	msu_device_t *device;
 	gchar *root_path;
 	gchar *id;
 
-	if (!msu_media_service_get_device_info(object, &root_path, &id, &device,
+	if (!msu_media_service_get_object_info(object, &root_path, &id, &device,
 					       error))
 		goto on_error;
 
@@ -899,7 +901,7 @@ static void prv_object_method_call(GDBusConnection *conn,
 	else
 		goto finished;
 
-	if(!task) {
+	if (!task) {
 		g_dbus_method_invocation_return_gerror(invocation, error);
 		g_error_free(error);
 
@@ -927,7 +929,7 @@ static void prv_item_method_call(GDBusConnection *conn,
 		task = msu_task_get_resource_new(invocation, object,
 						 parameters, &error);
 
-		if(!task) {
+		if (!task) {
 			g_dbus_method_invocation_return_gerror(invocation,
 							       error);
 			g_error_free(error);
@@ -996,7 +998,7 @@ static void prv_con_method_call(GDBusConnection *conn,
 	else
 		goto finished;
 
-	if(!task) {
+	if (!task) {
 		g_dbus_method_invocation_return_gerror(invocation, error);
 		g_error_free(error);
 
@@ -1031,7 +1033,7 @@ static void prv_props_method_call(GDBusConnection *conn,
 	else
 		goto finished;
 
-	if(!task) {
+	if (!task) {
 		g_dbus_method_invocation_return_gerror(invocation, error);
 		g_error_free(error);
 
@@ -1074,6 +1076,7 @@ static void prv_device_method_call(GDBusConnection *conn,
 		task = msu_task_cancel_upload_new(invocation, object,
 						  parameters, &error);
 	} else if (!strcmp(method, MSU_INTERFACE_CANCEL)) {
+		task = NULL;
 
 		device_id = prv_get_device_id(object, &error);
 		if (!device_id)
@@ -1089,11 +1092,13 @@ static void prv_device_method_call(GDBusConnection *conn,
 		g_dbus_method_invocation_return_value(invocation, NULL);
 
 		goto finished;
+	} else {
+		goto finished;
 	}
 
 on_error:
 
-	if(error) {
+	if (!task) {
 		g_dbus_method_invocation_return_gerror(invocation, error);
 		g_error_free(error);
 

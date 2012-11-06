@@ -129,7 +129,7 @@ struct msu_task_target_info_t_ {
 	gchar *path;
 	gchar *root_path;
 	gchar *id;
-	const msu_device_t *device;
+	msu_device_t *device;
 };
 
 typedef struct msu_task_t_ msu_task_t;

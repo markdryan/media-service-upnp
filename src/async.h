@@ -37,7 +37,6 @@ typedef void (*msu_async_cb_t)(msu_async_cb_data_t *cb_data);
 typedef struct msu_async_bas_t_ msu_async_bas_t;
 struct msu_async_bas_t_ {
 	msu_upnp_prop_mask filter_mask;
-	gchar *root_path;
 	GPtrArray *vbs;
 	const gchar *protocol_info;
 	gboolean need_child_count;
@@ -49,7 +48,6 @@ struct msu_async_bas_t_ {
 typedef struct msu_async_get_prop_t_ msu_async_get_prop_t;
 struct msu_async_get_prop_t_ {
 	GCallback prop_func;
-	gchar *root_path;
 	const gchar *protocol_info;
 };
 
@@ -57,25 +55,16 @@ typedef struct msu_async_get_all_t_ msu_async_get_all_t;
 struct msu_async_get_all_t_ {
 	GCallback prop_func;
 	GVariantBuilder *vb;
-	gchar *root_path;
 	msu_upnp_prop_mask filter_mask;
 	const gchar *protocol_info;
 	gboolean need_child_count;
 	gboolean device_object;
-	msu_device_t *device;
 };
 
 typedef struct msu_async_upload_t_ msu_async_upload_t;
 struct msu_async_upload_t_ {
 	const gchar *object_class;
-	gchar *root_path;
 	gchar *mime_type;
-	msu_device_t *device;
-};
-
-typedef struct msu_async_create_container_t_ msu_async_create_container_t;
-struct msu_async_create_container_t_ {
-	gchar *root_path;
 };
 
 typedef struct msu_async_update_t_ msu_async_update_t;
@@ -95,13 +84,11 @@ struct msu_async_cb_data_t_ {
 	GUPnPServiceProxy *proxy;
 	GCancellable *cancellable;
 	gulong cancel_id;
-	gchar *id;
 	union {
 		msu_async_bas_t bas;
 		msu_async_get_prop_t get_prop;
 		msu_async_get_all_t get_all;
 		msu_async_upload_t upload;
-		msu_async_create_container_t create_container;
 		msu_async_update_t update;
 	} ut;
 };

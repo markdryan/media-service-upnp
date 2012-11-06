@@ -648,7 +648,7 @@ static GVariant *prv_get_artists_prop(GList *list)
 }
 
 void msu_props_add_device(GUPnPDeviceInfo *proxy,
-			  msu_device_t *device,
+			  const msu_device_t *device,
 			  GVariantBuilder *vb)
 {
 	gchar *str;
@@ -737,7 +737,7 @@ void msu_props_add_device(GUPnPDeviceInfo *proxy,
 }
 
 GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
-				    msu_device_t *device,
+				    const msu_device_t *device,
 				    const gchar *prop)
 {
 	GVariant *dlna_caps = NULL;

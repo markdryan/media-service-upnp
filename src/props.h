@@ -86,11 +86,11 @@ gboolean msu_props_parse_update_filter(GHashTable *filter_map,
 				       gchar **upnp_filter);
 
 void msu_props_add_device(GUPnPDeviceInfo *proxy,
-			  msu_device_t *device,
+			  const msu_device_t *device,
 			  GVariantBuilder *vb);
 
 GVariant *msu_props_get_device_prop(GUPnPDeviceInfo *proxy,
-				    msu_device_t *device,
+				    const msu_device_t *device,
 				    const gchar *prop);
 
 gboolean msu_props_add_object(GVariantBuilder *item_vb,
