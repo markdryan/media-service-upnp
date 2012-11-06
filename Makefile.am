@@ -17,33 +17,34 @@ media_service_upnp_sources = 	src/async.c		 \
 				src/chain-task.c	 \
 				src/device.c		 \
 				src/error.c		 \
-				src/media-service-upnp.c \
 				src/log.c		 \
+				src/media-service-upnp.c \
 				src/path.c		 \
 				src/props.c		 \
 				src/search.c		 \
 				src/settings.c		 \
 				src/sort.c		 \
 				src/task.c		 \
-				src/upnp.c		 \
-				src/task-processor.c
+				src/task-processor.c	 \
+				src/upnp.c
 
-media_service_upnp_headers =	src/async.h		\
-				src/chain-task.h	\
-				src/client.h		\
-				src/device.h		\
-				src/error.h		\
-				src/interface.h		\
-				src/log.h		\
-				src/path.h		\
-				src/props.h		\
-				src/search.h		\
-				src/settings.h		\
-				src/sort.h		\
-				src/task.h		\
-				src/upnp.h		\
-				src/task-processor.h	\
-				src/task-atom.h
+media_service_upnp_headers =	src/async.h		 \
+				src/chain-task.h	 \
+				src/client.h		 \
+				src/device.h		 \
+				src/error.h		 \
+				src/interface.h		 \
+				src/log.h		 \
+				src/media-service-upnp.h \
+				src/path.h		 \
+				src/props.h		 \
+				src/search.h		 \
+				src/settings.h		 \
+				src/sort.h		 \
+				src/task.h		 \
+				src/task-atom.h		 \
+				src/task-processor.h	 \
+				src/upnp.h
 
 
 bin_PROGRAMS = media-service-upnp

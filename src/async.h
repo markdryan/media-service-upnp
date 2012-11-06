@@ -25,11 +25,11 @@
 
 #include <libgupnp/gupnp-control-point.h>
 
+#include "media-service-upnp.h"
 #include "task.h"
 #include "upnp.h"
 
 typedef struct msu_async_cb_data_t_ msu_async_cb_data_t;
-typedef struct msu_device_t_ msu_device_t;
 typedef guint64 msu_upnp_prop_mask;
 
 typedef void (*msu_async_cb_t)(msu_async_cb_data_t *cb_data);

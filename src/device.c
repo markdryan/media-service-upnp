@@ -885,7 +885,7 @@ static void prv_found_child(GUPnPDIDLLiteParser *parser,
 	builder->vb = g_variant_builder_new(G_VARIANT_TYPE("a{sv}"));
 
 	if (!msu_props_add_object(builder->vb, object, cb_task_data->root_path,
-				  task->path, cb_task_data->filter_mask))
+				  task->target.path, cb_task_data->filter_mask))
 		goto on_error;
 
 	if (GUPNP_IS_DIDL_LITE_CONTAINER(object)) {

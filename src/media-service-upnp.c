@@ -827,39 +827,56 @@ static void prv_msu_method_call(GDBusConnection *conn,
 	}
 }
 
-static const gchar *prv_get_device_id(const gchar *object, GError **error)
+gboolean msu_media_service_get_device_info(const gchar *path, gchar **root_path,
+					   gchar **object_id,
+					   const msu_device_t **device,
+					   GError **error)
 {
-	msu_device_t *device;
-	gchar *root_path;
-	gchar *id;
-
-	if (!msu_path_get_path_and_id(object, &root_path, &id, error)) {
-		MSU_LOG_WARNING("Bad object %s", object);
+	if (!msu_path_get_path_and_id(path, root_path, object_id, error)) {
+		MSU_LOG_WARNING("Bad object %s", path);
 
 		goto on_error;
 	}
 
-	g_free(id);
-
-	device = msu_device_from_path(root_path,
+	*device = msu_device_from_path(*root_path,
 				msu_upnp_get_server_udn_map(g_context.upnp));
 
-	if (!device) {
-		MSU_LOG_WARNING("Cannot locate device for %s", root_path);
+	if (*device == NULL) {
+		MSU_LOG_WARNING("Cannot locate device for %s", *root_path);
 
 		*error = g_error_new(MSU_ERROR, MSU_ERROR_OBJECT_NOT_FOUND,
 				     "Cannot locate device corresponding to"
 				     " the specified path");
+
+		g_free(*root_path);
+		g_free(*object_id);
+
 		goto on_error;
 	}
 
+	return TRUE;
+
+on_error:
+
+	return FALSE;
+}
+
+static const gchar *prv_get_device_id(const gchar *object, GError **error)
+{
+	const msu_device_t *device;
+	gchar *root_path;
+	gchar *id;
+
+	if (!msu_media_service_get_device_info(object, &root_path, &id, &device,
+					       error))
+		goto on_error;
+
+	g_free(id);
 	g_free(root_path);
 
 	return device->path;
 
 on_error:
-
-	g_free(root_path);
 
 	return NULL;
 }
@@ -872,25 +889,24 @@ static void prv_object_method_call(GDBusConnection *conn,
 				   gpointer user_data)
 {
 	msu_task_t *task;
-	const gchar *device_id;
 	GError *error = NULL;
 
-	device_id = prv_get_device_id(object, &error);
-	if (!device_id) {
+	if (!strcmp(method, MSU_INTERFACE_DELETE))
+		task = msu_task_delete_new(invocation, object, &error);
+	else if (!strcmp(method, MSU_INTERFACE_UPDATE))
+		task = msu_task_update_new(invocation, object, parameters,
+					   &error);
+	else
+		goto finished;
+
+	if(!task) {
 		g_dbus_method_invocation_return_gerror(invocation, error);
 		g_error_free(error);
 
 		goto finished;
 	}
 
-	if (!strcmp(method, MSU_INTERFACE_DELETE))
-		task = msu_task_delete_new(invocation, object);
-	else if (!strcmp(method, MSU_INTERFACE_UPDATE))
-		task = msu_task_update_new(invocation, object, parameters);
-	else
-		goto finished;
-
-	prv_add_task(task, device_id);
+	prv_add_task(task, task->target.device->path);
 
 finished:
 
@@ -905,21 +921,21 @@ static void prv_item_method_call(GDBusConnection *conn,
 				 gpointer user_data)
 {
 	msu_task_t *task;
-	const gchar *device_id = NULL;
 	GError *error = NULL;
-
-	device_id = prv_get_device_id(object, &error);
-	if (!device_id) {
-		g_dbus_method_invocation_return_gerror(invocation, error);
-		g_error_free(error);
-
-		goto finished;
-	}
 
 	if (!strcmp(method, MSU_INTERFACE_GET_COMPATIBLE_RESOURCE)) {
 		task = msu_task_get_resource_new(invocation, object,
-						 parameters);
-		prv_add_task(task, device_id);
+						 parameters, &error);
+
+		if(!task) {
+			g_dbus_method_invocation_return_gerror(invocation,
+							       error);
+			g_error_free(error);
+
+			goto finished;
+		}
+
+		prv_add_task(task, task->target.device->path);
 	}
 
 finished:
@@ -938,51 +954,56 @@ static void prv_con_method_call(GDBusConnection *conn,
 				gpointer user_data)
 {
 	msu_task_t *task;
-	const gchar *device_id = NULL;
 	GError *error = NULL;
 
-	device_id = prv_get_device_id(object, &error);
-	if (!device_id) {
+	if (!strcmp(method, MSU_INTERFACE_LIST_CHILDREN))
+		task = msu_task_get_children_new(invocation, object,
+						 parameters, TRUE,
+						 TRUE, &error);
+	else if (!strcmp(method, MSU_INTERFACE_LIST_CHILDREN_EX))
+		task = msu_task_get_children_ex_new(invocation, object,
+						    parameters, TRUE,
+						    TRUE, &error);
+	else if (!strcmp(method, MSU_INTERFACE_LIST_ITEMS))
+		task = msu_task_get_children_new(invocation, object,
+						 parameters, TRUE,
+						 FALSE, &error);
+	else if (!strcmp(method, MSU_INTERFACE_LIST_ITEMS_EX))
+		task = msu_task_get_children_ex_new(invocation, object,
+						    parameters, TRUE,
+						    FALSE, &error);
+	else if (!strcmp(method, MSU_INTERFACE_LIST_CONTAINERS))
+		task = msu_task_get_children_new(invocation, object,
+						 parameters, FALSE,
+						 TRUE, &error);
+	else if (!strcmp(method, MSU_INTERFACE_LIST_CONTAINERS_EX))
+		task = msu_task_get_children_ex_new(invocation, object,
+						    parameters, FALSE,
+						    TRUE, &error);
+	else if (!strcmp(method, MSU_INTERFACE_SEARCH_OBJECTS))
+		task = msu_task_search_new(invocation, object,
+					   parameters, &error);
+	else if (!strcmp(method, MSU_INTERFACE_SEARCH_OBJECTS_EX))
+		task = msu_task_search_ex_new(invocation, object,
+					      parameters, &error);
+	else if (!strcmp(method, MSU_INTERFACE_UPLOAD))
+		task = msu_task_upload_new(invocation, object,
+					   parameters, &error);
+	else if (!strcmp(method, MSU_INTERFACE_CREATE_CONTAINER))
+		task = msu_task_create_container_new_generic(invocation,
+						MSU_TASK_CREATE_CONTAINER,
+						object, parameters, &error);
+	else
+		goto finished;
+
+	if(!task) {
 		g_dbus_method_invocation_return_gerror(invocation, error);
 		g_error_free(error);
 
 		goto finished;
 	}
 
-	if (!strcmp(method, MSU_INTERFACE_LIST_CHILDREN))
-		task = msu_task_get_children_new(invocation, object,
-						 parameters, TRUE, TRUE);
-	else if (!strcmp(method, MSU_INTERFACE_LIST_CHILDREN_EX))
-		task = msu_task_get_children_ex_new(invocation, object,
-						    parameters, TRUE, TRUE);
-	else if (!strcmp(method, MSU_INTERFACE_LIST_ITEMS))
-		task = msu_task_get_children_new(invocation, object,
-						 parameters, TRUE, FALSE);
-	else if (!strcmp(method, MSU_INTERFACE_LIST_ITEMS_EX))
-		task = msu_task_get_children_ex_new(invocation, object,
-						    parameters, TRUE, FALSE);
-	else if (!strcmp(method, MSU_INTERFACE_LIST_CONTAINERS))
-		task = msu_task_get_children_new(invocation, object,
-						 parameters, FALSE, TRUE);
-	else if (!strcmp(method, MSU_INTERFACE_LIST_CONTAINERS_EX))
-		task = msu_task_get_children_ex_new(invocation, object,
-						    parameters, FALSE, TRUE);
-	else if (!strcmp(method, MSU_INTERFACE_SEARCH_OBJECTS))
-		task = msu_task_search_new(invocation, object,
-					   parameters);
-	else if (!strcmp(method, MSU_INTERFACE_SEARCH_OBJECTS_EX))
-		task = msu_task_search_ex_new(invocation, object,
-					      parameters);
-	else if (!strcmp(method, MSU_INTERFACE_UPLOAD))
-		task = msu_task_upload_new(invocation, object, parameters);
-	else if (!strcmp(method, MSU_INTERFACE_CREATE_CONTAINER))
-		task = msu_task_create_container_new_generic(invocation,
-						MSU_TASK_CREATE_CONTAINER,
-						object, parameters);
-	else
-		goto finished;
-
-	prv_add_task(task, device_id);
+	prv_add_task(task, task->target.device->path);
 
 finished:
 
@@ -999,25 +1020,25 @@ static void prv_props_method_call(GDBusConnection *conn,
 				  gpointer user_data)
 {
 	msu_task_t *task;
-	const gchar *device_id = NULL;
 	GError *error = NULL;
 
-	device_id = prv_get_device_id(object, &error);
-	if (!device_id) {
+	if (!strcmp(method, MSU_INTERFACE_GET_ALL))
+		task = msu_task_get_props_new(invocation, object,
+					      parameters, &error);
+	else if (!strcmp(method, MSU_INTERFACE_GET))
+		task = msu_task_get_prop_new(invocation, object,
+					     parameters, &error);
+	else
+		goto finished;
+
+	if(!task) {
 		g_dbus_method_invocation_return_gerror(invocation, error);
 		g_error_free(error);
 
 		goto finished;
 	}
 
-	if (!strcmp(method, MSU_INTERFACE_GET_ALL))
-		task = msu_task_get_props_new(invocation, object, parameters);
-	else if (!strcmp(method, MSU_INTERFACE_GET))
-		task = msu_task_get_prop_new(invocation, object, parameters);
-	else
-		goto finished;
-
-	prv_add_task(task, device_id);
+	prv_add_task(task, task->target.device->path);
 
 finished:
 
@@ -1032,40 +1053,32 @@ static void prv_device_method_call(GDBusConnection *conn,
 				   gpointer user_data)
 {
 	msu_task_t *task;
-	const gchar *device_id = NULL;
 	GError *error = NULL;
 	const gchar *client_name;
+	const gchar *device_id;
 	const msu_task_queue_key_t *queue_id;
-
-	device_id = prv_get_device_id(object, &error);
-	if (!device_id) {
-		g_dbus_method_invocation_return_gerror(invocation, error);
-		g_error_free(error);
-
-		goto finished;
-	}
 
 	if (!strcmp(method, MSU_INTERFACE_UPLOAD_TO_ANY)) {
 		task = msu_task_upload_to_any_new(invocation, object,
-						  parameters);
-		prv_add_task(task, device_id);
+						  parameters, &error);
 	} else if (!strcmp(method, MSU_INTERFACE_CREATE_CONTAINER_IN_ANY)) {
 		task = msu_task_create_container_new_generic(invocation,
 					MSU_TASK_CREATE_CONTAINER_IN_ANY,
-					object, parameters);
-		prv_add_task(task, device_id);
+					object, parameters, &error);
 	} else if (!strcmp(method, MSU_INTERFACE_GET_UPLOAD_STATUS)) {
 		task = msu_task_get_upload_status_new(invocation, object,
-						      parameters);
-		prv_add_task(task, device_id);
+						      parameters, &error);
 	} else if (!strcmp(method, MSU_INTERFACE_GET_UPLOAD_IDS)) {
-		task = msu_task_get_upload_ids_new(invocation, object);
-		prv_add_task(task, device_id);
+		task = msu_task_get_upload_ids_new(invocation, object, &error);
 	} else if (!strcmp(method, MSU_INTERFACE_CANCEL_UPLOAD)) {
 		task = msu_task_cancel_upload_new(invocation, object,
-						  parameters);
-		prv_add_task(task, device_id);
+						  parameters, &error);
 	} else if (!strcmp(method, MSU_INTERFACE_CANCEL)) {
+
+		device_id = prv_get_device_id(object, &error);
+		if (!device_id)
+			goto on_error;
+
 		client_name = g_dbus_method_invocation_get_sender(invocation);
 
 		queue_id = msu_task_processor_lookup_queue(g_context.processor,
@@ -1074,7 +1087,20 @@ static void prv_device_method_call(GDBusConnection *conn,
 			msu_task_processor_cancel_queue(queue_id);
 
 		g_dbus_method_invocation_return_value(invocation, NULL);
+
+		goto finished;
 	}
+
+on_error:
+
+	if(error) {
+		g_dbus_method_invocation_return_gerror(invocation, error);
+		g_error_free(error);
+
+		goto finished;
+	}
+
+	prv_add_task(task, task->target.device->path);
 
 finished:
 

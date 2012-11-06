@@ -495,16 +495,17 @@ void msu_upnp_get_children(msu_upnp_t *upnp, msu_client_t *client,
 
 	MSU_LOG_DEBUG("Enter");
 
-	MSU_LOG_DEBUG("Path: %s", task->path);
+	MSU_LOG_DEBUG("Path: %s", task->target.path);
 	MSU_LOG_DEBUG("Start: %u", task->ut.get_children.start);
 	MSU_LOG_DEBUG("Count: %u", task->ut.get_children.count);
 
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.bas;
 
-	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
+	if (!msu_path_get_path_and_id(task->target.path,
+				      &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -569,15 +570,16 @@ void msu_upnp_get_all_props(msu_upnp_t *upnp, msu_client_t *client,
 
 	MSU_LOG_DEBUG("Enter");
 
-	MSU_LOG_DEBUG("Path: %s", task->path);
+	MSU_LOG_DEBUG("Path: %s", task->target.path);
 	MSU_LOG_DEBUG("Interface %s", task->ut.get_prop.interface_name);
 
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.get_all;
 
-	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
+	if (!msu_path_get_path_and_id(task->target.path,
+				      &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -628,7 +630,7 @@ void msu_upnp_get_prop(msu_upnp_t *upnp, msu_client_t *client,
 
 	MSU_LOG_DEBUG("Enter");
 
-	MSU_LOG_DEBUG("Path: %s", task->path);
+	MSU_LOG_DEBUG("Path: %s", task->target.path);
 	MSU_LOG_DEBUG("Interface %s", task->ut.get_prop.interface_name);
 	MSU_LOG_DEBUG("Prop.%s", task->ut.get_prop.prop_name);
 
@@ -636,10 +638,11 @@ void msu_upnp_get_prop(msu_upnp_t *upnp, msu_client_t *client,
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.get_prop;
 
-	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
+	if (!msu_path_get_path_and_id(task->target.path,
+				      &cb_task_data->root_path,
 				      &cb_data->id,
 				      &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -691,7 +694,7 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
 
 	MSU_LOG_DEBUG("Enter");
 
-	MSU_LOG_DEBUG("Path: %s", task->path);
+	MSU_LOG_DEBUG("Path: %s", task->target.path);
 	MSU_LOG_DEBUG("Query: %s", task->ut.search.query);
 	MSU_LOG_DEBUG("Start: %u", task->ut.search.start);
 	MSU_LOG_DEBUG("Count: %u", task->ut.search.count);
@@ -699,9 +702,10 @@ void msu_upnp_search(msu_upnp_t *upnp, msu_client_t *client,
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.bas;
 
-	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
+	if (!msu_path_get_path_and_id(task->target.path,
+				      &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -784,9 +788,10 @@ void msu_upnp_get_resource(msu_upnp_t *upnp, msu_client_t *client,
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.get_all;
 
-	if (!msu_path_get_path_and_id(task->path, &root_path, &cb_data->id,
+	if (!msu_path_get_path_and_id(task->target.path,
+				      &root_path, &cb_data->id,
 				      &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -909,9 +914,10 @@ void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_client_t *client,
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.upload;
 
-	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
+	if (!msu_path_get_path_and_id(task->target.path,
+				      &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -932,7 +938,7 @@ void msu_upnp_upload_to_any(msu_upnp_t *upnp, msu_client_t *client,
 	}
 
 	if (strcmp(cb_data->id, "0")) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
@@ -970,9 +976,10 @@ void msu_upnp_upload(msu_upnp_t *upnp, msu_client_t *client, msu_task_t *task,
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.upload;
 
-	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
+	if (!msu_path_get_path_and_id(task->target.path,
+				      &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -1015,8 +1022,9 @@ void msu_upnp_get_upload_status(msu_upnp_t *upnp, msu_task_t *task)
 
 	MSU_LOG_DEBUG("Enter");
 
-	if (!msu_path_get_path_and_id(task->path, &root_path, &id, &error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+	if (!msu_path_get_path_and_id(task->target.path,
+				      &root_path, &id, &error)) {
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -1034,7 +1042,7 @@ void msu_upnp_get_upload_status(msu_upnp_t *upnp, msu_task_t *task)
 	}
 
 	if (strcmp(id, "0")) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
 				    "GetUploadStatus must be executed on a root path");
@@ -1067,8 +1075,9 @@ void msu_upnp_get_upload_ids(msu_upnp_t *upnp, msu_task_t *task)
 
 	MSU_LOG_DEBUG("Enter");
 
-	if (!msu_path_get_path_and_id(task->path, &root_path, &id, &error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+	if (!msu_path_get_path_and_id(task->target.path,
+				      &root_path, &id, &error)) {
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -1086,7 +1095,7 @@ void msu_upnp_get_upload_ids(msu_upnp_t *upnp, msu_task_t *task)
 	}
 
 	if (strcmp(id, "0")) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
 				    "GetUploadIDs must be executed on a root path");
@@ -1119,8 +1128,9 @@ void msu_upnp_cancel_upload(msu_upnp_t *upnp, msu_task_t *task)
 
 	MSU_LOG_DEBUG("Enter");
 
-	if (!msu_path_get_path_and_id(task->path, &root_path, &id, &error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+	if (!msu_path_get_path_and_id(task->target.path, &root_path,
+				      &id, &error)) {
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -1138,7 +1148,7 @@ void msu_upnp_cancel_upload(msu_upnp_t *upnp, msu_task_t *task)
 	}
 
 	if (strcmp(id, "0")) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		error = g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
 				    "CancelUpload must be executed on a root path");
@@ -1175,9 +1185,9 @@ void msu_upnp_delete_object(msu_upnp_t *upnp, msu_client_t *client,
 
 	cb_data = msu_async_cb_data_new(task, cb);
 
-	if (!msu_path_get_path_and_id(task->path, &root_path,
+	if (!msu_path_get_path_and_id(task->target.path, &root_path,
 				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -1222,9 +1232,10 @@ void msu_upnp_create_container(msu_upnp_t *upnp, msu_client_t *client,
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.create_container;
 
-	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
+	if (!msu_path_get_path_and_id(task->target.path,
+				      &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -1269,9 +1280,10 @@ void msu_upnp_create_container_in_any(msu_upnp_t *upnp, msu_client_t *client,
 	cb_data = msu_async_cb_data_new(task, cb);
 	cb_task_data = &cb_data->ut.create_container;
 
-	if (!msu_path_get_path_and_id(task->path, &cb_task_data->root_path,
+	if (!msu_path_get_path_and_id(task->target.path,
+				      &cb_task_data->root_path,
 				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
@@ -1280,7 +1292,7 @@ void msu_upnp_create_container_in_any(msu_upnp_t *upnp, msu_client_t *client,
 		      cb_data->id);
 
 	if (strcmp(cb_data->id, "0")) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		cb_data->error =
 			g_error_new(MSU_ERROR, MSU_ERROR_BAD_PATH,
@@ -1331,9 +1343,9 @@ void msu_upnp_update_object(msu_upnp_t *upnp, msu_client_t *client,
 	cb_task_data = &cb_data->ut.update;
 	task_data = &task->ut.update;
 
-	if (!msu_path_get_path_and_id(task->path, &root_path,
+	if (!msu_path_get_path_and_id(task->target.path, &root_path,
 				      &cb_data->id, &cb_data->error)) {
-		MSU_LOG_WARNING("Bad path %s", task->path);
+		MSU_LOG_WARNING("Bad path %s", task->target.path);
 
 		goto on_error;
 	}
