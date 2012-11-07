@@ -424,7 +424,8 @@ void msu_task_queue_task_completed(const msu_task_queue_key_t *queue_id)
 	else if (queue->defer_remove)
 		g_hash_table_remove(processor->task_queues, queue_id);
 	else if (queue->tasks->len > 0)
-		queue->idle_id = g_idle_add(prv_task_queue_process_task, queue);
+		queue->idle_id = g_idle_add(prv_task_queue_process_task,
+					    (gpointer)queue_id);
 	else if (queue->flags & MSU_TASK_QUEUE_FLAG_AUTO_REMOVE)
 		g_hash_table_remove(processor->task_queues, queue_id);
 
