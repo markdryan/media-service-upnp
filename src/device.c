@@ -1448,9 +1448,9 @@ static void prv_service_reset_for_prop_cb(GUPnPServiceProxy *proxy,
 
 	cb_data->result = g_variant_ref_sink(g_variant_new_string(token));
 
-	g_free(token);
-
 	MSU_LOG_DEBUG("Service Reset %s", token);
+
+	g_free(token);
 
 on_complete:
 
@@ -1532,9 +1532,9 @@ static void prv_service_reset_for_props_cb(GUPnPServiceProxy *proxy,
 	cb_data->result = g_variant_ref_sink(g_variant_builder_end(
 						cb_task_data->vb));
 
-	g_free(token);
-
 	MSU_LOG_DEBUG("Service Reset %s", token);
+
+	g_free(token);
 
 on_complete:
 
