@@ -1577,6 +1577,10 @@ static void prv_get_sr_token_for_props(GUPnPServiceProxy *proxy,
 					cb_data, NULL);
 	cb_data->cancellable = cancellable;
 
+	MSU_LOG_DEBUG("Exit");
+
+	return;
+
 on_complete:
 
 	(void) g_idle_add(msu_async_complete_task, cb_data);
